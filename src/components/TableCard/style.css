@@ -1,0 +1,82 @@
+.table-card {
+  padding: 1.75rem;
+  border-radius: 20px;
+  background: var(--color-surface);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.table-card__toolbar {
+  width: 100%;
+}
+
+.table-card__table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.table-card__bulk-actions {
+  background: rgba(0, 0, 0, 0.03);
+  border: 1px dashed rgba(0, 0, 0, 0.08);
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+}
+
+.table-card__mobile-card {
+  background: var(--color-surface);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: 16px;
+  padding: 1rem;
+  cursor: pointer;
+  transition: box-shadow 0.2s ease;
+}
+
+.table-card__mobile-card:hover {
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
+}
+
+.table-card__mobile-field {
+  display: flex;
+  flex-direction: column;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.status-pill--ativo {
+  background: rgba(52, 199, 89, 0.15);
+  color: #34c759;
+}
+
+.status-pill--inativo,
+.status-pill--banido {
+  background: rgba(255, 69, 58, 0.15);
+  color: #ff3b30;
+}
+
+.table-card__row {
+  cursor: pointer;
+}
+
+.table-card__row:hover {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+.table-card .MuiTableCell-root {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+@media (max-width: 768px) {
+  .table-card {
+    padding: 1.25rem;
+  }
+}
+

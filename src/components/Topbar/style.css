@@ -1,0 +1,68 @@
+.topbar {
+  background: var(--color-surface);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+  padding: 1rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+.topbar__left {
+  min-width: 0;
+}
+
+.topbar__welcome {
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.topbar__toggle {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.topbar__toggle:hover {
+  background: rgba(0, 0, 0, 0.07);
+}
+
+.topbar__right .MuiIconButton-root {
+  color: var(--color-secondary);
+}
+
+.topbar__profile {
+  background: rgba(0, 0, 0, 0.02);
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+}
+
+.topbar__profile .MuiAvatar-root {
+  width: 36px;
+  height: 36px;
+  font-size: 0.95rem;
+}
+
+.topbar__avatar-btn {
+  padding: 2px;
+}
+
+.topbar__theme-item {
+  padding: 0.5rem 1rem;
+}
+
+.topbar__mobile-row {
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .topbar {
+    padding: 0.75rem 1rem;
+  }
+
+  .topbar__profile-info {
+    display: none;
+  }
+}
+

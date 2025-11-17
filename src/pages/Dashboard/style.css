@@ -1,0 +1,30 @@
+.dashboard-page {
+  min-height: 100vh;
+  padding: 3rem;
+  background-color: var(--color-background);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dashboard-card {
+  max-width: 720px;
+  width: 100%;
+  padding: 3rem;
+  border-radius: 24px;
+}
+
+.dashboard-actions {
+  margin-top: 2rem;
+}
+
+@media (max-width: 768px) {
+  .dashboard-page {
+    padding: 1.5rem;
+  }
+
+  .dashboard-card {
+    padding: 2rem;
+  }
+}
+

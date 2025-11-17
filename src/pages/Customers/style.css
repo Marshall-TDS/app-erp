@@ -1,0 +1,12 @@
+.customers-page {
+  width: 100%;
+  padding: 2rem;
+  background-color: var(--color-background);
+}
+
+@media (max-width: 768px) {
+  .customers-page {
+    padding: 1rem;
+  }
+}
+
