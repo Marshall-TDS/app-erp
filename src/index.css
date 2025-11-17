@@ -35,6 +35,26 @@ body {
   color: var(--color-text);
 }
 
+.MuiButton-containedPrimary {
+  background-color: var(--color-primary) !important;
+  color: var(--color-on-primary) !important;
+}
+
+.MuiButton-containedPrimary:hover {
+  background-color: var(--color-primary-dark) !important;
+}
+
+.MuiButton-outlinedPrimary {
+  border-color: var(--color-primary) !important;
+  color: var(--color-primary) !important;
+}
+
+.MuiButton-outlinedPrimary:hover {
+  border-color: var(--color-primary-dark) !important;
+  color: var(--color-primary-dark) !important;
+  background-color: rgba(var(--color-primary-rgb), 0.08) !important;
+}
+
 .theme-dark {
   --color-primary: #dbaa3d;
   --color-primary-dark: #a06c17;

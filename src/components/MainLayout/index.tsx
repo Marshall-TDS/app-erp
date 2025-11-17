@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { Box } from '@mui/material'
 import { Outlet } from 'react-router-dom'
+import { SearchProvider } from '../../context/SearchContext'
 import Sidebar from '../Sidebar'
 import Topbar from '../Topbar'
 import './style.css'
@@ -18,10 +19,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [themeMode, setThemeMode] = useState<'light' | 'dark'>(() => {
     if (typeof window === 'undefined') return 'light'
-    const stored = window.localStorage.getItem('marshall-theme-mode') as
-      | 'light'
-      | 'dark'
-      | null
+    const stored = window.localStorage.getItem('marshall-theme-mode') as 'light' | 'dark' | null
     return stored ?? (prefersDark ? 'dark' : 'light')
   })
 
@@ -37,22 +35,23 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   }, [themeMode])
 
   return (
-    <Box className="main-layout">
-      <Sidebar open={sidebarOpen} onToggle={() => setSidebarOpen((prev) => !prev)} />
-      <Box component="section" className="main-layout__content">
-        <Topbar
-          sidebarOpen={sidebarOpen}
-          onToggleSidebar={() => setSidebarOpen((prev) => !prev)}
-          themeMode={themeMode}
-          onChangeTheme={setThemeMode}
-        />
-        <Box component="main" className="main-layout__page">
-          {children ?? <Outlet />}
+    <SearchProvider>
+      <Box className="main-layout">
+        <Sidebar open={sidebarOpen} onToggle={() => setSidebarOpen((prev) => !prev)} />
+        <Box component="section" className="main-layout__content">
+          <Topbar
+            sidebarOpen={sidebarOpen}
+            onToggleSidebar={() => setSidebarOpen((prev) => !prev)}
+            themeMode={themeMode}
+            onChangeTheme={setThemeMode}
+          />
+          <Box component="main" className="main-layout__page">
+            {children ?? <Outlet />}
+          </Box>
         </Box>
       </Box>
-    </Box>
+    </SearchProvider>
   )
 }
 
 export default MainLayout
-

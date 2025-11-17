@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Box } from '@mui/material'
 import TableCard, {
   type TableCardColumn,
   type TableCardRow,
 } from '../../components/TableCard'
+import { useSearch } from '../../context/SearchContext'
 import './style.css'
 
 type CustomerStatus = 'Ativo' | 'Inativo' | 'Banido'
@@ -58,6 +59,22 @@ const generateId = () =>
 
 const CustomersPage = () => {
   const [customers, setCustomers] = useState<CustomerRow[]>(initialCustomers)
+  const { setFilters, setPlaceholder, setQuery } = useSearch()
+
+  useEffect(() => {
+    setPlaceholder('Pesquisar cliente, documento ou e-mail')
+    const filters = [
+      { id: 'name', label: 'Nome', field: 'name', type: 'text' as const, page: 'customers' },
+      { id: 'email', label: 'E-mail', field: 'email', type: 'text' as const, page: 'customers' },
+      { id: 'document', label: 'Documento', field: 'document', type: 'text' as const, page: 'customers' },
+    ]
+    setFilters(filters, 'name')
+    return () => {
+      setFilters([])
+      setPlaceholder('Pesquisar')
+      setQuery('')
+    }
+  }, [setFilters, setPlaceholder, setQuery])
 
   const handleAddCustomer = (data: Partial<CustomerRow>) => {
     const newCustomer: CustomerRow = {
@@ -91,7 +108,6 @@ const CustomersPage = () => {
         title="Clientes"
         columns={customerColumns}
         rows={customers}
-        searchPlaceholder="Pesquisar cliente, documento ou e-mail"
         onAdd={handleAddCustomer}
         onEdit={handleEditCustomer}
         onDelete={handleDeleteCustomer}

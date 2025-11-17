@@ -89,7 +89,7 @@ const Sidebar = ({ open, onToggle }: SidebarProps) => {
                   className={`sidebar-link ${
                     location.pathname.startsWith(item.path) ? 'active' : ''
                   }`}
-                  sx={{ gap: open || isMobile ? 1.5 : 0 }}
+                  sx={{ gap: 0 }}
                   onClick={() => isMobile && onToggle()}
                 >
                   <ListItemIcon className="sidebar-link__icon">{item.icon}</ListItemIcon>

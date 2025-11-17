@@ -8,7 +8,7 @@
   gap: 1.5rem;
   position: sticky;
   top: 0;
-  z-index: 5;
+  z-index: 10;
 }
 
 .topbar__left {
@@ -66,3 +66,27 @@
   }
 }
 
+
+.topbar__search-panel {
+  position: fixed;
+  top: 73px;
+  left: 0;
+  right: 0;
+  padding: 1rem 2rem;
+  background: var(--color-surface);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+  z-index: 1050;
+}
+
+.topbar__search-panel .MuiTextField-root {
+  max-width: 600px;
+}
+
+.topbar__search-panel .MuiChip-root {
+  margin-bottom: 0.5rem;
+}
+
+.topbar__search-icon {
+  color: var(--color-secondary);
+  margin-right: 0.5rem;
+}

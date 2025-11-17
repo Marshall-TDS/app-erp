@@ -1,10 +1,11 @@
 .table-card {
-  padding: 1.75rem;
-  border-radius: 20px;
-  background: var(--color-surface);
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  width: 100%;
 }
 
 .table-card__toolbar {
@@ -74,9 +75,42 @@
   border-bottom: 1px solid rgba(0, 0, 0, 0.04);
 }
 
+.table-card__fab {
+  position: fixed !important;
+  bottom: 2rem !important;
+  right: 2rem !important;
+  z-index: 1000 !important;
+  background-color: var(--color-primary) !important;
+}
+
+.table-card__fab:hover {
+  background-color: var(--color-primary-dark) !important;
+}
+
+.table-card__top-actions {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  z-index: 1100 !important;
+  background-color: var(--color-surface) !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  padding: 1rem 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
 @media (max-width: 768px) {
   .table-card {
-    padding: 1.25rem;
+    padding: 0;
+  }
+
+  .table-card__fab {
+    bottom: 1.5rem;
+    right: 1.5rem;
+  }
+
+  .table-card__top-actions {
+    padding: 0.75rem 1rem;
   }
 }
 

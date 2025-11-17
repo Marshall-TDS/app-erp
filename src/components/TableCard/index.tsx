@@ -1,4 +1,6 @@
 import { useMemo, useState, type ReactNode } from 'react'
+import { useSearch } from '../../context/SearchContext'
+import { createPortal } from 'react-dom'
 import {
   Box,
   Button,
@@ -8,8 +10,8 @@ import {
   DialogContent,
   DialogTitle,
   Divider,
+  Fab,
   IconButton,
-  InputAdornment,
   Menu,
   MenuItem,
   Stack,
@@ -22,9 +24,8 @@ import {
   Typography,
   useMediaQuery,
   useTheme,
-  Paper,
 } from '@mui/material'
-import { Add, DeleteOutline, MoreVert, Search } from '@mui/icons-material'
+import { Add, DeleteOutline, MoreVert } from '@mui/icons-material'
 import './style.css'
 
 export type TableCardColumn<T extends TableCardRow> = {
@@ -43,7 +44,6 @@ type TableCardProps<T extends TableCardRow> = {
   title?: string
   columns: TableCardColumn<T>[]
   rows: T[]
-  searchPlaceholder?: string
   onAdd?: (data: Partial<T>) => void
   onEdit?: (id: T['id'], data: Partial<T>) => void
   onDelete?: (id: T['id']) => void
@@ -59,7 +59,6 @@ const TableCard = <T extends TableCardRow>({
   title,
   columns,
   rows,
-  searchPlaceholder = 'Pesquisar',
   onAdd,
   onEdit,
   onDelete,
@@ -67,7 +66,7 @@ const TableCard = <T extends TableCardRow>({
 }: TableCardProps<T>) => {
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('md'))
-  const [searchTerm, setSearchTerm] = useState('')
+  const { query, selectedFilter } = useSearch()
   const [selectedIds, setSelectedIds] = useState<Array<T['id']>>([])
   const [dialog, setDialog] = useState<DialogState<T>>({
     mode: null,
@@ -77,17 +76,24 @@ const TableCard = <T extends TableCardRow>({
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const [menuRow, setMenuRow] = useState<T | null>(null)
 
+  const [primaryColumn, ...secondaryColumns] = columns
+
   const filteredRows = useMemo(() => {
-    if (!searchTerm) return rows
-    const lower = searchTerm.toLowerCase()
-    return rows.filter((row) =>
-      columns.some((column) => {
+    if (!query) return rows
+    const lower = query.toLowerCase()
+    return rows.filter((row) => {
+      if (selectedFilter) {
+        const value = row[selectedFilter.field as keyof T]
+        if (value === undefined || value === null) return false
+        return String(value).toLowerCase().includes(lower)
+      }
+      return columns.some((column) => {
         const value = row[column.key]
         if (value === undefined || value === null) return false
         return String(value).toLowerCase().includes(lower)
-      }),
-    )
-  }, [rows, columns, searchTerm])
+      })
+    })
+  }, [rows, columns, query, selectedFilter])
 
   const allSelected =
     filteredRows.length > 0 &&
@@ -177,7 +183,7 @@ const TableCard = <T extends TableCardRow>({
   }
 
   return (
-    <Paper className="table-card">
+    <Box className="table-card">
       <Stack spacing={2}>
         <Stack
           direction={{ xs: 'column', sm: 'row' }}
@@ -189,55 +195,8 @@ const TableCard = <T extends TableCardRow>({
           <Typography variant="h5" fontWeight={600}>
             {title}
           </Typography>
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} width="100%">
-            <TextField
-              value={searchTerm}
-              onChange={(event) => setSearchTerm(event.target.value)}
-              placeholder={searchPlaceholder}
-              size="small"
-              fullWidth
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Search fontSize="small" />
-                  </InputAdornment>
-                ),
-              }}
-            />
-            <Button
-              variant="contained"
-              startIcon={<Add />}
-              onClick={() => openDialog('add')}
-            >
-              Adicionar
-            </Button>
-          </Stack>
         </Stack>
 
-        {selectedIds.length > 0 && (
-          <Stack
-            direction={{ xs: 'column', sm: 'row' }}
-            alignItems={{ xs: 'flex-start', sm: 'center' }}
-            justifyContent="space-between"
-            spacing={1}
-            className="table-card__bulk-actions"
-          >
-            <Typography variant="body2">
-              {selectedIds.length} registro(s) selecionado(s)
-            </Typography>
-            <Stack direction="row" spacing={1}>
-              <Button
-                variant="outlined"
-                color="error"
-                startIcon={<DeleteOutline />}
-                onClick={handleBulkDelete}
-                disabled={!onBulkDelete}
-              >
-                Excluir selecionados
-              </Button>
-            </Stack>
-          </Stack>
-        )}
 
         {!isMobile ? (
           <Box className="table-card__table-wrapper">
@@ -313,24 +272,33 @@ const TableCard = <T extends TableCardRow>({
                 className="table-card__mobile-card"
                 onClick={() => openDialog('edit', row)}
               >
-                <Stack direction="row" justifyContent="space-between" alignItems="center">
-                  <Checkbox
-                    checked={selectedIds.includes(row.id)}
-                    onChange={() => handleToggleSelectRow(row.id)}
-                    onClick={(event) => event.stopPropagation()}
-                  />
-                  <IconButton
-                    onClick={(event) => {
-                      event.stopPropagation()
-                      handleOpenMenu(event, row)
-                    }}
-                  >
-                    <MoreVert />
-                  </IconButton>
+                <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={1}>
+                  <Stack direction="row" alignItems="center" spacing={1} flex={1}>
+                    <Checkbox
+                      checked={selectedIds.includes(row.id)}
+                      onChange={() => handleToggleSelectRow(row.id)}
+                      onClick={(event) => event.stopPropagation()}
+                    />
+                    {primaryColumn && (
+                      <Typography variant="subtitle1" fontWeight={600} noWrap>
+                        {renderCell(row, primaryColumn)}
+                      </Typography>
+                    )}
+                  </Stack>
+                  {selectedIds.includes(row.id) && (
+                    <IconButton
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        handleOpenMenu(event, row)
+                      }}
+                    >
+                      <MoreVert />
+                    </IconButton>
+                  )}
                 </Stack>
                 <Divider sx={{ my: 1 }} />
                 <Stack spacing={1}>
-                  {columns.map((column) => (
+                  {secondaryColumns.map((column) => (
                     <Box key={String(column.key)} className="table-card__mobile-field">
                       <Typography variant="caption" color="text.secondary">
                         {column.label}
@@ -383,12 +351,52 @@ const TableCard = <T extends TableCardRow>({
         </DialogContent>
         <DialogActions>
           <Button onClick={closeDialog}>Cancelar</Button>
-          <Button variant="contained" onClick={handleSubmit}>
+          <Button variant="contained" color="primary" onClick={handleSubmit}>
             Salvar
           </Button>
         </DialogActions>
       </Dialog>
-    </Paper>
+
+      {createPortal(
+        <Fab
+          color="primary"
+          aria-label="adicionar"
+          onClick={() => openDialog('add')}
+          className="table-card__fab"
+        >
+          <Add />
+        </Fab>,
+        document.body,
+      )}
+
+      {selectedIds.length > 0 &&
+        createPortal(
+          <Box className="table-card__top-actions">
+            <Stack
+              direction={{ xs: 'column', sm: 'row' }}
+              alignItems={{ xs: 'flex-start', sm: 'center' }}
+              justifyContent="space-between"
+              spacing={1.5}
+            >
+              <Typography variant="body1" fontWeight={600}>
+                {selectedIds.length} registro(s) selecionado(s)
+              </Typography>
+              <Stack direction="row" spacing={1}>
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  startIcon={<DeleteOutline />}
+                  onClick={handleBulkDelete}
+                  disabled={!onBulkDelete}
+                >
+                  Excluir selecionados
+                </Button>
+              </Stack>
+            </Stack>
+          </Box>,
+          document.body,
+        )}
+    </Box>
   )
 }
 
