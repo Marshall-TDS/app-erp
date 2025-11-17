@@ -120,3 +120,6 @@
   max-width: 360px;
 }
 
+.main-layout__page {
+  padding: 1rem !important;
+}
