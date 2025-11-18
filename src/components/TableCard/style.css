@@ -154,11 +154,19 @@
 }
 
 .theme-dark .table-card__checkbox .MuiCheckbox-root {
-  color: var(--color-text);
+  color: var(--color-text) !important;
 }
 
 .theme-dark .table-card__checkbox .MuiCheckbox-root.Mui-checked {
-  color: var(--color-primary);
+  color: var(--color-primary) !important;
+}
+
+.theme-dark .table-card__checkbox .MuiCheckbox-root .MuiSvgIcon-root {
+  color: var(--color-text) !important;
+}
+
+.theme-dark .table-card__checkbox .MuiCheckbox-root.Mui-checked .MuiSvgIcon-root {
+  color: var(--color-primary) !important;
 }
 
 /* Área principal do card */

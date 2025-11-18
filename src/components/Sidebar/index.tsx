@@ -7,6 +7,9 @@ import {
   ListItemText,
   Typography,
   Collapse,
+  Switch,
+  Stack,
+  Divider,
   useMediaQuery,
   useTheme,
 } from '@mui/material'
@@ -17,6 +20,8 @@ import {
   SettingsOutlined,
   BarChartOutlined,
   ChevronLeft,
+  DarkMode,
+  Logout,
 } from '@mui/icons-material'
 import { NavLink, useLocation } from 'react-router-dom'
 import logoMarshall from '../../assets/images/logo-marshall.svg'
@@ -48,9 +53,11 @@ const menuStructure = [
 type SidebarProps = {
   open: boolean
   onToggle: () => void
+  themeMode: 'light' | 'dark'
+  onChangeTheme: (mode: 'light' | 'dark') => void
 }
 
-const Sidebar = ({ open, onToggle }: SidebarProps) => {
+const Sidebar = ({ open, onToggle, themeMode, onChangeTheme }: SidebarProps) => {
   const location = useLocation()
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('md'))
@@ -100,6 +107,53 @@ const Sidebar = ({ open, onToggle }: SidebarProps) => {
           </div>
         ))}
       </nav>
+
+      <div className="sidebar-footer">
+        <Divider className="sidebar-footer__divider" />
+        <Stack spacing={1} className="sidebar-footer__content">
+          <ListItemButton
+            className="sidebar-footer__item"
+            disableRipple
+            sx={{ gap: 0 }}
+          >
+            <ListItemIcon className="sidebar-footer__icon">
+              <DarkMode fontSize="small" />
+            </ListItemIcon>
+            {(open || isMobile) && (
+              <>
+                <ListItemText 
+                  primary="Modo escuro" 
+                  className="sidebar-footer__text"
+                />
+                <Switch
+                  size="small"
+                  checked={themeMode === 'dark'}
+                  onChange={(event) => onChangeTheme(event.target.checked ? 'dark' : 'light')}
+                  className="sidebar-footer__switch"
+                />
+              </>
+            )}
+          </ListItemButton>
+          <ListItemButton
+            className="sidebar-footer__item"
+            onClick={() => {
+              // TODO: Implementar lógica de logout
+              console.log('Sair')
+            }}
+            sx={{ gap: 0 }}
+          >
+            <ListItemIcon className="sidebar-footer__icon">
+              <Logout fontSize="small" />
+            </ListItemIcon>
+            {(open || isMobile) && (
+              <ListItemText 
+                primary="Sair" 
+                className="sidebar-footer__text"
+              />
+            )}
+          </ListItemButton>
+        </Stack>
+      </div>
     </>
   )
 

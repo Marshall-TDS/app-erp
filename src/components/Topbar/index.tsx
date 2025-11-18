@@ -1,27 +1,19 @@
-import { useEffect, useRef, useState, type MouseEvent } from 'react'
-import { createPortal } from 'react-dom'
+import { useEffect, useRef, useState } from 'react'
 import {
-  Avatar,
   Box,
   Chip,
   IconButton,
-  Divider,
-  Menu,
-  MenuItem,
   Stack,
-  Switch,
   TextField,
-  Typography,
   Tooltip,
-  useMediaQuery,
-  useTheme,
+  Collapse,
 } from '@mui/material'
 import {
-  DarkMode,
   Menu as MenuIcon,
   MenuOpen,
   NotificationsNone,
   Search,
+  Close,
 } from '@mui/icons-material'
 import { useSearch } from '../../context/SearchContext'
 import './style.css'
@@ -29,14 +21,9 @@ import './style.css'
 type TopbarProps = {
   sidebarOpen: boolean
   onToggleSidebar: () => void
-  themeMode: 'light' | 'dark'
-  onChangeTheme: (mode: 'light' | 'dark') => void
 }
 
-const Topbar = ({ sidebarOpen, onToggleSidebar, themeMode, onChangeTheme }: TopbarProps) => {
-  const theme = useTheme()
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'))
-  const [profileAnchor, setProfileAnchor] = useState<null | HTMLElement>(null)
+const Topbar = ({ sidebarOpen, onToggleSidebar }: TopbarProps) => {
   const {
     filters,
     selectedFilter,
@@ -49,171 +36,113 @@ const Topbar = ({ sidebarOpen, onToggleSidebar, themeMode, onChangeTheme }: Topb
   } = useSearch()
   const showSearch = filters.length > 0
   const searchInputRef = useRef<HTMLInputElement>(null)
+  const [filtersVisible, setFiltersVisible] = useState(false)
 
   useEffect(() => {
-    if (searchOpen) {
-      searchInputRef.current?.focus()
-    }
-  }, [searchOpen])
-  useEffect(() => {
-    if (!showSearch) {
-      setSearchOpen(false)
+    if (showSearch) {
+      setSearchOpen(true)
     }
   }, [showSearch, setSearchOpen])
 
-  const handleOpenProfileMenu = (event: MouseEvent<HTMLButtonElement>) => {
-    setProfileAnchor(event.currentTarget)
+  useEffect(() => {
+    if (searchOpen && searchInputRef.current) {
+      searchInputRef.current.focus()
+    }
+  }, [searchOpen])
+
+  const handleCloseSearch = () => {
+    setQuery('')
   }
 
-  const handleCloseProfileMenu = () => setProfileAnchor(null)
+  const handleInputFocus = () => {
+    setFiltersVisible(true)
+  }
 
-  const profileMenu = (
-    <Menu anchorEl={profileAnchor} open={Boolean(profileAnchor)} onClose={handleCloseProfileMenu}>
-      <MenuItem className="topbar__theme-item" disableRipple>
-        <Stack direction="row" alignItems="center" spacing={1.5} width="100%">
-          <DarkMode fontSize="small" />
-          <Typography variant="body2" flex={1}>
-            Modo escuro
-          </Typography>
-          <Switch
-            size="small"
-            checked={themeMode === 'dark'}
-            onChange={(event) => onChangeTheme(event.target.checked ? 'dark' : 'light')}
-          />
+  const handleInputBlur = () => {
+    setFiltersVisible(false)
+  }
+
+  return (
+    <header className="topbar">
+      <Stack 
+        direction="row" 
+        alignItems="center" 
+        spacing={1.5} 
+        className="topbar__content"
+        sx={{ width: '100%' }}
+      >
+        <IconButton
+          aria-label={sidebarOpen ? 'Recolher menu lateral' : 'Expandir menu lateral'}
+          onClick={onToggleSidebar}
+          className="topbar__toggle"
+        >
+          {sidebarOpen ? <MenuOpen /> : <MenuIcon />}
+        </IconButton>
+
+        {showSearch && (
+          <Box className="topbar__search-container topbar__search-container--open">
+            <Stack direction="row" alignItems="center" spacing={1} sx={{ flex: 1 }}>
+              {query && (
+                <IconButton
+                  size="small"
+                  onClick={handleCloseSearch}
+                  className="topbar__search-close"
+                >
+                  <Close fontSize="small" />
+                </IconButton>
+              )}
+              <TextField
+                inputRef={searchInputRef}
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                onFocus={handleInputFocus}
+                onBlur={handleInputBlur}
+                placeholder={placeholder}
+                fullWidth
+                size="small"
+                className="topbar__search-input"
+                InputProps={{
+                  startAdornment: (
+                    <Search fontSize="small" className="topbar__search-icon" />
+                  ),
+                }}
+              />
+            </Stack>
+          </Box>
+        )}
+
+        {!showSearch && (
+          <Box sx={{ flex: 1 }} />
+        )}
+
+        <Stack direction="row" alignItems="center" spacing={0.5} className="topbar__right">
+          <Tooltip title="Notificações">
+            <IconButton aria-label="Notificações" className="topbar__notif">
+              <NotificationsNone />
+            </IconButton>
+          </Tooltip>
         </Stack>
-      </MenuItem>
-      <Divider />
-      <MenuItem onClick={handleCloseProfileMenu}>Meu perfil</MenuItem>
-      <MenuItem onClick={handleCloseProfileMenu}>Configurações</MenuItem>
-      <MenuItem onClick={handleCloseProfileMenu}>Sair</MenuItem>
-    </Menu>
-  )
+      </Stack>
 
-  const searchPanel =
-    showSearch && searchOpen
-      ? createPortal(
-          <Box className="topbar__search-panel">
-            <TextField
-              inputRef={searchInputRef}
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder={placeholder}
-              fullWidth
-              size="small"
-              InputProps={{
-                startAdornment: (
-                  <Search fontSize="small" className="topbar__search-icon" />
-                ),
-              }}
-            />
-            <Stack direction="row" spacing={1} mt={1} flexWrap="wrap">
+      {showSearch && (
+        <Collapse in={filtersVisible}>
+          <Box className="topbar__search-filters">
+            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
               {filters.map((filter) => (
                 <Chip
                   key={filter.id}
                   label={filter.label}
-                  color={selectedFilter?.id === filter.id ? 'primary' : 'default'}
+                  size="small"
                   onClick={() => selectFilter(filter.id)}
-                  variant={selectedFilter?.id === filter.id ? 'filled' : 'outlined'}
+                  className={`topbar__filter-chip ${
+                    selectedFilter?.id === filter.id ? 'topbar__filter-chip--active' : ''
+                  }`}
                 />
               ))}
             </Stack>
-          </Box>,
-          document.body,
-        )
-      : null
-
-  return (
-    <header className="topbar">
-      {isMobile ? (
-        <Stack direction="row" alignItems="center" justifyContent="space-between" className="topbar__mobile-row">
-          <Stack direction="row" alignItems="center" spacing={1}>
-            <IconButton
-              aria-label={sidebarOpen ? 'Recolher menu lateral' : 'Expandir menu lateral'}
-              onClick={onToggleSidebar}
-              className="topbar__toggle"
-            >
-              {sidebarOpen ? <MenuOpen /> : <MenuIcon />}
-            </IconButton>
-            {showSearch && (
-              <IconButton
-                aria-label="Pesquisar"
-                onClick={() => setSearchOpen(!searchOpen)}
-                color={searchOpen ? 'primary' : 'default'}
-              >
-                <Search />
-              </IconButton>
-            )}
-          </Stack>
-          <Stack direction="row" spacing={1} alignItems="center">
-            <Tooltip title="Notificações">
-              <IconButton aria-label="Notificações" className="topbar__notif">
-                <NotificationsNone />
-              </IconButton>
-            </Tooltip>
-            <IconButton onClick={handleOpenProfileMenu} className="topbar__avatar-btn">
-              <Avatar sx={{ bgcolor: 'var(--color-secondary)', color: 'var(--color-on-primary)' }}>
-                TL
-              </Avatar>
-            </IconButton>
-          </Stack>
-        </Stack>
-      ) : (
-        <>
-          <Stack direction="row" alignItems="center" spacing={2} className="topbar__left">
-            <Stack direction="row" alignItems="center" spacing={1}>
-              <IconButton
-                aria-label={sidebarOpen ? 'Recolher menu lateral' : 'Expandir menu lateral'}
-                onClick={onToggleSidebar}
-                className="topbar__toggle"
-              >
-                {sidebarOpen ? <MenuOpen /> : <MenuIcon />}
-              </IconButton>
-              {showSearch && (
-                <IconButton
-                  aria-label="Pesquisar"
-                  onClick={() => setSearchOpen(!searchOpen)}
-                  color={searchOpen ? 'primary' : 'default'}
-                >
-                  <Search />
-                </IconButton>
-              )}
-            </Stack>
-            <Box>
-              <Typography variant="subtitle2" className="topbar__welcome">
-                Bem-vindo(a), Thiago Lamberti
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Sistema Marshall de Gestão
-              </Typography>
-            </Box>
-          </Stack>
-
-          <Stack direction="row" alignItems="center" spacing={1.5} className="topbar__right">
-            <Tooltip title="Notificações">
-              <IconButton aria-label="Notificações">
-                <NotificationsNone />
-              </IconButton>
-            </Tooltip>
-            <Stack direction="row" alignItems="center" spacing={1.5} className="topbar__profile">
-              <IconButton onClick={handleOpenProfileMenu} className="topbar__avatar-btn">
-                <Avatar sx={{ bgcolor: 'var(--color-secondary)', color: 'var(--color-on-primary)' }}>
-                  TL
-                </Avatar>
-              </IconButton>
-              <Box className="topbar__profile-info">
-                <Typography variant="body2" fontWeight={600}>
-                  thiago.lamberti
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  Administrador
-                </Typography>
-              </Box>
-            </Stack>
-          </Stack>
-        </>
+          </Box>
+        </Collapse>
       )}
-      {profileMenu}
-      {searchPanel}
     </header>
   )
 }

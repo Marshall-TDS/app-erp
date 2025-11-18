@@ -37,13 +37,16 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   return (
     <SearchProvider>
       <Box className="main-layout">
-        <Sidebar open={sidebarOpen} onToggle={() => setSidebarOpen((prev) => !prev)} />
+        <Sidebar 
+          open={sidebarOpen} 
+          onToggle={() => setSidebarOpen((prev) => !prev)}
+          themeMode={themeMode}
+          onChangeTheme={setThemeMode}
+        />
         <Box component="section" className="main-layout__content">
           <Topbar
             sidebarOpen={sidebarOpen}
             onToggleSidebar={() => setSidebarOpen((prev) => !prev)}
-            themeMode={themeMode}
-            onChangeTheme={setThemeMode}
           />
           <Box component="main" className="main-layout__page">
             {children ?? <Outlet />}
