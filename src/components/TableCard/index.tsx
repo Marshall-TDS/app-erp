@@ -9,7 +9,6 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  Divider,
   Fab,
   IconButton,
   Menu,
@@ -22,10 +21,8 @@ import {
   TableRow,
   TextField,
   Typography,
-  useMediaQuery,
-  useTheme,
 } from '@mui/material'
-import { Add, DeleteOutline, MoreVert } from '@mui/icons-material'
+import { Add, DeleteOutline, MoreVert, ViewModule, TableChart } from '@mui/icons-material'
 import './style.css'
 
 export type TableCardColumn<T extends TableCardRow> = {
@@ -64,10 +61,9 @@ const TableCard = <T extends TableCardRow>({
   onDelete,
   onBulkDelete,
 }: TableCardProps<T>) => {
-  const theme = useTheme()
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'))
   const { query, selectedFilter } = useSearch()
   const [selectedIds, setSelectedIds] = useState<Array<T['id']>>([])
+  const [viewMode, setViewMode] = useState<'card' | 'table'>('card')
   const [dialog, setDialog] = useState<DialogState<T>>({
     mode: null,
     open: false,
@@ -76,6 +72,7 @@ const TableCard = <T extends TableCardRow>({
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const [menuRow, setMenuRow] = useState<T | null>(null)
 
+  // Define qual coluna será exibida como título e as demais como preview
   const [primaryColumn, ...secondaryColumns] = columns
 
   const filteredRows = useMemo(() => {
@@ -195,128 +192,196 @@ const TableCard = <T extends TableCardRow>({
           <Typography variant="h5" fontWeight={600}>
             {title}
           </Typography>
+          <Stack direction="row" spacing={0.5} className="table-card__view-toggle">
+            <IconButton
+              size="small"
+              onClick={() => setViewMode('card')}
+              className={viewMode === 'card' ? 'table-card__view-toggle--active' : ''}
+              aria-label="Visualização em cards"
+            >
+              <ViewModule fontSize="small" />
+            </IconButton>
+            <IconButton
+              size="small"
+              onClick={() => setViewMode('table')}
+              className={viewMode === 'table' ? 'table-card__view-toggle--active' : ''}
+              aria-label="Visualização em tabela"
+            >
+              <TableChart fontSize="small" />
+            </IconButton>
+          </Stack>
         </Stack>
 
-
-        {!isMobile ? (
-          <Box className="table-card__table-wrapper">
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell padding="checkbox">
-                    <Checkbox
-                      checked={allSelected}
-                      onChange={handleToggleSelectAll}
-                      indeterminate={
-                        selectedIds.length > 0 && !allSelected && filteredRows.length > 0
-                      }
-                    />
-                  </TableCell>
-                  {columns.map((column) => (
-                    <TableCell key={String(column.key)}>{column.label}</TableCell>
-                  ))}
-                  <TableCell align="right">Ações</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {filteredRows.map((row) => (
-                  <TableRow
+        {/* Visualização em Cards ou Tabela */}
+        {viewMode === 'card' ? (
+          <Box className="table-card__list-container">
+            {selectedIds.length > 0 && (
+              <Box className="table-card__select-all-bar">
+                <Checkbox
+                  checked={allSelected}
+                  onChange={handleToggleSelectAll}
+                  indeterminate={
+                    selectedIds.length > 0 && !allSelected && filteredRows.length > 0
+                  }
+                />
+                <Typography variant="body2" fontWeight={500}>
+                  {selectedIds.length} selecionado(s)
+                </Typography>
+              </Box>
+            )}
+            
+            <Stack spacing={0.5} className="table-card__list">
+              {filteredRows.map((row) => {
+                const isSelected = selectedIds.includes(row.id)
+                
+                return (
+                  <Box
                     key={row.id}
-                    hover
-                    className="table-card__row"
-                    onClick={() => openDialog('edit', row)}
+                    className={`table-card__gmail-card ${isSelected ? 'table-card__gmail-card--selected' : ''}`}
+                    onClick={() => {
+                      if (!isSelected) {
+                        openDialog('edit', row)
+                      }
+                    }}
                   >
-                    <TableCell
-                      padding="checkbox"
-                      onClick={(event) => event.stopPropagation()}
-                    >
+                    <Box className="table-card__gmail-card-content">
                       <Checkbox
-                        checked={selectedIds.includes(row.id)}
+                        checked={isSelected}
                         onChange={() => handleToggleSelectRow(row.id)}
+                        onClick={(event) => event.stopPropagation()}
+                        className="table-card__checkbox"
+                      />
+                      
+                      <Box className="table-card__gmail-card-main" flex={1}>
+                        <Box className="table-card__gmail-card-header">
+                          {primaryColumn && (
+                            <Typography 
+                              variant="subtitle1" 
+                              fontWeight={600} 
+                              className="table-card__gmail-title"
+                              component="div"
+                            >
+                              {renderCell(row, primaryColumn)}
+                            </Typography>
+                          )}
+                          
+                          <IconButton
+                            className="table-card__gmail-actions"
+                            onClick={(event) => {
+                              event.stopPropagation()
+                              handleOpenMenu(event, row)
+                            }}
+                            size="small"
+                          >
+                            <MoreVert fontSize="small" />
+                          </IconButton>
+                        </Box>
+                        
+                        {secondaryColumns.length > 0 && (
+                          <Box className="table-card__gmail-card-preview">
+                            {secondaryColumns.map((column) => (
+                              <Typography
+                                key={String(column.key)}
+                                variant="body2"
+                                color="text.secondary"
+                                className="table-card__gmail-preview-item"
+                              >
+                                <span className="table-card__gmail-preview-label">
+                                  {column.label}:
+                                </span>{' '}
+                                {renderCell(row, column)}
+                              </Typography>
+                            ))}
+                          </Box>
+                        )}
+                      </Box>
+                    </Box>
+                  </Box>
+                )
+              })}
+              
+              {filteredRows.length === 0 && (
+                <Box className="table-card__empty-state">
+                  <Typography align="center" color="text.secondary" variant="body1">
+                    Nenhum registro encontrado.
+                  </Typography>
+                </Box>
+              )}
+            </Stack>
+          </Box>
+        ) : (
+          <Box className="table-card__table-container">
+            <Box className="table-card__table-wrapper">
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell padding="checkbox">
+                      <Checkbox
+                        checked={allSelected}
+                        onChange={handleToggleSelectAll}
+                        indeterminate={
+                          selectedIds.length > 0 && !allSelected && filteredRows.length > 0
+                        }
                       />
                     </TableCell>
                     {columns.map((column) => (
-                      <TableCell key={String(column.key)}>
-                        {renderCell(row, column)}
-                      </TableCell>
+                      <TableCell key={String(column.key)}>{column.label}</TableCell>
                     ))}
-                    <TableCell align="right" onClick={(event) => event.stopPropagation()}>
-                      <IconButton
-                        onClick={(event) => {
-                          event.stopPropagation()
-                          handleOpenMenu(event, row)
-                        }}
-                      >
-                        <MoreVert />
-                      </IconButton>
-                    </TableCell>
+                    <TableCell align="right">Ações</TableCell>
                   </TableRow>
-                ))}
-                {filteredRows.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={columns.length + 2}>
-                      <Typography align="center" color="text.secondary">
-                        Nenhum registro encontrado.
-                      </Typography>
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </Box>
-        ) : (
-          <Stack spacing={1.5}>
-            {filteredRows.map((row) => (
-              <Box
-                key={row.id}
-                className="table-card__mobile-card"
-                onClick={() => openDialog('edit', row)}
-              >
-                <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={1}>
-                  <Stack direction="row" alignItems="center" spacing={1} flex={1}>
-                    <Checkbox
-                      checked={selectedIds.includes(row.id)}
-                      onChange={() => handleToggleSelectRow(row.id)}
-                      onClick={(event) => event.stopPropagation()}
-                    />
-                    {primaryColumn && (
-                      <Typography variant="subtitle1" fontWeight={600} noWrap>
-                        {renderCell(row, primaryColumn)}
-                      </Typography>
-                    )}
-                  </Stack>
-                  {selectedIds.includes(row.id) && (
-                    <IconButton
-                      onClick={(event) => {
-                        event.stopPropagation()
-                        handleOpenMenu(event, row)
+                </TableHead>
+                <TableBody>
+                  {filteredRows.map((row) => (
+                    <TableRow
+                      key={row.id}
+                      hover
+                      className={`table-card__row ${selectedIds.includes(row.id) ? 'table-card__row--selected' : ''}`}
+                      onClick={() => {
+                        if (!selectedIds.includes(row.id)) {
+                          openDialog('edit', row)
+                        }
                       }}
                     >
-                      <MoreVert />
-                    </IconButton>
-                  )}
-                </Stack>
-                <Divider sx={{ my: 1 }} />
-                <Stack spacing={1}>
-                  {secondaryColumns.map((column) => (
-                    <Box key={String(column.key)} className="table-card__mobile-field">
-                      <Typography variant="caption" color="text.secondary">
-                        {column.label}
-                      </Typography>
-                      <Typography variant="body1" fontWeight={600}>
-                        {renderCell(row, column)}
-                      </Typography>
-                    </Box>
+                      <TableCell
+                        padding="checkbox"
+                        onClick={(event) => event.stopPropagation()}
+                      >
+                        <Checkbox
+                          checked={selectedIds.includes(row.id)}
+                          onChange={() => handleToggleSelectRow(row.id)}
+                        />
+                      </TableCell>
+                      {columns.map((column) => (
+                        <TableCell key={String(column.key)}>
+                          {renderCell(row, column)}
+                        </TableCell>
+                      ))}
+                      <TableCell align="right" onClick={(event) => event.stopPropagation()}>
+                        <IconButton
+                          onClick={(event) => {
+                            event.stopPropagation()
+                            handleOpenMenu(event, row)
+                          }}
+                          size="small"
+                        >
+                          <MoreVert fontSize="small" />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </Stack>
-              </Box>
-            ))}
-            {filteredRows.length === 0 && (
-              <Typography align="center" color="text.secondary">
-                Nenhum registro encontrado.
-              </Typography>
-            )}
-          </Stack>
+                  {filteredRows.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={columns.length + 2}>
+                        <Typography align="center" color="text.secondary">
+                          Nenhum registro encontrado.
+                        </Typography>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </Box>
+          </Box>
         )}
       </Stack>
 

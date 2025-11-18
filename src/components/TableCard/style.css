@@ -16,68 +16,253 @@
   color: var(--color-text);
 }
 
-.table-card__table-wrapper {
-  width: 100%;
-  overflow-x: auto;
+/* Toggle de visualização */
+.table-card__view-toggle {
+  display: flex;
+  align-items: center;
   background: var(--color-surface);
+  border: 1px solid var(--color-border-lighter);
   border-radius: 8px;
-  border: 1px solid var(--color-border-lighter);
+  padding: 2px;
 }
 
-.table-card__bulk-actions {
-  background: var(--color-hover);
-  border: 1px dashed var(--color-border-light);
-  padding: 0.75rem 1rem;
-  border-radius: 12px;
-}
-
-.table-card__mobile-card {
+.theme-dark .table-card__view-toggle {
   background: var(--color-surface);
-  border: 1px solid var(--color-border-lighter);
-  border-radius: 16px;
-  padding: 1rem;
-  cursor: pointer;
-  transition: box-shadow 0.2s ease;
+  border-color: var(--color-border);
 }
 
-.table-card__mobile-card:hover {
-  box-shadow: 0 10px 25px var(--color-shadow);
-}
-
-.theme-dark .table-card__mobile-card .MuiTypography-root {
-  color: var(--color-text);
-}
-
-.theme-dark .table-card__mobile-card .MuiTypography-colorTextSecondary {
+.table-card__view-toggle .MuiIconButton-root {
   color: var(--color-on-secondary);
+  padding: 6px;
+  transition: all 0.2s ease;
 }
 
-.theme-dark .table-card__mobile-card .MuiCheckbox-root {
-  color: var(--color-text);
-}
-
-.theme-dark .table-card__mobile-card .MuiCheckbox-root.Mui-checked {
-  color: var(--color-primary);
-}
-
-.theme-dark .table-card__mobile-card .MuiIconButton-root {
-  color: var(--color-text);
-}
-
-.theme-dark .table-card__mobile-card .MuiIconButton-root:hover {
+.table-card__view-toggle .MuiIconButton-root:hover {
   background: var(--color-hover);
-  color: var(--color-primary);
+  color: var(--color-text);
 }
 
-.theme-dark .table-card__mobile-card .MuiDivider-root {
-  border-color: var(--color-border-lighter);
+.table-card__view-toggle .MuiIconButton-root.table-card__view-toggle--active {
+  background: var(--color-primary) !important;
+  color: var(--color-on-primary) !important;
 }
 
-.table-card__mobile-field {
+.table-card__view-toggle .MuiIconButton-root.table-card__view-toggle--active .MuiSvgIcon-root {
+  color: var(--color-on-primary) !important;
+}
+
+.theme-dark .table-card__view-toggle .MuiIconButton-root.table-card__view-toggle--active {
+  background: var(--color-primary) !important;
+}
+
+.theme-dark .table-card__view-toggle .MuiIconButton-root.table-card__view-toggle--active .MuiSvgIcon-root {
+  color: var(--color-on-primary) !important;
+}
+
+/* Container da lista estilo Gmail */
+.table-card__list-container {
+  width: 100%;
   display: flex;
   flex-direction: column;
 }
 
+/* Barra de seleção múltipla */
+.table-card__select-all-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-lighter);
+  border-radius: 8px 8px 0 0;
+  margin-bottom: 0.5rem;
+}
+
+.theme-dark .table-card__select-all-bar {
+  background: var(--color-surface);
+  border-color: var(--color-border);
+}
+
+.theme-dark .table-card__select-all-bar .MuiTypography-root {
+  color: var(--color-text);
+}
+
+/* Lista de cards */
+.table-card__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Card estilo Gmail */
+.table-card__gmail-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-lighter);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.table-card__gmail-card:hover {
+  box-shadow: 0 2px 8px var(--color-shadow);
+  border-color: var(--color-border);
+}
+
+.table-card__gmail-card--selected {
+  background: var(--color-hover);
+  border-color: var(--color-primary);
+}
+
+.theme-dark .table-card__gmail-card {
+  background: var(--color-surface);
+  border-color: var(--color-border);
+}
+
+.theme-dark .table-card__gmail-card:hover {
+  box-shadow: 0 2px 8px var(--color-shadow);
+  border-color: var(--color-border-light);
+}
+
+.theme-dark .table-card__gmail-card--selected {
+  background: var(--color-hover);
+  border-color: var(--color-primary);
+}
+
+/* Conteúdo do card */
+.table-card__gmail-card-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem;
+  min-height: 72px;
+}
+
+@media (max-width: 600px) {
+  .table-card__gmail-card-content {
+    padding: 0.875rem;
+    gap: 0.5rem;
+    min-height: 64px;
+  }
+}
+
+/* Checkbox */
+.table-card__checkbox {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.theme-dark .table-card__checkbox .MuiCheckbox-root {
+  color: var(--color-text);
+}
+
+.theme-dark .table-card__checkbox .MuiCheckbox-root.Mui-checked {
+  color: var(--color-primary);
+}
+
+/* Área principal do card */
+.table-card__gmail-card-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* Cabeçalho do card (título + botão de ações) */
+.table-card__gmail-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+  min-height: 24px;
+}
+
+/* Título do card */
+.table-card__gmail-title {
+  flex: 1;
+  min-width: 0;
+  color: var(--color-text);
+  font-size: 0.9375rem;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  margin: 0;
+}
+
+.theme-dark .table-card__gmail-title {
+  color: var(--color-text);
+}
+
+/* Preview do card (subtítulos) */
+.table-card__gmail-card-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-top: 0.25rem;
+}
+
+.table-card__gmail-preview-item {
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-on-secondary);
+}
+
+.theme-dark .table-card__gmail-preview-item {
+  color: var(--color-on-secondary);
+}
+
+.table-card__gmail-preview-label {
+  font-weight: 500;
+  color: var(--color-on-secondary);
+}
+
+.theme-dark .table-card__gmail-preview-label {
+  color: var(--color-on-secondary);
+}
+
+/* Botão de ações */
+.table-card__gmail-actions {
+  flex-shrink: 0;
+  margin: 0;
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
+  align-self: center;
+}
+
+.table-card__gmail-card:hover .table-card__gmail-actions {
+  opacity: 1;
+}
+
+.theme-dark .table-card__gmail-actions .MuiIconButton-root {
+  color: var(--color-text);
+}
+
+.theme-dark .table-card__gmail-actions .MuiIconButton-root:hover {
+  background: var(--color-hover-strong);
+  color: var(--color-primary);
+}
+
+/* Estado vazio */
+.table-card__empty-state {
+  padding: 3rem 1rem;
+  text-align: center;
+}
+
+.theme-dark .table-card__empty-state .MuiTypography-root {
+  color: var(--color-on-secondary);
+}
+
+/* Status pills */
 .status-pill {
   display: inline-flex;
   align-items: center;
@@ -110,63 +295,98 @@
   color: #ff6b6b;
 }
 
-.table-card__row {
-  cursor: pointer;
+/* Container da tabela */
+.table-card__table-container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
-.table-card__row:hover {
-  background-color: var(--color-hover);
-}
-
-.table-card .MuiTableCell-root {
-  border-bottom: 1px solid var(--color-border-lighter);
-  color: var(--color-text);
+.table-card__table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  background: var(--color-surface);
+  border-radius: 8px;
+  border: 1px solid var(--color-border-lighter);
 }
 
 .theme-dark .table-card__table-wrapper {
   background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  border-color: var(--color-border);
 }
 
-.theme-dark .table-card .MuiTable-root {
+/* Linhas da tabela */
+.table-card__row {
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.table-card__row:hover {
+  background-color: var(--color-hover) !important;
+}
+
+.table-card__row--selected {
+  background-color: var(--color-hover) !important;
+}
+
+.theme-dark .table-card__row {
   background: var(--color-surface);
 }
 
-.theme-dark .table-card .MuiTableHead-root .MuiTableCell-root {
+.theme-dark .table-card__row:hover {
+  background-color: var(--color-hover) !important;
+}
+
+.theme-dark .table-card__row--selected {
+  background-color: var(--color-hover) !important;
+}
+
+/* Células da tabela */
+.table-card__table-wrapper .MuiTableCell-root {
+  border-bottom: 1px solid var(--color-border-lighter);
+  color: var(--color-text);
+}
+
+.theme-dark .table-card__table-wrapper .MuiTable-root {
+  background: var(--color-surface);
+}
+
+.theme-dark .table-card__table-wrapper .MuiTableHead-root .MuiTableCell-root {
   color: var(--color-on-secondary);
   font-weight: 600;
   background: transparent;
 }
 
-.theme-dark .table-card .MuiTableBody-root .MuiTableCell-root {
+.theme-dark .table-card__table-wrapper .MuiTableBody-root .MuiTableCell-root {
   color: var(--color-text);
 }
 
-.theme-dark .table-card .MuiTableRow-root {
+.theme-dark .table-card__table-wrapper .MuiTableRow-root {
   background: var(--color-surface);
 }
 
-.theme-dark .table-card .MuiTableRow-root:hover {
+.theme-dark .table-card__table-wrapper .MuiTableRow-root:hover {
   background: var(--color-hover) !important;
 }
 
-.theme-dark .table-card .MuiCheckbox-root {
+.theme-dark .table-card__table-wrapper .MuiCheckbox-root {
   color: var(--color-text);
 }
 
-.theme-dark .table-card .MuiCheckbox-root.Mui-checked {
+.theme-dark .table-card__table-wrapper .MuiCheckbox-root.Mui-checked {
   color: var(--color-primary);
 }
 
-.theme-dark .table-card .MuiIconButton-root {
+.theme-dark .table-card__table-wrapper .MuiIconButton-root {
   color: var(--color-text);
 }
 
-.theme-dark .table-card .MuiIconButton-root:hover {
+.theme-dark .table-card__table-wrapper .MuiIconButton-root:hover {
   background: var(--color-hover);
   color: var(--color-primary);
 }
 
+/* FAB (botão flutuante) */
 .table-card__fab {
   position: fixed !important;
   bottom: 2rem !important;
@@ -179,6 +399,7 @@
   background-color: var(--color-primary-dark) !important;
 }
 
+/* Barra de ações no topo */
 .table-card__top-actions {
   position: fixed !important;
   top: 0 !important;
@@ -191,13 +412,31 @@
   box-shadow: 0 2px 8px var(--color-shadow);
 }
 
+.theme-dark .table-card__top-actions {
+  background-color: var(--color-surface) !important;
+  border-bottom-color: var(--color-border);
+}
+
 .theme-dark .table-card__top-actions .MuiTypography-root {
   color: var(--color-text);
 }
 
+/* Responsividade */
 @media (max-width: 768px) {
   .table-card {
     padding: 0;
+  }
+
+  .table-card__gmail-card-content {
+    padding: 0.875rem;
+  }
+
+  .table-card__gmail-title {
+    font-size: 0.875rem;
+  }
+
+  .table-card__gmail-preview-item {
+    font-size: 0.75rem;
   }
 
   .table-card__fab {
@@ -210,3 +449,24 @@
   }
 }
 
+@media (max-width: 480px) {
+  .table-card__gmail-title {
+    font-size: 0.8125rem;
+  }
+}
+
+/* Animações suaves */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.table-card__gmail-card {
+  animation: slideIn 0.2s ease-out;
+}
