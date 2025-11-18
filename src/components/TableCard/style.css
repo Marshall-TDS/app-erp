@@ -12,21 +12,28 @@
   width: 100%;
 }
 
+.theme-dark .table-card__toolbar .MuiTypography-root {
+  color: var(--color-text);
+}
+
 .table-card__table-wrapper {
   width: 100%;
   overflow-x: auto;
+  background: var(--color-surface);
+  border-radius: 8px;
+  border: 1px solid var(--color-border-lighter);
 }
 
 .table-card__bulk-actions {
-  background: rgba(0, 0, 0, 0.03);
-  border: 1px dashed rgba(0, 0, 0, 0.08);
+  background: var(--color-hover);
+  border: 1px dashed var(--color-border-light);
   padding: 0.75rem 1rem;
   border-radius: 12px;
 }
 
 .table-card__mobile-card {
   background: var(--color-surface);
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--color-border-lighter);
   border-radius: 16px;
   padding: 1rem;
   cursor: pointer;
@@ -34,7 +41,36 @@
 }
 
 .table-card__mobile-card:hover {
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 10px 25px var(--color-shadow);
+}
+
+.theme-dark .table-card__mobile-card .MuiTypography-root {
+  color: var(--color-text);
+}
+
+.theme-dark .table-card__mobile-card .MuiTypography-colorTextSecondary {
+  color: var(--color-on-secondary);
+}
+
+.theme-dark .table-card__mobile-card .MuiCheckbox-root {
+  color: var(--color-text);
+}
+
+.theme-dark .table-card__mobile-card .MuiCheckbox-root.Mui-checked {
+  color: var(--color-primary);
+}
+
+.theme-dark .table-card__mobile-card .MuiIconButton-root {
+  color: var(--color-text);
+}
+
+.theme-dark .table-card__mobile-card .MuiIconButton-root:hover {
+  background: var(--color-hover);
+  color: var(--color-primary);
+}
+
+.theme-dark .table-card__mobile-card .MuiDivider-root {
+  border-color: var(--color-border-lighter);
 }
 
 .table-card__mobile-field {
@@ -63,16 +99,72 @@
   color: #ff3b30;
 }
 
+.theme-dark .status-pill--ativo {
+  background: rgba(52, 199, 89, 0.25);
+  color: #4ade80;
+}
+
+.theme-dark .status-pill--inativo,
+.theme-dark .status-pill--banido {
+  background: rgba(255, 69, 58, 0.25);
+  color: #ff6b6b;
+}
+
 .table-card__row {
   cursor: pointer;
 }
 
 .table-card__row:hover {
-  background-color: rgba(0, 0, 0, 0.02);
+  background-color: var(--color-hover);
 }
 
 .table-card .MuiTableCell-root {
-  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+  border-bottom: 1px solid var(--color-border-lighter);
+  color: var(--color-text);
+}
+
+.theme-dark .table-card__table-wrapper {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+}
+
+.theme-dark .table-card .MuiTable-root {
+  background: var(--color-surface);
+}
+
+.theme-dark .table-card .MuiTableHead-root .MuiTableCell-root {
+  color: var(--color-on-secondary);
+  font-weight: 600;
+  background: transparent;
+}
+
+.theme-dark .table-card .MuiTableBody-root .MuiTableCell-root {
+  color: var(--color-text);
+}
+
+.theme-dark .table-card .MuiTableRow-root {
+  background: var(--color-surface);
+}
+
+.theme-dark .table-card .MuiTableRow-root:hover {
+  background: var(--color-hover) !important;
+}
+
+.theme-dark .table-card .MuiCheckbox-root {
+  color: var(--color-text);
+}
+
+.theme-dark .table-card .MuiCheckbox-root.Mui-checked {
+  color: var(--color-primary);
+}
+
+.theme-dark .table-card .MuiIconButton-root {
+  color: var(--color-text);
+}
+
+.theme-dark .table-card .MuiIconButton-root:hover {
+  background: var(--color-hover);
+  color: var(--color-primary);
 }
 
 .table-card__fab {
@@ -94,9 +186,13 @@
   right: 0 !important;
   z-index: 1100 !important;
   background-color: var(--color-surface) !important;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid var(--color-border);
   padding: 1rem 2rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px var(--color-shadow);
+}
+
+.theme-dark .table-card__top-actions .MuiTypography-root {
+  color: var(--color-text);
 }
 
 @media (max-width: 768px) {
