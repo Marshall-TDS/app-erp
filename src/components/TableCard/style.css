@@ -187,6 +187,7 @@
   gap: 0.75rem;
   width: 100%;
   min-height: 24px;
+  padding-top: 5px;
 }
 
 /* Título do card */
@@ -477,4 +478,8 @@
 
 .table-card__gmail-card {
   animation: slideIn 0.2s ease-out;
+}
+
+.theme-dark .MuiSvgIcon-root {
+  color: white;
 }
