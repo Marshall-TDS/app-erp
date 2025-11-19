@@ -215,21 +215,6 @@ const TableCard = <T extends TableCardRow>({
         {/* Visualização em Cards ou Tabela */}
         {viewMode === 'card' ? (
           <Box className="table-card__list-container">
-            {selectedIds.length > 0 && (
-              <Box className="table-card__select-all-bar">
-                <Checkbox
-                  checked={allSelected}
-                  onChange={handleToggleSelectAll}
-                  indeterminate={
-                    selectedIds.length > 0 && !allSelected && filteredRows.length > 0
-                  }
-                />
-                <Typography variant="body2" fontWeight={500}>
-                  {selectedIds.length} selecionado(s)
-                </Typography>
-              </Box>
-            )}
-            
             <Stack spacing={0.5} className="table-card__list">
               {filteredRows.map((row) => {
                 const isSelected = selectedIds.includes(row.id)
@@ -446,16 +431,32 @@ const TableCard = <T extends TableCardRow>({
               <Typography variant="body1" fontWeight={600}>
                 {selectedIds.length} registro(s) selecionado(s)
               </Typography>
-              <Stack direction="row" spacing={1}>
-                <Button
-                  variant="outlined"
+              <Stack 
+                direction="row" 
+                spacing={1} 
+                alignItems="center"
+                sx={{ 
+                  alignSelf: { xs: 'flex-end', sm: 'center' },
+                  width: { xs: '100%', sm: 'auto' },
+                  justifyContent: { xs: 'flex-end', sm: 'flex-start' }
+                }}
+              >
+                <IconButton
                   color="primary"
-                  startIcon={<DeleteOutline />}
                   onClick={handleBulkDelete}
                   disabled={!onBulkDelete}
+                  aria-label="Excluir selecionados"
                 >
-                  Excluir selecionados
-                </Button>
+                  <DeleteOutline />
+                </IconButton>
+                <Checkbox
+                  checked={allSelected}
+                  onChange={handleToggleSelectAll}
+                  indeterminate={
+                    selectedIds.length > 0 && !allSelected && filteredRows.length > 0
+                  }
+                  aria-label="Selecionar todos"
+                />
               </Stack>
             </Stack>
           </Box>,
