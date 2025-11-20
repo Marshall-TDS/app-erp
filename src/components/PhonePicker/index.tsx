@@ -8,7 +8,6 @@ import {
   MenuItem,
   InputAdornment,
   ListItemText,
-  TextFieldProps,
 } from '@mui/material'
 import { Phone, ExpandMore, Search } from '@mui/icons-material'
 import './style.css'

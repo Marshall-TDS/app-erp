@@ -11,7 +11,6 @@ import {
   Checkbox,
   Chip,
   Paper,
-  OutlinedInput,
 } from '@mui/material'
 import {
   ExpandMore,
@@ -73,10 +72,8 @@ const MultiSelectPicker = ({
   const [anchorEl, setAnchorEl] = useState<HTMLDivElement | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [focusedIndex, setFocusedIndex] = useState(-1)
-  const [inputFocused, setInputFocused] = useState(false)
   const searchInputRef = useRef<HTMLInputElement>(null)
   const optionsListRef = useRef<HTMLDivElement>(null)
-  const inputRef = useRef<HTMLDivElement>(null)
 
   const open = Boolean(anchorEl)
 
@@ -169,11 +166,16 @@ const MultiSelectPicker = ({
   const selectedLabels = getSelectedLabels()
   const displayChips = selectedLabels.slice(0, maxDisplayChips)
   const remainingCount = Math.max(0, selectedLabels.length - maxDisplayChips)
+  
+  // Valor de exibição para o TextField (similar ao SelectPicker)
+  const displayValue = value.length > 0 
+    ? `${value.length} selecionado(s)`
+    : ''
 
   // Lidar com abertura do popover
-  const handleOpen = (event: React.MouseEvent<HTMLDivElement>) => {
+  const handleOpen = (event: React.MouseEvent<HTMLDivElement | HTMLInputElement>) => {
     if (disabled) return
-    setAnchorEl(event.currentTarget)
+    setAnchorEl(event.currentTarget as HTMLDivElement)
     setSearchQuery('')
     setFocusedIndex(-1)
   }
@@ -183,7 +185,6 @@ const MultiSelectPicker = ({
     setAnchorEl(null)
     setSearchQuery('')
     setFocusedIndex(-1)
-    setInputFocused(false)
   }
 
   // Lidar com seleção/deseleção de opção
@@ -232,7 +233,7 @@ const MultiSelectPicker = ({
     if (!open) {
       if (event.key === 'Enter' || event.key === ' ' || event.key === 'ArrowDown') {
         event.preventDefault()
-        if (inputRef.current) {
+        if (event.currentTarget instanceof HTMLElement) {
           handleOpen(event as any)
         }
       }
@@ -296,22 +297,20 @@ const MultiSelectPicker = ({
 
   return (
     <>
-      <Box
-        ref={inputRef}
+      <TextField
+        label={label}
+        value={displayValue}
+        placeholder={placeholder}
+        fullWidth={fullWidth}
+        disabled={disabled}
+        error={error}
+        helperText={helperText}
+        required={required}
         onClick={handleOpen}
         onKeyDown={handleKeyDown}
-        className={`multi-select-picker ${disabled ? 'multi-select-picker--disabled' : ''} ${error ? 'multi-select-picker--error' : ''} ${inputFocused ? 'multi-select-picker--focused' : ''}`}
-        sx={{ width: fullWidth ? '100%' : 'auto' }}
-      >
-        <OutlinedInput
-          fullWidth={fullWidth}
-          value=""
-          placeholder={value.length === 0 ? placeholder : ''}
-          disabled={disabled}
-          error={error}
-          required={required}
-          readOnly
-          startAdornment={
+        InputProps={{
+          readOnly: true,
+          startAdornment: value.length > 0 ? (
             <InputAdornment position="start">
               <Box className="multi-select-picker__chips-container">
                 {displayChips.map((item) => (
@@ -334,19 +333,10 @@ const MultiSelectPicker = ({
                     disabled={disabled}
                   />
                 )}
-                {value.length === 0 && (
-                  <Typography
-                    variant="body2"
-                    className="multi-select-picker__placeholder"
-                    component="span"
-                  >
-                    {placeholder}
-                  </Typography>
-                )}
               </Box>
             </InputAdornment>
-          }
-          endAdornment={
+          ) : undefined,
+          endAdornment: (
             <InputAdornment position="end">
               {shouldShowClearButton && (
                 <IconButton
@@ -368,21 +358,10 @@ const MultiSelectPicker = ({
                 <ExpandMore fontSize="small" />
               </IconButton>
             </InputAdornment>
-          }
-          label={label}
-          className="multi-select-picker__input"
-          onFocus={() => setInputFocused(true)}
-          onBlur={() => setInputFocused(false)}
-        />
-        {helperText && (
-          <Typography
-            variant="caption"
-            className={`multi-select-picker__helper ${error ? 'multi-select-picker__helper--error' : ''}`}
-          >
-            {helperText}
-          </Typography>
-        )}
-      </Box>
+          ),
+        }}
+        className="multi-select-picker"
+      />
       <Popover
         open={open}
         anchorEl={anchorEl}

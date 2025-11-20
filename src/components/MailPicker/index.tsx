@@ -5,7 +5,7 @@ import {
   Box,
   Typography,
   MenuItem,
-  InputAdornment,
+  IconButton,
 } from '@mui/material'
 import { Email, CheckCircle } from '@mui/icons-material'
 import './style.css'
@@ -89,19 +89,18 @@ const MailPicker = ({
   error = false,
   helperText,
 }: MailPickerProps) => {
-  const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null)
+  const [anchorEl, setAnchorEl] = useState<HTMLInputElement | null>(null)
   const [inputValue, setInputValue] = useState(value || '')
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [selectedIndex, setSelectedIndex] = useState(-1)
 
-  const { localPart, domain, suggestions } = useMemo(() => parseEmail(inputValue), [inputValue])
+  const { localPart, suggestions } = useMemo(() => parseEmail(inputValue), [inputValue])
 
   // Atualizar quando o valor externo mudar
   useEffect(() => {
     setInputValue(value || '')
   }, [value])
 
-  const open = Boolean(anchorEl)
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (disabled) return
@@ -165,7 +164,7 @@ const MailPicker = ({
     handleDomainSelect(selectedDomain)
   }
 
-  const emailError = error || (inputValue && !isValidEmail(inputValue))
+  const emailError = error || (inputValue ? !isValidEmail(inputValue) : false)
 
   return (
     <>
@@ -183,14 +182,20 @@ const MailPicker = ({
         helperText={helperText || (inputValue && !isValidEmail(inputValue) ? 'Email inválido' : '')}
         type="email"
         InputProps={{
-          endAdornment: inputValue && isValidEmail(inputValue) ? (
-            <InputAdornment position="end">
-              <CheckCircle className="mail-picker__valid-icon" fontSize="small" />
-            </InputAdornment>
-          ) : (
-            <InputAdornment position="end">
-              <Email className="mail-picker__email-icon" fontSize="small" />
-            </InputAdornment>
+          endAdornment: (
+            <IconButton
+              edge="end"
+              size="small"
+              disabled={disabled}
+              className="mail-picker__icon-btn"
+              sx={{ mr: -1 }}
+            >
+              {inputValue && isValidEmail(inputValue) ? (
+                <CheckCircle className="mail-picker__valid-icon" fontSize="small" />
+              ) : (
+                <Email className="mail-picker__email-icon" fontSize="small" />
+              )}
+            </IconButton>
           ),
         }}
         className="mail-picker"
