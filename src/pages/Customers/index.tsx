@@ -22,6 +22,7 @@ const customerColumns: TableCardColumn<CustomerRow>[] = [
   { key: 'email', label: 'E-mail' },
   { key: 'document', label: 'Documento' },
   { key: 'status', label: 'Status', dataType: 'status' },
+  { key: 'birthday', label: 'Data de Nascimento', dataType: 'date' },
   { key: 'createdAt', label: 'Cadastro', dataType: 'date' },
 ]
 
@@ -33,6 +34,7 @@ const initialCustomers: CustomerRow[] = [
     document: '5511993815132',
     status: 'Ativo',
     createdAt: '2025-11-14',
+    birthday: '1990-01-01',
   },
   {
     id: '2',
@@ -41,6 +43,7 @@ const initialCustomers: CustomerRow[] = [
     document: '84851236000190',
     status: 'Ativo',
     createdAt: '2025-10-02',
+    birthday: '1990-01-01',
   },
   {
     id: '3',
@@ -49,6 +52,7 @@ const initialCustomers: CustomerRow[] = [
     document: '07469382000152',
     status: 'Inativo',
     createdAt: '2025-09-21',
+    birthday: '1990-01-01',
   },
 ]
 

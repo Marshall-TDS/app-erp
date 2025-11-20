@@ -23,7 +23,6 @@ import {
   Typography,
 } from '@mui/material'
 import { Add, DeleteOutline, MoreVert, ViewModule, TableChart } from '@mui/icons-material'
-import DatePickerField from './DatePickerField'
 import './style.css'
 
 export type TableCardColumn<T extends TableCardRow> = {
@@ -384,38 +383,20 @@ const TableCard = <T extends TableCardRow>({
         </DialogTitle>
         <DialogContent dividers>
           <Stack spacing={2}>
-            {columns.map((column) => {
-              if (column.dataType === 'date') {
-                return (
-                  <DatePickerField
-                    key={String(column.key)}
-                    label={column.label}
-                    value={formValues[column.key] ? String(formValues[column.key]) : ''}
-                    onChange={(value) =>
-                      setFormValues((prev) => ({
-                        ...prev,
-                        [column.key]: value,
-                      }))
-                    }
-                    fullWidth
-                  />
-                )
-              }
-              return (
-                <TextField
-                  key={String(column.key)}
-                  label={column.label}
-                  value={formValues[column.key] ?? ''}
-                  onChange={(event) =>
-                    setFormValues((prev) => ({
-                      ...prev,
-                      [column.key]: event.target.value,
-                    }))
-                  }
-                  fullWidth
-                />
-              )
-            })}
+            {columns.map((column) => (
+              <TextField
+                key={String(column.key)}
+                label={column.label}
+                value={formValues[column.key] ?? ''}
+                onChange={(event) =>
+                  setFormValues((prev) => ({
+                    ...prev,
+                    [column.key]: event.target.value,
+                  }))
+                }
+                fullWidth
+              />
+            ))}
           </Stack>
         </DialogContent>
         <DialogActions>

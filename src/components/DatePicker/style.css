@@ -1,19 +1,19 @@
-/* DatePickerField - Estilo Google Calendar */
-.date-picker-field {
+/* DatePicker - Estilo Google Calendar */
+.date-picker {
   width: 100%;
 }
 
-.date-picker-field .MuiOutlinedInput-root {
+.date-picker .MuiOutlinedInput-root {
   background-color: var(--color-surface);
 }
 
-.theme-dark .date-picker-field .MuiOutlinedInput-root {
+.theme-dark .date-picker .MuiOutlinedInput-root {
   background-color: var(--color-surface);
   color: var(--color-text);
 }
 
 /* Ocultar o ícone nativo do calendário do input date */
-.date-picker-field input[type="date"]::-webkit-calendar-picker-indicator {
+.date-picker input[type="date"]::-webkit-calendar-picker-indicator {
   display: none;
   -webkit-appearance: none;
   appearance: none;
@@ -23,19 +23,19 @@
   cursor: pointer;
 }
 
-.date-picker-field input[type="date"]::-webkit-inner-spin-button,
-.date-picker-field input[type="date"]::-webkit-clear-button {
+.date-picker input[type="date"]::-webkit-inner-spin-button,
+.date-picker input[type="date"]::-webkit-clear-button {
   display: none;
   -webkit-appearance: none;
   appearance: none;
 }
 
 /* Para Firefox */
-.date-picker-field input[type="date"] {
+.date-picker input[type="date"] {
   position: relative;
 }
 
-.date-picker-field input[type="date"]::-moz-calendar-picker-indicator {
+.date-picker input[type="date"]::-moz-calendar-picker-indicator {
   display: none;
   opacity: 0;
   width: 0;

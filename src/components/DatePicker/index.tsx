@@ -6,19 +6,22 @@ import {
   IconButton,
   Typography,
   Button,
-  Stack,
 } from '@mui/material'
 import { CalendarToday } from '@mui/icons-material'
-import './DatePickerField.css'
+import './style.css'
 
-type DatePickerFieldProps = {
-  label: string
+type DatePickerProps = {
+  label?: string
   value: string
   onChange: (value: string) => void
   fullWidth?: boolean
+  placeholder?: string
+  disabled?: boolean
+  error?: boolean
+  helperText?: string
 }
 
-// Normalizar o valor da data para formato YYYY-MM-DD
+// Normalizar o valor da data para formato YYYY-MM-DD (sem problemas de fuso horário)
 const normalizeDate = (dateValue: string): string => {
   if (!dateValue) return ''
   // Se já está no formato YYYY-MM-DD, retorna como está
@@ -27,9 +30,25 @@ const normalizeDate = (dateValue: string): string => {
   }
   // Tenta converter de outros formatos
   try {
+    // Se for uma string de data no formato YYYY-MM-DD, criar data local
+    if (/^\d{4}-\d{2}-\d{2}/.test(dateValue)) {
+      const dateStr = dateValue.substring(0, 10)
+      const [year, month, day] = dateStr.split('-').map(Number)
+      const date = new Date(year, month - 1, day)
+      // Formatar de volta para YYYY-MM-DD
+      const yearStr = date.getFullYear().toString()
+      const monthStr = (date.getMonth() + 1).toString().padStart(2, '0')
+      const dayStr = date.getDate().toString().padStart(2, '0')
+      return `${yearStr}-${monthStr}-${dayStr}`
+    }
+    // Para outros formatos, usar o Date normal
     const date = new Date(dateValue)
     if (!isNaN(date.getTime())) {
-      return date.toISOString().split('T')[0]
+      // Usar métodos locais para evitar problemas de fuso horário
+      const year = date.getFullYear()
+      const month = (date.getMonth() + 1).toString().padStart(2, '0')
+      const day = date.getDate().toString().padStart(2, '0')
+      return `${year}-${month}-${day}`
     }
   } catch {
     // Se falhar, retorna vazio
@@ -37,22 +56,24 @@ const normalizeDate = (dateValue: string): string => {
   return ''
 }
 
-const DatePickerField = ({
+const DatePicker = ({
   label,
   value,
   onChange,
   fullWidth = false,
-}: DatePickerFieldProps) => {
+  placeholder = 'Selecione uma data',
+  disabled = false,
+  error = false,
+  helperText,
+}: DatePickerProps) => {
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null)
   
   const normalizedValue = normalizeDate(value || '')
   const [tempDate, setTempDate] = useState(normalizedValue)
 
-  // Atualizar tempDate quando o valor externo mudar (apenas se for diferente do atual)
+  // Atualizar tempDate quando o valor externo mudar
   useEffect(() => {
     const newNormalized = normalizeDate(value || '')
-    // Só atualiza se o valor normalizado for diferente
-    // Compara com o valor atual do estado tempDate
     setTempDate((currentTempDate) => {
       if (newNormalized !== currentTempDate) {
         return newNormalized
@@ -64,6 +85,7 @@ const DatePickerField = ({
   const open = Boolean(anchorEl)
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    if (disabled) return
     setAnchorEl(event.currentTarget)
     const currentValue = tempDate || normalizedValue || ''
     setTempDate(currentValue)
@@ -74,7 +96,11 @@ const DatePickerField = ({
   }
 
   const handleDateSelect = (date: Date) => {
-    const formattedDate = date.toISOString().split('T')[0]
+    // Formatar data local sem problemas de fuso horário
+    const year = date.getFullYear()
+    const month = (date.getMonth() + 1).toString().padStart(2, '0')
+    const day = date.getDate().toString().padStart(2, '0')
+    const formattedDate = `${year}-${month}-${day}`
     setTempDate(formattedDate)
     onChange(formattedDate)
     handleClose()
@@ -86,6 +112,7 @@ const DatePickerField = ({
   }
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (disabled) return
     const newValue = event.target.value
     
     // Atualizar o estado local imediatamente
@@ -98,6 +125,7 @@ const DatePickerField = ({
 
   // Handler para quando o campo perder o foco
   const handleBlur = () => {
+    if (disabled) return
     // Normalizar a data quando o campo perde o foco
     if (tempDate) {
       const normalized = normalizeDate(tempDate)
@@ -110,7 +138,14 @@ const DatePickerField = ({
 
   // Gerar dias do calendário
   const getCalendarDays = () => {
-    const currentDate = tempDate ? new Date(tempDate + 'T00:00:00') : new Date()
+    // Parsear data local sem problemas de fuso horário
+    let currentDate: Date
+    if (tempDate && /^\d{4}-\d{2}-\d{2}$/.test(tempDate)) {
+      const [year, month, day] = tempDate.split('-').map(Number)
+      currentDate = new Date(year, month - 1, day)
+    } else {
+      currentDate = new Date()
+    }
     const year = currentDate.getFullYear()
     const month = currentDate.getMonth()
 
@@ -135,7 +170,15 @@ const DatePickerField = ({
   }
 
   const calendarDays = getCalendarDays()
-  const currentDate = tempDate ? new Date(tempDate + 'T00:00:00') : new Date()
+  // Parsear data local para exibição do mês/ano
+  let currentDate: Date
+  if (tempDate && /^\d{4}-\d{2}-\d{2}$/.test(tempDate)) {
+    const [year, month, day] = tempDate.split('-').map(Number)
+    currentDate = new Date(year, month - 1, day)
+  } else {
+    currentDate = new Date()
+  }
+  
   const monthNames = [
     'Janeiro',
     'Fevereiro',
@@ -154,6 +197,15 @@ const DatePickerField = ({
   const weekDays = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
   const today = new Date()
   today.setHours(0, 0, 0, 0)
+  
+  // Função para comparar datas sem considerar hora
+  const isSameDate = (date1: Date, date2: Date): boolean => {
+    return (
+      date1.getFullYear() === date2.getFullYear() &&
+      date1.getMonth() === date2.getMonth() &&
+      date1.getDate() === date2.getDate()
+    )
+  }
 
   const navigateMonth = (direction: 'prev' | 'next') => {
     const newDate = new Date(currentDate)
@@ -162,7 +214,7 @@ const DatePickerField = ({
     } else {
       newDate.setMonth(newDate.getMonth() + 1)
     }
-    const formattedDate = newDate.toISOString().split('T')[0]
+    const formattedDate = `${newDate.getFullYear()}-${(newDate.getMonth() + 1).toString().padStart(2, '0')}-${newDate.getDate().toString().padStart(2, '0')}`
     setTempDate(formattedDate)
   }
 
@@ -175,6 +227,10 @@ const DatePickerField = ({
         onBlur={handleBlur}
         fullWidth={fullWidth}
         type="date"
+        disabled={disabled}
+        error={error}
+        helperText={helperText}
+        placeholder={placeholder}
         InputLabelProps={{
           shrink: true,
         }}
@@ -185,13 +241,14 @@ const DatePickerField = ({
               edge="end"
               size="small"
               aria-label="Abrir calendário"
+              disabled={disabled}
               sx={{ mr: -1 }}
             >
               <CalendarToday fontSize="small" />
             </IconButton>
           ),
         }}
-        className="date-picker-field"
+        className="date-picker"
       />
       <Popover
         open={open}
@@ -251,11 +308,15 @@ const DatePickerField = ({
 
               const dayDate = new Date(day)
               dayDate.setHours(0, 0, 0, 0)
-              const isToday = dayDate.getTime() === today.getTime()
-              const isSelected =
-                tempDate &&
-                dayDate.toISOString().split('T')[0] ===
-                  new Date(tempDate + 'T00:00:00').toISOString().split('T')[0]
+              const isToday = isSameDate(dayDate, today)
+              
+              // Verificar se está selecionado comparando datas locais
+              let isSelected = false
+              if (tempDate && /^\d{4}-\d{2}-\d{2}$/.test(tempDate)) {
+                const [year, month, dayValue] = tempDate.split('-').map(Number)
+                const selectedDate = new Date(year, month - 1, dayValue)
+                isSelected = isSameDate(dayDate, selectedDate)
+              }
 
               return (
                 <Button
@@ -288,5 +349,5 @@ const DatePickerField = ({
   )
 }
 
-export default DatePickerField
+export default DatePicker
 
