@@ -114,7 +114,7 @@ const userFormFields: TableCardFormField<UserRow>[] = [
         fullWidth
         placeholder="Selecione um ou mais grupos"
         showSelectAll
-        chipDisplay="inline"
+        chipDisplay="block"
         required
       />
     ),
@@ -130,6 +130,8 @@ const userFormFields: TableCardFormField<UserRow>[] = [
         options={featureOptions}
         fullWidth
         placeholder="Selecione as funcionalidades"
+        showSelectAll
+        chipDisplay="block"
       />
     ),
   },

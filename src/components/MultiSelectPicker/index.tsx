@@ -47,7 +47,7 @@ type MultiSelectPickerProps = {
   showSelectAll?: boolean
   groupBy?: boolean
   chipVariant?: 'filled' | 'outlined'
-  chipDisplay?: 'inline' | 'summary'
+  chipDisplay?: 'inline' | 'summary' | 'block'
 }
 
 const MultiSelectPicker = ({
@@ -166,12 +166,12 @@ const MultiSelectPicker = ({
   }
 
   const selectedLabels = getSelectedLabels()
-  const isInlineChips = chipDisplay === 'inline'
-  const displayChips = isInlineChips ? selectedLabels : selectedLabels.slice(0, maxDisplayChips)
-  const remainingCount = isInlineChips ? 0 : Math.max(0, selectedLabels.length - maxDisplayChips)
-  
+  const showAllChips = chipDisplay === 'inline' || chipDisplay === 'block'
+  const displayChips = showAllChips ? selectedLabels : selectedLabels.slice(0, maxDisplayChips)
+  const remainingCount = showAllChips ? 0 : Math.max(0, selectedLabels.length - maxDisplayChips)
+
   // Valor de exibição para o TextField (similar ao SelectPicker)
-  const displayValue = value.length > 0 
+  const displayValue = value.length > 0 && !showAllChips
     ? `${value.length} selecionado(s)`
     : ''
 
@@ -303,7 +303,7 @@ const MultiSelectPicker = ({
       <TextField
         label={label}
         value={displayValue}
-        placeholder={placeholder}
+        placeholder={value.length > 0 && showAllChips ? '' : placeholder}
         fullWidth={fullWidth}
         disabled={disabled}
         error={error}
@@ -316,9 +316,8 @@ const MultiSelectPicker = ({
           startAdornment: value.length > 0 ? (
             <InputAdornment position="start">
               <Box
-                className={`multi-select-picker__chips-container ${
-                  isInlineChips ? 'multi-select-picker__chips-container--inline' : ''
-                }`}
+                className={`multi-select-picker__chips-container ${chipDisplay === 'inline' ? 'multi-select-picker__chips-container--inline' : ''
+                  }`}
               >
                 {displayChips.map((item) => (
                   <Chip
@@ -367,7 +366,8 @@ const MultiSelectPicker = ({
             </InputAdornment>
           ),
         }}
-        className="multi-select-picker"
+        className={`multi-select-picker ${value.length > 0 && showAllChips ? 'multi-select-picker--hidden-input' : ''
+          }`}
       />
       <Popover
         open={open}
@@ -448,11 +448,10 @@ const MultiSelectPicker = ({
                         onClick={() => handleToggle(option.value)}
                         selected={selected}
                         disabled={option.disabled}
-                        className={`multi-select-picker__option ${
-                          focusedIndex === globalIndex
-                            ? 'multi-select-picker__option--focused'
-                            : ''
-                        } ${selected ? 'multi-select-picker__option--selected' : ''}`}
+                        className={`multi-select-picker__option ${focusedIndex === globalIndex
+                          ? 'multi-select-picker__option--focused'
+                          : ''
+                          } ${selected ? 'multi-select-picker__option--selected' : ''}`}
                       >
                         <Checkbox
                           checked={selected}
@@ -477,11 +476,10 @@ const MultiSelectPicker = ({
                     onClick={() => handleToggle(option.value)}
                     selected={selected}
                     disabled={option.disabled}
-                    className={`multi-select-picker__option ${
-                      focusedIndex === index
-                        ? 'multi-select-picker__option--focused'
-                        : ''
-                    } ${selected ? 'multi-select-picker__option--selected' : ''}`}
+                    className={`multi-select-picker__option ${focusedIndex === index
+                      ? 'multi-select-picker__option--focused'
+                      : ''
+                      } ${selected ? 'multi-select-picker__option--selected' : ''}`}
                   >
                     <Checkbox
                       checked={selected}
