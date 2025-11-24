@@ -22,6 +22,7 @@ import {
   ChevronLeft,
   DarkMode,
   Logout,
+  AdminPanelSettingsOutlined,
 } from '@mui/icons-material'
 import { NavLink, useLocation } from 'react-router-dom'
 import logoMarshall from '../../assets/images/logo-marshall.svg'
@@ -41,6 +42,10 @@ const menuStructure = [
       { label: 'Clientes', icon: <PeopleAltOutlined />, path: '/customers' },
       { label: 'Equipe', icon: <BarChartOutlined />, path: '/team' },
     ],
+  },
+  {
+    title: 'Acessos',
+    items: [{ label: 'Usuários', icon: <AdminPanelSettingsOutlined />, path: '/users' }],
   },
   {
     title: 'Configurações',

@@ -1,0 +1,12 @@
+.users-page {
+  width: 100%;
+  padding: 0;
+  background-color: var(--color-background);
+}
+
+@media (max-width: 768px) {
+  .users-page {
+    padding: 0;
+  }
+}
+

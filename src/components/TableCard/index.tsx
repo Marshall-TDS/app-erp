@@ -23,6 +23,7 @@ import {
   Typography,
 } from '@mui/material'
 import { Add, DeleteOutline, MoreVert, ViewModule, TableChart } from '@mui/icons-material'
+import type { SelectChangeEvent } from '@mui/material/Select'
 import './style.css'
 
 export type TableCardColumn<T extends TableCardRow> = {
@@ -32,9 +33,40 @@ export type TableCardColumn<T extends TableCardRow> = {
   render?: (value: any, row: T) => ReactNode
 }
 
+export type TableCardFieldRenderProps<T extends TableCardRow> = {
+  value: any
+  onChange: (value: any) => void
+  field: TableCardFormField<T>
+}
+
+export type TableCardFormField<T extends TableCardRow> = TableCardColumn<T> & {
+  inputType?:
+    | 'text'
+    | 'number'
+    | 'email'
+    | 'password'
+    | 'date'
+    | 'select'
+    | 'multiselect'
+  options?: Array<{ label: string; value: any }>
+  defaultValue?: any
+  required?: boolean
+  helperText?: string
+  placeholder?: string
+  disabled?: boolean
+  renderInput?: (props: TableCardFieldRenderProps<T>) => ReactNode
+}
+
 export type TableCardRow = {
   id: string | number
   [key: string]: any
+}
+
+export type TableCardRowAction<T extends TableCardRow> = {
+  label: string
+  icon?: ReactNode
+  onClick: (row: T) => void
+  disabled?: boolean
 }
 
 type TableCardProps<T extends TableCardRow> = {
@@ -45,6 +77,8 @@ type TableCardProps<T extends TableCardRow> = {
   onEdit?: (id: T['id'], data: Partial<T>) => void
   onDelete?: (id: T['id']) => void
   onBulkDelete?: (ids: T['id'][]) => void
+  formFields?: TableCardFormField<T>[]
+  rowActions?: TableCardRowAction<T>[]
 }
 
 type DialogState<T extends TableCardRow> =
@@ -60,6 +94,8 @@ const TableCard = <T extends TableCardRow>({
   onEdit,
   onDelete,
   onBulkDelete,
+  formFields,
+  rowActions,
 }: TableCardProps<T>) => {
   const { query, selectedFilter } = useSearch()
   const [selectedIds, setSelectedIds] = useState<Array<T['id']>>([])
@@ -74,6 +110,7 @@ const TableCard = <T extends TableCardRow>({
 
   // Define qual coluna será exibida como título e as demais como preview
   const [primaryColumn, ...secondaryColumns] = columns
+  const formSchema = formFields ?? columns
 
   const filteredRows = useMemo(() => {
     if (!query) return rows
@@ -110,16 +147,51 @@ const TableCard = <T extends TableCardRow>({
     )
   }
 
+  const buildFormValues = (row?: T) => {
+    if (!formFields) {
+      if (row) return row
+      return {} as Partial<T>
+    }
+
+    const initialValues = formSchema.reduce((acc, field) => {
+      const isMultiSelect = field.inputType === 'multiselect'
+      if (row) {
+        const existingValue = row[field.key]
+        if (isMultiSelect) {
+          acc[field.key] = Array.isArray(existingValue)
+            ? existingValue
+            : existingValue !== undefined && existingValue !== null
+              ? [existingValue]
+              : []
+        } else {
+          acc[field.key] =
+            existingValue !== undefined && existingValue !== null
+              ? existingValue
+              : field.defaultValue ?? ''
+        }
+      } else {
+        acc[field.key] = isMultiSelect
+          ? Array.isArray(field.defaultValue)
+            ? field.defaultValue
+            : []
+          : field.defaultValue ?? ''
+      }
+      return acc
+    }, {} as Partial<T>)
+
+    return initialValues
+  }
+
   const openDialog = (mode: 'add' | 'edit', row?: T) => {
     if (mode === 'add') {
       setDialog({ mode: 'add', open: true })
-      setFormValues({} as Partial<T>)
+      setFormValues(buildFormValues())
       return
     }
 
     if (row) {
       setDialog({ mode: 'edit', open: true, row })
-      setFormValues(row)
+      setFormValues(buildFormValues(row))
     }
   }
 
@@ -161,6 +233,128 @@ const TableCard = <T extends TableCardRow>({
   const handleBulkDelete = () => {
     onBulkDelete?.(selectedIds)
     setSelectedIds([])
+  }
+
+  const handleFieldChange = (key: keyof T, value: any) => {
+    setFormValues((prev) => ({
+      ...prev,
+      [key]: value,
+    }))
+  }
+
+  const renderFormField = (field: TableCardFormField<T> | TableCardColumn<T>) => {
+    const value = formValues[field.key] ?? ''
+    const inputType =
+      'inputType' in field && field.inputType ? field.inputType : field.dataType ?? 'text'
+
+    if ('renderInput' in field && field.renderInput) {
+      return (
+        <Box key={String(field.key)}>
+          {field.renderInput({
+            value,
+            onChange: (newValue) => handleFieldChange(field.key, newValue),
+            field: field as TableCardFormField<T>,
+          })}
+        </Box>
+      )
+    }
+
+    if (inputType === 'select') {
+      const options =
+        'options' in field && field.options
+          ? field.options
+          : []
+
+      return (
+        <TextField
+          key={String(field.key)}
+          select
+          label={field.label}
+          value={value}
+          onChange={(event) => handleFieldChange(field.key, event.target.value)}
+          fullWidth
+          helperText={'helperText' in field ? field.helperText : undefined}
+          required={'required' in field ? field.required : undefined}
+          placeholder={'placeholder' in field ? field.placeholder : undefined}
+          disabled={'disabled' in field ? field.disabled : undefined}
+        >
+          {options.map((option) => (
+            <MenuItem key={String(option.value)} value={option.value}>
+              {option.label}
+            </MenuItem>
+          ))}
+        </TextField>
+      )
+    }
+
+    if (inputType === 'multiselect') {
+      const options =
+        'options' in field && field.options
+          ? field.options
+          : []
+      const multiValue = Array.isArray(value) ? value : []
+
+      const handleMultiSelectChange = (event: SelectChangeEvent<string[]>) => {
+        const selected = event.target.value
+        handleFieldChange(
+          field.key,
+          typeof selected === 'string' ? selected.split(',') : selected,
+        )
+      }
+
+      return (
+        <TextField
+          key={String(field.key)}
+          select
+          label={field.label}
+          value={multiValue}
+          onChange={handleMultiSelectChange}
+          fullWidth
+          SelectProps={{
+            multiple: true,
+            renderValue: (selected) => (selected as (string | number)[]).map(String).join(', '),
+          }}
+          helperText={'helperText' in field ? field.helperText : undefined}
+          required={'required' in field ? field.required : undefined}
+          placeholder={'placeholder' in field ? field.placeholder : undefined}
+          disabled={'disabled' in field ? field.disabled : undefined}
+        >
+          {options.map((option) => (
+            <MenuItem key={String(option.value)} value={option.value}>
+              <Checkbox checked={multiValue.includes(option.value)} />
+              <span>{option.label}</span>
+            </MenuItem>
+          ))}
+        </TextField>
+      )
+    }
+
+    const textFieldType =
+      inputType === 'password'
+        ? 'password'
+        : inputType === 'email'
+          ? 'email'
+          : inputType === 'number'
+            ? 'number'
+            : inputType === 'date'
+              ? 'date'
+              : 'text'
+
+    return (
+      <TextField
+        key={String(field.key)}
+        label={field.label}
+        type={textFieldType}
+        value={value}
+        onChange={(event) => handleFieldChange(field.key, event.target.value)}
+        fullWidth
+        helperText={'helperText' in field ? field.helperText : undefined}
+        required={'required' in field ? field.required : undefined}
+        placeholder={'placeholder' in field ? field.placeholder : undefined}
+        disabled={'disabled' in field ? field.disabled : undefined}
+        InputLabelProps={inputType === 'date' ? { shrink: true } : undefined}
+      />
+    )
   }
 
   const renderCell = (row: T, column: TableCardColumn<T>) => {
@@ -371,10 +565,29 @@ const TableCard = <T extends TableCardRow>({
       </Stack>
 
       <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleCloseMenu}>
-        <MenuItem onClick={handleDeleteRow} disabled={!onDelete}>
-          <DeleteOutline fontSize="small" style={{ marginRight: 8 }} />
-          Excluir
-        </MenuItem>
+        {rowActions?.map((action) => (
+          <MenuItem
+            key={action.label}
+            onClick={() => {
+              if (menuRow) {
+                action.onClick(menuRow)
+              }
+              handleCloseMenu()
+            }}
+            disabled={action.disabled}
+          >
+            {action.icon && (
+              <span style={{ display: 'inline-flex', marginRight: 8 }}>{action.icon}</span>
+            )}
+            {action.label}
+          </MenuItem>
+        ))}
+        {onDelete && (
+          <MenuItem onClick={handleDeleteRow}>
+            <DeleteOutline fontSize="small" style={{ marginRight: 8 }} />
+            Excluir
+          </MenuItem>
+        )}
       </Menu>
 
       <Dialog open={dialog.open} onClose={closeDialog} fullWidth maxWidth="sm">
@@ -383,20 +596,7 @@ const TableCard = <T extends TableCardRow>({
         </DialogTitle>
         <DialogContent dividers>
           <Stack spacing={2}>
-            {columns.map((column) => (
-              <TextField
-                key={String(column.key)}
-                label={column.label}
-                value={formValues[column.key] ?? ''}
-                onChange={(event) =>
-                  setFormValues((prev) => ({
-                    ...prev,
-                    [column.key]: event.target.value,
-                  }))
-                }
-                fullWidth
-              />
-            ))}
+            {formSchema.map((field) => renderFormField(field))}
           </Stack>
         </DialogContent>
         <DialogActions>

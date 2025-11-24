@@ -7,6 +7,22 @@
   background-color: var(--color-surface);
 }
 
+/* Placeholder */
+.mail-picker .MuiInputBase-input::placeholder {
+  color: var(--color-on-secondary);
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
+}
+
+.theme-dark .mail-picker .MuiInputBase-input::placeholder {
+  color: var(--color-on-secondary);
+  opacity: 0.6;
+}
+
+.mail-picker .MuiOutlinedInput-root.Mui-focused .MuiInputBase-input::placeholder {
+  opacity: 0.4;
+}
+
 .theme-dark .mail-picker .MuiOutlinedInput-root {
   background-color: var(--color-surface);
   color: var(--color-text);

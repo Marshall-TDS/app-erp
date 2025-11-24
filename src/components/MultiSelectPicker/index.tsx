@@ -47,6 +47,7 @@ type MultiSelectPickerProps = {
   showSelectAll?: boolean
   groupBy?: boolean
   chipVariant?: 'filled' | 'outlined'
+  chipDisplay?: 'inline' | 'summary'
 }
 
 const MultiSelectPicker = ({
@@ -68,6 +69,7 @@ const MultiSelectPicker = ({
   showSelectAll = true,
   groupBy = false,
   chipVariant = 'filled',
+  chipDisplay = 'inline',
 }: MultiSelectPickerProps) => {
   const [anchorEl, setAnchorEl] = useState<HTMLDivElement | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
@@ -164,8 +166,9 @@ const MultiSelectPicker = ({
   }
 
   const selectedLabels = getSelectedLabels()
-  const displayChips = selectedLabels.slice(0, maxDisplayChips)
-  const remainingCount = Math.max(0, selectedLabels.length - maxDisplayChips)
+  const isInlineChips = chipDisplay === 'inline'
+  const displayChips = isInlineChips ? selectedLabels : selectedLabels.slice(0, maxDisplayChips)
+  const remainingCount = isInlineChips ? 0 : Math.max(0, selectedLabels.length - maxDisplayChips)
   
   // Valor de exibição para o TextField (similar ao SelectPicker)
   const displayValue = value.length > 0 
@@ -312,7 +315,11 @@ const MultiSelectPicker = ({
           readOnly: true,
           startAdornment: value.length > 0 ? (
             <InputAdornment position="start">
-              <Box className="multi-select-picker__chips-container">
+              <Box
+                className={`multi-select-picker__chips-container ${
+                  isInlineChips ? 'multi-select-picker__chips-container--inline' : ''
+                }`}
+              >
                 {displayChips.map((item) => (
                   <Chip
                     key={item.value}

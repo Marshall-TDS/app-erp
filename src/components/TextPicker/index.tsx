@@ -5,7 +5,7 @@ import {
   IconButton,
   InputAdornment,
 } from '@mui/material'
-import { Close, Search, Edit } from '@mui/icons-material'
+import { Close, Search } from '@mui/icons-material'
 import './style.css'
 
 type TextPickerProps = {
@@ -92,7 +92,7 @@ const TextPicker = ({
   }
 
   // Determinar ícone inicial baseado no tipo
-  const defaultStartIcon = type === 'search' ? <Search /> : type === 'text' ? <Edit /> : null
+  const defaultStartIcon = type === 'search' ? <Search /> : null
   const displayStartIcon = startIcon || defaultStartIcon
 
   // Determinar se deve mostrar botão de limpar

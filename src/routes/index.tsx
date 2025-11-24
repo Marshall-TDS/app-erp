@@ -4,6 +4,7 @@ import DashboardPage from '../pages/Dashboard'
 import InventoryPage from '../pages/Inventory'
 import CustomersPage from '../pages/Customers'
 import TeamPage from '../pages/Team'
+import UsersPage from '../pages/Users'
 import SettingsPage from '../pages/Settings'
 import ExemploPage from '../pages/Exemplo'
 import MainLayout from '../components/MainLayout'
@@ -17,6 +18,7 @@ const AppRoutes = () => (
         <Route path="/inventory" element={<InventoryPage />} />
         <Route path="/customers" element={<CustomersPage />} />
         <Route path="/team" element={<TeamPage />} />
+        <Route path="/users" element={<UsersPage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/exemplo" element={<ExemploPage />} />
       </Route>

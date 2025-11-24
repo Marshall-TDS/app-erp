@@ -15,6 +15,22 @@
   min-height: 48px;
 }
 
+/* Placeholder */
+.multi-select-picker .MuiInputBase-input::placeholder {
+  color: var(--color-on-secondary);
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
+}
+
+.theme-dark .multi-select-picker .MuiInputBase-input::placeholder {
+  color: var(--color-on-secondary);
+  opacity: 0.6;
+}
+
+.multi-select-picker .MuiOutlinedInput-root.Mui-focused .MuiInputBase-input::placeholder {
+  opacity: 0.4;
+}
+
 .theme-dark .multi-select-picker__input {
   background-color: var(--color-surface);
   color: var(--color-text);
@@ -28,6 +44,30 @@
   align-items: center;
   min-height: 24px;
   max-width: calc(100% - 80px);
+}
+
+.multi-select-picker__chips-container--inline {
+  flex-wrap: nowrap;
+  gap: 6px;
+  max-width: 100%;
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+  padding-top: 4px;
+}
+
+.multi-select-picker__chips-container--inline::-webkit-scrollbar {
+  height: 4px;
+}
+
+.multi-select-picker__chips-container--inline::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 2px;
+}
+
+.multi-select-picker__chips-container--inline .multi-select-picker__chip {
+  margin-bottom: 0;
 }
 
 .multi-select-picker__placeholder {
