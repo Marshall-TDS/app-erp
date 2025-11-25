@@ -23,6 +23,7 @@ import {
   DarkMode,
   Logout,
   AdminPanelSettingsOutlined,
+  Groups2Outlined,
 } from '@mui/icons-material'
 import { NavLink, useLocation } from 'react-router-dom'
 import logoMarshall from '../../assets/images/logo-marshall.svg'
@@ -45,7 +46,10 @@ const menuStructure = [
   },
   {
     title: 'Acessos',
-    items: [{ label: 'Usuários', icon: <AdminPanelSettingsOutlined />, path: '/users' }],
+    items: [
+      { label: 'Usuários', icon: <AdminPanelSettingsOutlined />, path: '/users' },
+      { label: 'Grupos de Usuários', icon: <Groups2Outlined />, path: '/access/user-groups' },
+    ],
   },
   {
     title: 'Configurações',

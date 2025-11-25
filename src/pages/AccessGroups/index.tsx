@@ -1,0 +1,269 @@
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Box, Chip, CircularProgress, Snackbar, Typography } from '@mui/material'
+import TableCard, {
+  type TableCardColumn,
+  type TableCardFormField,
+  type TableCardRow,
+} from '../../components/TableCard'
+import TextPicker from '../../components/TextPicker'
+import MultiSelectPicker from '../../components/MultiSelectPicker'
+import { useSearch } from '../../context/SearchContext'
+import {
+  type UserGroupDTO,
+  type FeatureDefinition,
+  userGroupService,
+} from '../../services/userGroups'
+import './style.css'
+
+type AccessGroupRow = TableCardRow &
+  Pick<UserGroupDTO, 'name' | 'code' | 'features' | 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy'>
+
+const DEFAULT_USER = 'admin'
+
+const normalizeCode = (value: string) => {
+  if (!value) return ''
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-zA-Z0-9]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+    .toUpperCase()
+}
+
+const mapGroupToRow = (group: UserGroupDTO): AccessGroupRow => ({
+  ...group,
+})
+
+const AccessGroupsPage = () => {
+  const [groups, setGroups] = useState<AccessGroupRow[]>([])
+  const [featureOptions, setFeatureOptions] = useState<Array<{ label: string; value: string }>>([])
+  const [featureDictionary, setFeatureDictionary] = useState<Record<string, FeatureDefinition>>({})
+  const [loading, setLoading] = useState(true)
+  const [toast, setToast] = useState<{ open: boolean; message: string }>({ open: false, message: '' })
+  const [error, setError] = useState<string | null>(null)
+  const { setFilters, setPlaceholder, setQuery } = useSearch()
+
+  useEffect(() => {
+    setPlaceholder('Pesquisar grupo por nome ou código')
+    const filters = [
+      { id: 'name', label: 'Nome', field: 'name', type: 'text' as const, page: 'access-groups' },
+      { id: 'code', label: 'Código', field: 'code', type: 'text' as const, page: 'access-groups' },
+    ]
+    setFilters(filters, 'name')
+    return () => {
+      setFilters([])
+      setPlaceholder('Pesquisar')
+      setQuery('')
+    }
+  }, [setFilters, setPlaceholder, setQuery])
+
+  const loadFeatures = async () => {
+    try {
+      const list = await userGroupService.listFeatures()
+      const options = list.map((feature) => ({ label: feature.name, value: feature.key }))
+      const dictionary = list.reduce<Record<string, FeatureDefinition>>((acc, feature) => {
+        acc[feature.key] = feature
+        return acc
+      }, {})
+      setFeatureOptions(options)
+      setFeatureDictionary(dictionary)
+    } catch (err) {
+      console.error(err)
+      setError('Não foi possível carregar as funcionalidades')
+    }
+  }
+
+  const loadGroups = async () => {
+    try {
+      const data = await userGroupService.list()
+      setGroups(data.map(mapGroupToRow))
+    } catch (err) {
+      console.error(err)
+      setError('Não foi possível carregar os grupos')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    loadFeatures()
+    loadGroups()
+  }, [])
+
+  const handleAddGroup = async (data: Partial<AccessGroupRow>) => {
+    try {
+      const payload = {
+        name: (data.name as string) ?? '',
+        code: normalizeCode((data.code as string) ?? ''),
+        features: Array.isArray(data.features) ? (data.features as string[]) : [],
+        createdBy: DEFAULT_USER,
+      }
+      const created = await userGroupService.create(payload)
+      setGroups((prev) => [...prev, mapGroupToRow(created)])
+      setToast({ open: true, message: 'Grupo criado com sucesso' })
+    } catch (err) {
+      console.error(err)
+      setToast({ open: true, message: err instanceof Error ? err.message : 'Erro ao criar grupo' })
+    }
+  }
+
+  const handleEditGroup = async (id: AccessGroupRow['id'], data: Partial<AccessGroupRow>) => {
+    try {
+      const existing = groups.find((group) => group.id === id)
+      if (!existing) return
+      const payload = {
+        name: (data.name as string) ?? existing.name,
+        code: normalizeCode((data.code as string) ?? existing.code),
+        features: Array.isArray(data.features) ? (data.features as string[]) : existing.features,
+        updatedBy: DEFAULT_USER,
+      }
+      const updated = await userGroupService.update(id as string, payload)
+      setGroups((prev) => prev.map((group) => (group.id === id ? mapGroupToRow(updated) : group)))
+      setToast({ open: true, message: 'Grupo atualizado' })
+    } catch (err) {
+      console.error(err)
+      setToast({ open: true, message: err instanceof Error ? err.message : 'Erro ao atualizar grupo' })
+    }
+  }
+
+  const handleDeleteGroup = async (id: AccessGroupRow['id']) => {
+    try {
+      await userGroupService.remove(id as string)
+      setGroups((prev) => prev.filter((group) => group.id !== id))
+      setToast({ open: true, message: 'Grupo removido' })
+    } catch (err) {
+      console.error(err)
+      setToast({ open: true, message: err instanceof Error ? err.message : 'Erro ao remover grupo' })
+    }
+  }
+
+  const handleBulkDelete = async (ids: AccessGroupRow['id'][]) => {
+    try {
+      await Promise.all(ids.map((id) => userGroupService.remove(id as string)))
+      setGroups((prev) => prev.filter((group) => !ids.includes(group.id)))
+      setToast({ open: true, message: 'Grupos removidos' })
+    } catch (err) {
+      console.error(err)
+      setToast({ open: true, message: err instanceof Error ? err.message : 'Erro ao remover grupos' })
+    }
+  }
+
+  const renderFeaturesCell = useCallback(
+    (keys: string[]) => {
+      if (!Array.isArray(keys) || keys.length === 0) {
+        return <Typography color="text.secondary">Sem funcionalidades</Typography>
+      }
+      return (
+        <Box display="flex" flexWrap="wrap" gap={0.5}>
+          {keys.map((key) => (
+            <Chip key={key} label={featureDictionary[key]?.name ?? key} size="small" />
+          ))}
+        </Box>
+      )
+    },
+    [featureDictionary],
+  )
+
+  const tableColumns = useMemo<TableCardColumn<AccessGroupRow>[]>(() => {
+    return [
+      { key: 'name', label: 'Nome' },
+      { key: 'code', label: 'Código' },
+      {
+        key: 'features',
+        label: 'Funcionalidades',
+        render: (value: AccessGroupRow['features']) => renderFeaturesCell(value),
+      },
+      { key: 'createdAt', label: 'Criado em', dataType: 'date' },
+    ]
+  }, [renderFeaturesCell])
+
+  const formFields = useMemo<TableCardFormField<AccessGroupRow>[]>(() => {
+    return [
+      {
+        key: 'name',
+        label: 'Nome do grupo',
+        required: true,
+        renderInput: ({ value, onChange, field }) => (
+          <TextPicker
+            label={field.label}
+            value={typeof value === 'string' ? value : ''}
+            onChange={(text) => onChange(text)}
+            placeholder="Ex: Operações Norte"
+            fullWidth
+            required
+          />
+        ),
+      },
+      {
+        key: 'code',
+        label: 'Código',
+        required: true,
+        helperText: 'Use letras maiúsculas e hífens (ex: OPERACOES-NORTE)',
+        renderInput: ({ value, onChange, field }) => (
+          <TextPicker
+            label={field.label}
+            value={typeof value === 'string' ? value : ''}
+            onChange={(text) => onChange(normalizeCode(text))}
+            placeholder="OPERACOES-NORTE"
+            fullWidth
+            required
+          />
+        ),
+      },
+      {
+        key: 'features',
+        label: 'Funcionalidades padrão',
+        renderInput: ({ value, onChange, field }) => (
+          <MultiSelectPicker
+            label={field.label}
+            value={Array.isArray(value) ? value : []}
+            onChange={(selected) => onChange(selected)}
+            options={featureOptions}
+            placeholder="Selecione as funcionalidades"
+            fullWidth
+            showSelectAll
+            chipDisplay="block"
+          />
+        ),
+      },
+    ]
+  }, [featureOptions])
+
+  return (
+    <Box className="access-groups-page">
+      {loading ? (
+        <Box className="access-groups-page__loading">
+          <CircularProgress size={32} />
+          <Typography variant="body2" color="text.secondary">
+            Carregando grupos...
+          </Typography>
+        </Box>
+      ) : (
+        <TableCard
+          title="Grupos de Usuários"
+          columns={tableColumns}
+          rows={groups}
+          onAdd={handleAddGroup}
+          onEdit={handleEditGroup}
+          onDelete={handleDeleteGroup}
+          onBulkDelete={handleBulkDelete}
+          formFields={formFields}
+        />
+      )}
+
+      <Snackbar
+        open={toast.open || Boolean(error)}
+        autoHideDuration={4000}
+        onClose={() => {
+          setToast({ open: false, message: '' })
+          setError(null)
+        }}
+        message={toast.open ? toast.message : error}
+      />
+    </Box>
+  )
+}
+
+export default AccessGroupsPage
+

@@ -37,6 +37,8 @@ export type TableCardFieldRenderProps<T extends TableCardRow> = {
   value: any
   onChange: (value: any) => void
   field: TableCardFormField<T>
+  formValues: Partial<T>
+  setFieldValue: (key: keyof T, value: any) => void
 }
 
 export type TableCardFormField<T extends TableCardRow> = TableCardColumn<T> & {
@@ -254,6 +256,8 @@ const TableCard = <T extends TableCardRow>({
             value,
             onChange: (newValue) => handleFieldChange(field.key, newValue),
             field: field as TableCardFormField<T>,
+            formValues,
+            setFieldValue: (key, newValue) => handleFieldChange(key, newValue),
           })}
         </Box>
       )

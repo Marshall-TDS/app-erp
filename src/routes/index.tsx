@@ -7,6 +7,7 @@ import TeamPage from '../pages/Team'
 import UsersPage from '../pages/Users'
 import SettingsPage from '../pages/Settings'
 import ExemploPage from '../pages/Exemplo'
+import AccessGroupsPage from '../pages/AccessGroups'
 import MainLayout from '../components/MainLayout'
 
 const AppRoutes = () => (
@@ -19,6 +20,7 @@ const AppRoutes = () => (
         <Route path="/customers" element={<CustomersPage />} />
         <Route path="/team" element={<TeamPage />} />
         <Route path="/users" element={<UsersPage />} />
+        <Route path="/access/user-groups" element={<AccessGroupsPage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/exemplo" element={<ExemploPage />} />
       </Route>
