@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, useState, type ReactNode } from 'react'
+import { createContext, useContext, useMemo, useState, useCallback, type ReactNode } from 'react'
 
 export type SearchFilter = {
   id: string
@@ -30,20 +30,20 @@ export const SearchProvider = ({ children }: { children: ReactNode }) => {
   const [placeholder, setPlaceholder] = useState('Pesquisar')
   const [searchOpen, setSearchOpen] = useState(false)
 
-  const setFilters = (nextFilters: SearchFilter[], defaultFilterId?: string) => {
+  const setFilters = useCallback((nextFilters: SearchFilter[], defaultFilterId?: string) => {
     setFilterState(nextFilters)
     if (nextFilters.length === 0) {
       setSelectedFilterId(undefined)
       return
     }
     setSelectedFilterId(defaultFilterId ?? nextFilters[0].id)
-  }
+  }, [])
 
   const selectedFilter = useMemo(() => {
     return filters.find((filter) => filter.id === selectedFilterId)
   }, [filters, selectedFilterId])
 
-  const value: SearchContextValue = {
+  const value = useMemo<SearchContextValue>(() => ({
     query,
     setQuery,
     filters,
@@ -54,7 +54,14 @@ export const SearchProvider = ({ children }: { children: ReactNode }) => {
     setPlaceholder,
     searchOpen,
     setSearchOpen,
-  }
+  }), [
+    query,
+    filters,
+    setFilters,
+    selectedFilter,
+    placeholder,
+    searchOpen,
+  ])
 
   return <SearchContext.Provider value={value}>{children}</SearchContext.Provider>
 }
