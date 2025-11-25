@@ -43,13 +43,13 @@ export type TableCardFieldRenderProps<T extends TableCardRow> = {
 
 export type TableCardFormField<T extends TableCardRow> = TableCardColumn<T> & {
   inputType?:
-    | 'text'
-    | 'number'
-    | 'email'
-    | 'password'
-    | 'date'
-    | 'select'
-    | 'multiselect'
+  | 'text'
+  | 'number'
+  | 'email'
+  | 'password'
+  | 'date'
+  | 'select'
+  | 'multiselect'
   options?: Array<{ label: string; value: any }>
   defaultValue?: any
   required?: boolean
@@ -71,6 +71,13 @@ export type TableCardRowAction<T extends TableCardRow> = {
   disabled?: boolean
 }
 
+export type TableCardBulkAction<T extends TableCardRow> = {
+  label: string
+  icon: ReactNode
+  onClick: (selectedIds: T['id'][]) => void
+  disabled?: boolean | ((selectedIds: T['id'][]) => boolean)
+}
+
 type TableCardProps<T extends TableCardRow> = {
   title?: string
   columns: TableCardColumn<T>[]
@@ -81,6 +88,7 @@ type TableCardProps<T extends TableCardRow> = {
   onBulkDelete?: (ids: T['id'][]) => void
   formFields?: TableCardFormField<T>[]
   rowActions?: TableCardRowAction<T>[]
+  bulkActions?: TableCardBulkAction<T>[]
 }
 
 type DialogState<T extends TableCardRow> =
@@ -98,6 +106,7 @@ const TableCard = <T extends TableCardRow>({
   onBulkDelete,
   formFields,
   rowActions,
+  bulkActions,
 }: TableCardProps<T>) => {
   const { query, selectedFilter } = useSearch()
   const [selectedIds, setSelectedIds] = useState<Array<T['id']>>([])
@@ -312,7 +321,7 @@ const TableCard = <T extends TableCardRow>({
           select
           label={field.label}
           value={multiValue}
-          onChange={handleMultiSelectChange}
+          onChange={(e) => handleMultiSelectChange(e as any)}
           fullWidth
           SelectProps={{
             multiple: true,
@@ -416,7 +425,7 @@ const TableCard = <T extends TableCardRow>({
             <Stack spacing={0.5} className="table-card__list">
               {filteredRows.map((row) => {
                 const isSelected = selectedIds.includes(row.id)
-                
+
                 return (
                   <Box
                     key={row.id}
@@ -434,20 +443,20 @@ const TableCard = <T extends TableCardRow>({
                         onClick={(event) => event.stopPropagation()}
                         className="table-card__checkbox"
                       />
-                      
+
                       <Box className="table-card__gmail-card-main" flex={1}>
                         <Box className="table-card__gmail-card-header">
                           {primaryColumn && (
-                            <Typography 
-                              variant="subtitle1" 
-                              fontWeight={600} 
+                            <Typography
+                              variant="subtitle1"
+                              fontWeight={600}
                               className="table-card__gmail-title"
                               component="div"
                             >
                               {renderCell(row, primaryColumn)}
                             </Typography>
                           )}
-                          
+
                           <IconButton
                             className="table-card__gmail-actions"
                             onClick={(event) => {
@@ -459,7 +468,7 @@ const TableCard = <T extends TableCardRow>({
                             <MoreVert fontSize="small" />
                           </IconButton>
                         </Box>
-                        
+
                         {secondaryColumns.length > 0 && (
                           <Box className="table-card__gmail-card-preview">
                             {secondaryColumns.map((column) => (
@@ -482,7 +491,7 @@ const TableCard = <T extends TableCardRow>({
                   </Box>
                 )
               })}
-              
+
               {filteredRows.length === 0 && (
                 <Box className="table-card__empty-state">
                   <Typography align="center" color="text.secondary" variant="body1">
@@ -635,16 +644,31 @@ const TableCard = <T extends TableCardRow>({
               <Typography variant="body1" fontWeight={600}>
                 {selectedIds.length} registro(s) selecionado(s)
               </Typography>
-              <Stack 
-                direction="row" 
-                spacing={1} 
+              <Stack
+                direction="row"
+                spacing={1}
                 alignItems="center"
-                sx={{ 
+                sx={{
                   alignSelf: { xs: 'flex-end', sm: 'center' },
                   width: { xs: '100%', sm: 'auto' },
                   justifyContent: { xs: 'flex-end', sm: 'flex-start' }
                 }}
               >
+                {bulkActions?.map((action) => (
+                  <IconButton
+                    key={action.label}
+                    color="primary"
+                    onClick={() => action.onClick(selectedIds)}
+                    disabled={
+                      typeof action.disabled === 'function'
+                        ? action.disabled(selectedIds)
+                        : action.disabled
+                    }
+                    title={action.label}
+                  >
+                    {action.icon}
+                  </IconButton>
+                ))}
                 <IconButton
                   color="primary"
                   onClick={handleBulkDelete}

@@ -409,6 +409,14 @@
   color: var(--color-text);
 }
 
+.theme-dark .table-card__top-actions .MuiIconButton-root.Mui-disabled {
+  color: rgba(255, 255, 255, 0.3) !important;
+}
+
+.theme-dark .table-card__top-actions .MuiIconButton-root.Mui-disabled .MuiSvgIcon-root {
+  color: rgba(255, 255, 255, 0.3) !important;
+}
+
 /* Responsividade */
 @media (max-width: 768px) {
   .table-card {

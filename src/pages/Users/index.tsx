@@ -12,12 +12,13 @@ import {
   Stack,
   Typography,
 } from '@mui/material'
-import { PasswordOutlined, VisibilityOutlined } from '@mui/icons-material'
+import { PasswordOutlined, VisibilityOutlined, Groups2Outlined, SecurityOutlined } from '@mui/icons-material'
 import TableCard, {
   type TableCardColumn,
   type TableCardFormField,
   type TableCardRow,
   type TableCardRowAction,
+  type TableCardBulkAction,
 } from '../../components/TableCard'
 import { useSearch } from '../../context/SearchContext'
 import TextPicker from '../../components/TextPicker'
@@ -55,6 +56,18 @@ const UsersPage = () => {
   const [detailUser, setDetailUser] = useState<UserRow | null>(null)
   const [toast, setToast] = useState<{ open: boolean; message: string }>({ open: false, message: '' })
   const [error, setError] = useState<string | null>(null)
+  const [manageGroupsDialog, setManageGroupsDialog] = useState<{
+    open: boolean
+    userId: string | null
+    groupIds: string[]
+    allowFeatures: string[]
+  }>({ open: false, userId: null, groupIds: [], allowFeatures: [] })
+  const [manageAccessDialog, setManageAccessDialog] = useState<{
+    open: boolean
+    userId: string | null
+    allowFeatures: string[]
+    deniedFeatures: string[]
+  }>({ open: false, userId: null, allowFeatures: [], deniedFeatures: [] })
   const { setFilters, setPlaceholder, setQuery } = useSearch()
 
   useEffect(() => {
@@ -137,6 +150,71 @@ const UsersPage = () => {
     [groupDictionary],
   )
 
+
+
+  const handleManageGroups = useCallback((selectedIds: UserRow['id'][]) => {
+    if (selectedIds.length !== 1) return
+    const userId = selectedIds[0] as string
+    const user = users.find((u) => u.id === userId)
+    if (!user) return
+
+    setManageGroupsDialog({
+      open: true,
+      userId,
+      groupIds: user.groupIds,
+      allowFeatures: mergeGroupFeatures(user.groupIds, []),
+    })
+  }, [users, mergeGroupFeatures])
+
+  const handleSaveGroups = async () => {
+    if (!manageGroupsDialog.userId) return
+    try {
+      const payload = {
+        groupIds: manageGroupsDialog.groupIds,
+        updatedBy: DEFAULT_USER,
+      }
+      const updated = await userService.update(manageGroupsDialog.userId, payload)
+      setUsers((prev) => prev.map((user) => (user.id === manageGroupsDialog.userId ? mapUserToRow(updated) : user)))
+      setToast({ open: true, message: 'Grupos atualizados com sucesso' })
+      setManageGroupsDialog((prev) => ({ ...prev, open: false }))
+    } catch (err) {
+      console.error(err)
+      setToast({ open: true, message: err instanceof Error ? err.message : 'Erro ao atualizar grupos' })
+    }
+  }
+
+  const handleManageAccess = useCallback((selectedIds: UserRow['id'][]) => {
+    if (selectedIds.length !== 1) return
+    const userId = selectedIds[0] as string
+    const user = users.find((u) => u.id === userId)
+    if (!user) return
+
+    setManageAccessDialog({
+      open: true,
+      userId,
+      allowFeatures: user.allowFeatures,
+      deniedFeatures: user.deniedFeatures,
+    })
+  }, [users])
+
+  const handleSaveAccess = async () => {
+    if (!manageAccessDialog.userId) return
+    try {
+      const payload = {
+        allowFeatures: manageAccessDialog.allowFeatures,
+        deniedFeatures: manageAccessDialog.deniedFeatures,
+        updatedBy: DEFAULT_USER,
+      }
+      const updated = await userService.update(manageAccessDialog.userId, payload)
+      setUsers((prev) => prev.map((user) => (user.id === manageAccessDialog.userId ? mapUserToRow(updated) : user)))
+      setToast({ open: true, message: 'Acessos atualizados com sucesso' })
+      setManageAccessDialog((prev) => ({ ...prev, open: false }))
+    } catch (err) {
+      console.error(err)
+      setToast({ open: true, message: err instanceof Error ? err.message : 'Erro ao atualizar acessos' })
+    }
+  }
+
   const handleAddUser = async (data: Partial<UserRow>) => {
     try {
       const payload = {
@@ -215,7 +293,7 @@ const UsersPage = () => {
   const featureChips = useCallback(
     (keys: string[]) => {
       if (!Array.isArray(keys) || keys.length === 0) {
-        return <Typography color="text.secondary">Nenhuma funcionalidade</Typography>
+        return <Typography color="text.secondary" className="users-page__empty-text">Nenhuma funcionalidade</Typography>
       }
       return (
         <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
@@ -274,65 +352,8 @@ const UsersPage = () => {
           />
         ),
       },
-      {
-        key: 'groupIds',
-        label: 'Grupos de usuário',
-        required: true,
-        renderInput: ({ value, onChange, field, formValues, setFieldValue }) => (
-          <MultiSelectPicker
-            label={field.label}
-            value={Array.isArray(value) ? value : []}
-            onChange={(selected) => {
-              onChange(selected)
-              const currentAllow = Array.isArray(formValues.allowFeatures)
-                ? (formValues.allowFeatures as string[])
-                : []
-              const merged = mergeGroupFeatures(selected as string[], currentAllow)
-              setFieldValue('allowFeatures', merged)
-            }}
-            options={groupOptions}
-            fullWidth
-            placeholder="Selecione um ou mais grupos"
-            showSelectAll
-            chipDisplay="block"
-            required
-          />
-        ),
-      },
-      {
-        key: 'allowFeatures',
-        label: 'Funcionalidades permitidas',
-        renderInput: ({ value, onChange, field }) => (
-          <MultiSelectPicker
-            label={field.label}
-            value={Array.isArray(value) ? value : []}
-            onChange={(selected) => onChange(selected)}
-            options={featureOptions}
-            fullWidth
-            placeholder="Selecione as funcionalidades"
-            showSelectAll
-            chipDisplay="block"
-          />
-        ),
-      },
-      {
-        key: 'deniedFeatures',
-        label: 'Funcionalidades negadas',
-        renderInput: ({ value, onChange, field }) => (
-          <MultiSelectPicker
-            label={field.label}
-            value={Array.isArray(value) ? value : []}
-            onChange={(selected) => onChange(selected)}
-            options={featureOptions}
-            fullWidth
-            placeholder="Selecione as funcionalidades negadas"
-            showSelectAll
-            chipDisplay="block"
-          />
-        ),
-      },
     ],
-    [featureOptions, groupOptions, mergeGroupFeatures],
+    [],
   )
 
   const rowActions: TableCardRowAction<UserRow>[] = [
@@ -347,6 +368,21 @@ const UsersPage = () => {
       onClick: handleSendPasswordUpdate,
     },
   ]
+
+  const bulkActions: TableCardBulkAction<UserRow>[] = useMemo(() => [
+    {
+      label: 'Gerenciar grupos de acessos',
+      icon: <Groups2Outlined />,
+      onClick: handleManageGroups,
+      disabled: (ids) => ids.length !== 1,
+    },
+    {
+      label: 'Gerenciar acessos particulares',
+      icon: <SecurityOutlined />,
+      onClick: handleManageAccess,
+      disabled: (ids) => ids.length !== 1,
+    }
+  ], [handleManageGroups, handleManageAccess])
 
   const tableColumns = useMemo<TableCardColumn<UserRow>[]>(() => [
     { key: 'fullName', label: 'Nome completo' },
@@ -390,6 +426,7 @@ const UsersPage = () => {
           onBulkDelete={handleBulkDelete}
           formFields={userFormFields}
           rowActions={rowActions}
+          bulkActions={bulkActions}
         />
       )}
 
@@ -478,6 +515,98 @@ const UsersPage = () => {
               Enviar alteração de senha
             </Button>
           )}
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={manageGroupsDialog.open}
+        onClose={() => setManageGroupsDialog(prev => ({ ...prev, open: false }))}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>Gerenciar grupos de acessos</DialogTitle>
+        <DialogContent dividers>
+          <Stack spacing={2}>
+            <MultiSelectPicker
+              label="Grupos de usuário"
+              value={manageGroupsDialog.groupIds}
+              onChange={(selected) => {
+                const newGroups = selected as string[]
+                const newFeatures = mergeGroupFeatures(newGroups, [])
+                setManageGroupsDialog(prev => ({
+                  ...prev,
+                  groupIds: newGroups,
+                  allowFeatures: newFeatures
+                }))
+              }}
+              options={groupOptions}
+              fullWidth
+              placeholder="Selecione um ou mais grupos"
+              showSelectAll
+              chipDisplay="block"
+            />
+            <MultiSelectPicker
+              label="Funcionalidades permitidas"
+              value={manageGroupsDialog.allowFeatures}
+              onChange={() => { }}
+              options={featureOptions}
+              fullWidth
+              placeholder="Funcionalidades carregadas automaticamente"
+              chipDisplay="block"
+              disabled
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setManageGroupsDialog(prev => ({ ...prev, open: false }))}>Cancelar</Button>
+          <Button variant="contained" onClick={handleSaveGroups}>Salvar</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={manageAccessDialog.open}
+        onClose={() => setManageAccessDialog(prev => ({ ...prev, open: false }))}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>Gerenciar acessos particulares</DialogTitle>
+        <DialogContent dividers>
+          <Stack spacing={2}>
+            <MultiSelectPicker
+              label="Funcionalidades permitidas"
+              value={manageAccessDialog.allowFeatures}
+              onChange={(selected) => {
+                setManageAccessDialog(prev => ({
+                  ...prev,
+                  allowFeatures: selected as string[]
+                }))
+              }}
+              options={featureOptions}
+              fullWidth
+              placeholder="Selecione as funcionalidades permitidas"
+              showSelectAll
+              chipDisplay="block"
+            />
+            <MultiSelectPicker
+              label="Funcionalidades negadas"
+              value={manageAccessDialog.deniedFeatures}
+              onChange={(selected) => {
+                setManageAccessDialog(prev => ({
+                  ...prev,
+                  deniedFeatures: selected as string[]
+                }))
+              }}
+              options={featureOptions}
+              fullWidth
+              placeholder="Selecione as funcionalidades negadas"
+              showSelectAll
+              chipDisplay="block"
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setManageAccessDialog(prev => ({ ...prev, open: false }))}>Cancelar</Button>
+          <Button variant="contained" onClick={handleSaveAccess}>Salvar</Button>
         </DialogActions>
       </Dialog>
 

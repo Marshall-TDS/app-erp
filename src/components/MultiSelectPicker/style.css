@@ -234,6 +234,16 @@
 	cursor: not-allowed;
 }
 
+.theme-dark .multi-select-picker .MuiInputBase-root,
+.theme-dark .multi-select-picker .MuiInputBase-input {
+	color: var(--color-text) !important;
+}
+
+.theme-dark .multi-select-picker--disabled .MuiInputBase-input {
+	-webkit-text-fill-color: var(--color-text) !important;
+	color: var(--color-text) !important;
+}
+
 /* Popover */
 .multi-select-picker-popover .MuiPaper-root {
 	border-radius: 8px;
