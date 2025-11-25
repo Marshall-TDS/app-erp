@@ -38,11 +38,14 @@ const list = () => api.get<UserDTO[]>('/users')
 const create = (payload: CreateUserPayload) => api.post<UserDTO>('/users', payload)
 const update = (id: string, payload: UpdateUserPayload) => api.put<UserDTO>(`/users/${id}`, payload)
 const remove = (id: string) => api.delete<void>(`/users/${id}`)
+const resetPassword = (payload: { token: string; password: string; confirmPassword: string }) =>
+  api.post<void>('/users/password/reset', payload)
 
 export const userService = {
   list,
   create,
   update,
   remove,
+  resetPassword,
 }
 

@@ -8,12 +8,14 @@ import UsersPage from '../pages/Users'
 import SettingsPage from '../pages/Settings'
 import ExemploPage from '../pages/Exemplo'
 import AccessGroupsPage from '../pages/AccessGroups'
+import SetPasswordPage from '../pages/SetPassword'
 import MainLayout from '../components/MainLayout'
 
 const AppRoutes = () => (
   <BrowserRouter>
     <Routes>
       <Route path="/" element={<LoginPage />} />
+      <Route path="/account/set-password" element={<SetPasswordPage />} />
       <Route element={<MainLayout />}>
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/inventory" element={<InventoryPage />} />
