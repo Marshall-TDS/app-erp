@@ -1,7 +1,8 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { Box } from '@mui/material'
-import { Outlet } from 'react-router-dom'
+import { Outlet, Navigate } from 'react-router-dom'
 import { SearchProvider } from '../../context/SearchContext'
+import { useAuth } from '../../context/AuthContext'
 import Sidebar from '../Sidebar'
 import Topbar from '../Topbar'
 import './style.css'
@@ -11,6 +12,7 @@ type MainLayoutProps = {
 }
 
 const MainLayout = ({ children }: MainLayoutProps) => {
+  const { isAuthenticated, loading } = useAuth()
   const prefersDark =
     typeof window !== 'undefined' &&
     window.matchMedia &&
@@ -22,6 +24,26 @@ const MainLayout = ({ children }: MainLayoutProps) => {
     const stored = window.localStorage.getItem('marshall-theme-mode') as 'light' | 'dark' | null
     return stored ?? (prefersDark ? 'dark' : 'light')
   })
+
+  // Redirecionar para login se não estiver autenticado
+  if (!loading && !isAuthenticated) {
+    return <Navigate to="/" replace />
+  }
+
+  if (loading) {
+    return (
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '100vh',
+        }}
+      >
+        Carregando...
+      </Box>
+    )
+  }
 
   useEffect(() => {
     if (typeof document === 'undefined') return

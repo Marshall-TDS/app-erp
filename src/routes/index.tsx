@@ -10,13 +10,20 @@ import ExemploPage from '../pages/Exemplo'
 import AccessGroupsPage from '../pages/AccessGroups'
 import SetPasswordPage from '../pages/SetPassword'
 import MainLayout from '../components/MainLayout'
+import { ProtectedRoute } from '../components/ProtectedRoute'
 
 const AppRoutes = () => (
   <BrowserRouter>
     <Routes>
       <Route path="/" element={<LoginPage />} />
       <Route path="/account/set-password" element={<SetPasswordPage />} />
-      <Route element={<MainLayout />}>
+      <Route
+        element={
+          <ProtectedRoute>
+            <MainLayout />
+          </ProtectedRoute>
+        }
+      >
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/inventory" element={<InventoryPage />} />
         <Route path="/customers" element={<CustomersPage />} />

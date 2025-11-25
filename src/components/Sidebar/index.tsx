@@ -25,7 +25,8 @@ import {
   AdminPanelSettingsOutlined,
   Groups2Outlined,
 } from '@mui/icons-material'
-import { NavLink, useLocation } from 'react-router-dom'
+import { NavLink, useLocation, useNavigate } from 'react-router-dom'
+import { useAuth } from '../../context/AuthContext'
 import logoMarshall from '../../assets/images/logo-marshall.svg'
 import './style.css'
 
@@ -68,10 +69,23 @@ type SidebarProps = {
 
 const Sidebar = ({ open, onToggle, themeMode, onChangeTheme }: SidebarProps) => {
   const location = useLocation()
+  const navigate = useNavigate()
+  const { logout } = useAuth()
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('md'))
   const withState = (base: string, closedModifier: string) =>
     open ? base : `${base} ${closedModifier}`
+
+  const handleLogout = async () => {
+    try {
+      await logout()
+      navigate('/', { replace: true })
+    } catch (error) {
+      // Se houver erro, ainda assim redireciona para login
+      console.error('Erro ao fazer logout:', error)
+      navigate('/', { replace: true })
+    }
+  }
 
   const drawerContent = (
     <>
@@ -145,10 +159,7 @@ const Sidebar = ({ open, onToggle, themeMode, onChangeTheme }: SidebarProps) => 
           </ListItemButton>
           <ListItemButton
             className="sidebar-footer__item"
-            onClick={() => {
-              // TODO: Implementar lógica de logout
-              console.log('Sair')
-            }}
+            onClick={handleLogout}
             sx={{ gap: 0 }}
           >
             <ListItemIcon className="sidebar-footer__icon">

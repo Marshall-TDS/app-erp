@@ -7,6 +7,10 @@ import {
   TextField,
   Tooltip,
   Collapse,
+  Menu,
+  MenuItem,
+  Avatar,
+  Typography,
 } from '@mui/material'
 import {
   Menu as MenuIcon,
@@ -14,8 +18,12 @@ import {
   NotificationsNone,
   Search,
   Close,
+  Logout,
+  AccountCircle,
 } from '@mui/icons-material'
+import { useNavigate } from 'react-router-dom'
 import { useSearch } from '../../context/SearchContext'
+import { useAuth } from '../../context/AuthContext'
 import './style.css'
 
 type TopbarProps = {
@@ -24,6 +32,8 @@ type TopbarProps = {
 }
 
 const Topbar = ({ sidebarOpen, onToggleSidebar }: TopbarProps) => {
+  const navigate = useNavigate()
+  const { user, logout } = useAuth()
   const {
     filters,
     selectedFilter,
@@ -37,6 +47,27 @@ const Topbar = ({ sidebarOpen, onToggleSidebar }: TopbarProps) => {
   const showSearch = filters.length > 0
   const searchInputRef = useRef<HTMLInputElement>(null)
   const [filtersVisible, setFiltersVisible] = useState(false)
+  const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null)
+
+  const handleUserMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setUserMenuAnchor(event.currentTarget)
+  }
+
+  const handleUserMenuClose = () => {
+    setUserMenuAnchor(null)
+  }
+
+  const handleLogout = async () => {
+    handleUserMenuClose()
+    try {
+      await logout()
+      navigate('/', { replace: true })
+    } catch (error) {
+      // Se houver erro, ainda assim redireciona para login
+      console.error('Erro ao fazer logout:', error)
+      navigate('/', { replace: true })
+    }
+  }
 
   useEffect(() => {
     if (showSearch) {
@@ -115,12 +146,63 @@ const Topbar = ({ sidebarOpen, onToggleSidebar }: TopbarProps) => {
           <Box sx={{ flex: 1 }} />
         )}
 
-        <Stack direction="row" alignItems="center" spacing={0.5} className="topbar__right">
+        <Stack direction="row" alignItems="center" spacing={1} className="topbar__right">
           <Tooltip title="Notificações">
             <IconButton aria-label="Notificações" className="topbar__notif">
               <NotificationsNone />
             </IconButton>
           </Tooltip>
+          
+          {user && (
+            <>
+              <Tooltip title="Menu do usuário">
+                <IconButton
+                  onClick={handleUserMenuOpen}
+                  sx={{ p: 0.5 }}
+                  aria-label="Menu do usuário"
+                >
+                  <Stack direction="row" alignItems="center" spacing={1}>
+                    <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.main' }}>
+                      {user.fullName.charAt(0).toUpperCase()}
+                    </Avatar>
+                    <Typography variant="body2" sx={{ display: { xs: 'none', sm: 'block' } }}>
+                      {user.fullName}
+                    </Typography>
+                  </Stack>
+                </IconButton>
+              </Tooltip>
+              
+              <Menu
+                anchorEl={userMenuAnchor}
+                open={Boolean(userMenuAnchor)}
+                onClose={handleUserMenuClose}
+                anchorOrigin={{
+                  vertical: 'bottom',
+                  horizontal: 'right',
+                }}
+                transformOrigin={{
+                  vertical: 'top',
+                  horizontal: 'right',
+                }}
+              >
+                <MenuItem disabled>
+                  <AccountCircle sx={{ mr: 1 }} />
+                  <Box>
+                    <Typography variant="body2" fontWeight="bold">
+                      {user.fullName}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {user.email}
+                    </Typography>
+                  </Box>
+                </MenuItem>
+                <MenuItem onClick={handleLogout}>
+                  <Logout sx={{ mr: 1 }} />
+                  Sair
+                </MenuItem>
+              </Menu>
+            </>
+          )}
         </Stack>
       </Stack>
 
