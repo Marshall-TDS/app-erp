@@ -21,6 +21,7 @@ import {
   TableRow,
   TextField,
   Typography,
+  Tooltip,
 } from '@mui/material'
 import { Add, DeleteOutline, MoreVert, ViewModule, TableChart } from '@mui/icons-material'
 import type { SelectChangeEvent } from '@mui/material/Select'
@@ -655,36 +656,44 @@ const TableCard = <T extends TableCardRow>({
                 }}
               >
                 {bulkActions?.map((action) => (
-                  <IconButton
-                    key={action.label}
-                    color="primary"
-                    onClick={() => action.onClick(selectedIds)}
-                    disabled={
-                      typeof action.disabled === 'function'
-                        ? action.disabled(selectedIds)
-                        : action.disabled
-                    }
-                    title={action.label}
-                  >
-                    {action.icon}
-                  </IconButton>
+                  <Tooltip key={action.label} title={action.label}>
+                    <span>
+                      <IconButton
+                        color="primary"
+                        onClick={() => action.onClick(selectedIds)}
+                        disabled={
+                          typeof action.disabled === 'function'
+                            ? action.disabled(selectedIds)
+                            : action.disabled
+                        }
+                      >
+                        {action.icon}
+                      </IconButton>
+                    </span>
+                  </Tooltip>
                 ))}
-                <IconButton
-                  color="primary"
-                  onClick={handleBulkDelete}
-                  disabled={!onBulkDelete}
-                  aria-label="Excluir selecionados"
-                >
-                  <DeleteOutline />
-                </IconButton>
-                <Checkbox
-                  checked={allSelected}
-                  onChange={handleToggleSelectAll}
-                  indeterminate={
-                    selectedIds.length > 0 && !allSelected && filteredRows.length > 0
-                  }
-                  aria-label="Selecionar todos"
-                />
+                <Tooltip title="Excluir selecionados">
+                  <span>
+                    <IconButton
+                      color="primary"
+                      onClick={handleBulkDelete}
+                      disabled={!onBulkDelete}
+                      aria-label="Excluir selecionados"
+                    >
+                      <DeleteOutline />
+                    </IconButton>
+                  </span>
+                </Tooltip>
+                <Tooltip title="Selecionar todos">
+                  <Checkbox
+                    checked={allSelected}
+                    onChange={handleToggleSelectAll}
+                    indeterminate={
+                      selectedIds.length > 0 && !allSelected && filteredRows.length > 0
+                    }
+                    aria-label="Selecionar todos"
+                  />
+                </Tooltip>
               </Stack>
             </Stack>
           </Box>,

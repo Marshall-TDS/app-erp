@@ -290,6 +290,13 @@ const UsersPage = () => {
     })
   }
 
+  const handleBulkSendPasswordUpdate = (ids: UserRow['id'][]) => {
+    setToast({
+      open: true,
+      message: `Solicitação de alteração de senha enviada para ${ids.length} usuários`,
+    })
+  }
+
   const featureChips = useCallback(
     (keys: string[]) => {
       if (!Array.isArray(keys) || keys.length === 0) {
@@ -356,20 +363,39 @@ const UsersPage = () => {
     [],
   )
 
-  const rowActions: TableCardRowAction<UserRow>[] = [
+  const rowActions: TableCardRowAction<UserRow>[] = useMemo(() => [
     {
       label: 'Ver',
       icon: <VisibilityOutlined fontSize="small" />,
       onClick: handleViewUser,
     },
     {
+      label: 'Gerenciar grupos de acessos',
+      icon: <Groups2Outlined fontSize="small" />,
+      onClick: (row) => handleManageGroups([row.id]),
+    },
+    {
+      label: 'Gerenciar acessos particulares',
+      icon: <SecurityOutlined fontSize="small" />,
+      onClick: (row) => handleManageAccess([row.id]),
+    },
+    {
       label: 'Enviar alteração de senha',
       icon: <PasswordOutlined fontSize="small" />,
       onClick: handleSendPasswordUpdate,
     },
-  ]
+  ], [handleManageGroups, handleManageAccess])
 
   const bulkActions: TableCardBulkAction<UserRow>[] = useMemo(() => [
+    {
+      label: 'Ver',
+      icon: <VisibilityOutlined />,
+      onClick: (ids) => {
+        const user = users.find((u) => u.id === ids[0])
+        if (user) handleViewUser(user)
+      },
+      disabled: (ids) => ids.length !== 1,
+    },
     {
       label: 'Gerenciar grupos de acessos',
       icon: <Groups2Outlined />,
@@ -381,8 +407,13 @@ const UsersPage = () => {
       icon: <SecurityOutlined />,
       onClick: handleManageAccess,
       disabled: (ids) => ids.length !== 1,
+    },
+    {
+      label: 'Enviar alteração de senha',
+      icon: <PasswordOutlined />,
+      onClick: handleBulkSendPasswordUpdate,
     }
-  ], [handleManageGroups, handleManageAccess])
+  ], [handleManageGroups, handleManageAccess, users])
 
   const tableColumns = useMemo<TableCardColumn<UserRow>[]>(() => [
     { key: 'fullName', label: 'Nome completo' },
