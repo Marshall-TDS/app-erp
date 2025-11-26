@@ -250,6 +250,10 @@
   color: var(--color-on-secondary);
 }
 
+.theme-dark .table-card__empty-text {
+  color: var(--color-text) !important;
+}
+
 /* Status pills */
 .status-pill {
   display: inline-flex;
