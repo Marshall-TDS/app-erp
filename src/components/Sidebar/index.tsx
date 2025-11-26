@@ -14,51 +14,31 @@ import {
   useTheme,
 } from '@mui/material'
 import {
-  DashboardOutlined,
   Inventory2Outlined,
   PeopleAltOutlined,
-  SettingsOutlined,
-  BarChartOutlined,
+  AdminPanelSettingsOutlined,
+  Groups2Outlined,
   ChevronLeft,
   DarkMode,
   Logout,
-  AdminPanelSettingsOutlined,
-  Groups2Outlined,
 } from '@mui/icons-material'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
+import React, { useEffect, useState } from 'react'
+import { menusService, type MenuDefinition } from '../../services/menus'
 import { useAuth } from '../../context/AuthContext'
 import logoMarshall from '../../assets/images/logo-marshall.svg'
 import './style.css'
 
-const menuStructure = [
-  {
-    title: 'Operações',
-    items: [
-      { label: 'Dashboard', icon: <DashboardOutlined />, path: '/dashboard' },
-      { label: 'Estoque', icon: <Inventory2Outlined />, path: '/inventory' },
-    ],
-  },
-  {
-    title: 'Pessoas',
-    items: [
-      { label: 'Clientes', icon: <PeopleAltOutlined />, path: '/customers' },
-      { label: 'Equipe', icon: <BarChartOutlined />, path: '/team' },
-    ],
-  },
-  {
-    title: 'Acessos',
-    items: [
-      { label: 'Usuários', icon: <AdminPanelSettingsOutlined />, path: '/users' },
-      { label: 'Grupos de Usuários', icon: <Groups2Outlined />, path: '/access/user-groups' },
-    ],
-  },
-  {
-    title: 'Configurações',
-    items: [
-      { label: 'Preferências', icon: <SettingsOutlined />, path: '/settings' },
-    ],
-  },
-]
+const iconMapping: Record<string, React.ReactElement> = {
+  People: <PeopleAltOutlined />,
+  Groups: <Groups2Outlined />,
+  AdminPanelSettings: <AdminPanelSettingsOutlined />,
+  Inventory: <Inventory2Outlined />,
+}
+
+const getIcon = (iconName: string) => {
+  return iconMapping[iconName] || <Inventory2Outlined />
+}
 
 type SidebarProps = {
   open: boolean
@@ -75,6 +55,39 @@ const Sidebar = ({ open, onToggle, themeMode, onChangeTheme }: SidebarProps) => 
   const isMobile = useMediaQuery(theme.breakpoints.down('md'))
   const withState = (base: string, closedModifier: string) =>
     open ? base : `${base} ${closedModifier}`
+
+  const [menuStructure, setMenuStructure] = useState<{
+    title: string
+    items: { label: string; icon: React.ReactNode; path: string }[]
+  }[]>([])
+
+  useEffect(() => {
+    menusService.getAll()
+      .then((menus: MenuDefinition[] | null) => {
+        if (!menus) return
+
+        const groups = menus.reduce((acc: Record<string, MenuDefinition[]>, menu: MenuDefinition) => {
+          if (!acc[menu.category]) {
+            acc[menu.category] = []
+          }
+          acc[menu.category].push(menu)
+          return acc
+        }, {} as Record<string, MenuDefinition[]>)
+
+        const structure = Object.entries(groups).map(([category, items]) => ({
+          title: category,
+          items: (items as MenuDefinition[]).map((item: MenuDefinition) => ({
+            label: item.name,
+            icon: getIcon(item.icon),
+            path: item.url.startsWith('/') ? item.url : `/${item.url}`,
+          })),
+        }))
+        setMenuStructure(structure)
+      })
+      .catch((error: unknown) => {
+        console.error('Failed to load menus:', error)
+      })
+  }, [])
 
   const handleLogout = async () => {
     try {
@@ -116,9 +129,8 @@ const Sidebar = ({ open, onToggle, themeMode, onChangeTheme }: SidebarProps) => 
                   key={item.label}
                   component={NavLink}
                   to={item.path}
-                  className={`sidebar-link ${
-                    location.pathname.startsWith(item.path) ? 'active' : ''
-                  }`}
+                  className={`sidebar-link ${location.pathname.startsWith(item.path) ? 'active' : ''
+                    }`}
                   sx={{ gap: 0 }}
                   onClick={() => isMobile && onToggle()}
                 >
@@ -144,8 +156,8 @@ const Sidebar = ({ open, onToggle, themeMode, onChangeTheme }: SidebarProps) => 
             </ListItemIcon>
             {(open || isMobile) && (
               <>
-                <ListItemText 
-                  primary="Modo escuro" 
+                <ListItemText
+                  primary="Modo escuro"
                   className="sidebar-footer__text"
                 />
                 <Switch
@@ -166,8 +178,8 @@ const Sidebar = ({ open, onToggle, themeMode, onChangeTheme }: SidebarProps) => 
               <Logout fontSize="small" />
             </ListItemIcon>
             {(open || isMobile) && (
-              <ListItemText 
-                primary="Sair" 
+              <ListItemText
+                primary="Sair"
                 className="sidebar-footer__text"
               />
             )}
