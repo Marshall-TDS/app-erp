@@ -241,7 +241,7 @@ const AccessGroupsPage = () => {
         </Box>
       ) : (
         <TableCard
-          title="Grupos de Usuários"
+          title="Grupos de Acesso"
           columns={tableColumns}
           rows={groups}
           onAdd={handleAddGroup}

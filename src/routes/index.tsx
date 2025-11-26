@@ -29,7 +29,7 @@ const AppRoutes = () => (
         <Route path="/customers" element={<CustomersPage />} />
         <Route path="/team" element={<TeamPage />} />
         <Route path="/users" element={<UsersPage />} />
-        <Route path="/access/user-groups" element={<AccessGroupsPage />} />
+        <Route path="/access/access-groups" element={<AccessGroupsPage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/exemplo" element={<ExemploPage />} />
       </Route>
