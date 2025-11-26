@@ -504,7 +504,7 @@ const TableCard = <T extends TableCardRow>({
 
               {filteredRows.length === 0 && (
                 <Box className="table-card__empty-state">
-                  <Typography align="center" color="text.secondary" variant="body1">
+                  <Typography align="center" color="text.secondary" variant="body1" className="table-card__empty-text">
                     Nenhum registro encontrado.
                   </Typography>
                 </Box>
@@ -574,7 +574,7 @@ const TableCard = <T extends TableCardRow>({
                   {filteredRows.length === 0 && (
                     <TableRow>
                       <TableCell colSpan={columns.length + 2}>
-                        <Typography align="center" color="text.secondary">
+                        <Typography align="center" color="text.secondary" className="table-card__empty-text">
                           Nenhum registro encontrado.
                         </Typography>
                       </TableCell>
@@ -630,7 +630,7 @@ const TableCard = <T extends TableCardRow>({
         </DialogActions>
       </Dialog>
 
-      {createPortal(
+      {onAdd && createPortal(
         <Fab
           color="primary"
           aria-label="adicionar"
