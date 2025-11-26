@@ -9,14 +9,13 @@ import TextPicker from '../../components/TextPicker'
 import MultiSelectPicker from '../../components/MultiSelectPicker'
 import { useSearch } from '../../context/SearchContext'
 import {
-  type UserGroupDTO,
+  type AccessGroupDTO,
   type FeatureDefinition,
-  userGroupService,
-} from '../../services/userGroups'
-import './style.css'
+  accessGroupService,
+} from '../../services/accessGroups'
 
 type AccessGroupRow = TableCardRow &
-  Pick<UserGroupDTO, 'name' | 'code' | 'features' | 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy'>
+  Pick<AccessGroupDTO, 'name' | 'code' | 'features' | 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy'>
 
 const DEFAULT_USER = 'admin'
 
@@ -31,7 +30,7 @@ const normalizeCode = (value: string) => {
     .toUpperCase()
 }
 
-const mapGroupToRow = (group: UserGroupDTO): AccessGroupRow => ({
+const mapGroupToRow = (group: AccessGroupDTO): AccessGroupRow => ({
   ...group,
 })
 
@@ -60,7 +59,7 @@ const AccessGroupsPage = () => {
 
   const loadFeatures = async () => {
     try {
-      const list = await userGroupService.listFeatures()
+      const list = await accessGroupService.listFeatures()
       const options = list.map((feature) => ({ label: feature.name, value: feature.key }))
       const dictionary = list.reduce<Record<string, FeatureDefinition>>((acc, feature) => {
         acc[feature.key] = feature
@@ -76,7 +75,7 @@ const AccessGroupsPage = () => {
 
   const loadGroups = async () => {
     try {
-      const data = await userGroupService.list()
+      const data = await accessGroupService.list()
       setGroups(data.map(mapGroupToRow))
     } catch (err) {
       console.error(err)
@@ -99,7 +98,7 @@ const AccessGroupsPage = () => {
         features: Array.isArray(data.features) ? (data.features as string[]) : [],
         createdBy: DEFAULT_USER,
       }
-      const created = await userGroupService.create(payload)
+      const created = await accessGroupService.create(payload)
       setGroups((prev) => [...prev, mapGroupToRow(created)])
       setToast({ open: true, message: 'Grupo criado com sucesso' })
     } catch (err) {
@@ -118,7 +117,7 @@ const AccessGroupsPage = () => {
         features: Array.isArray(data.features) ? (data.features as string[]) : existing.features,
         updatedBy: DEFAULT_USER,
       }
-      const updated = await userGroupService.update(id as string, payload)
+      const updated = await accessGroupService.update(id as string, payload)
       setGroups((prev) => prev.map((group) => (group.id === id ? mapGroupToRow(updated) : group)))
       setToast({ open: true, message: 'Grupo atualizado' })
     } catch (err) {
@@ -129,7 +128,7 @@ const AccessGroupsPage = () => {
 
   const handleDeleteGroup = async (id: AccessGroupRow['id']) => {
     try {
-      await userGroupService.remove(id as string)
+      await accessGroupService.remove(id as string)
       setGroups((prev) => prev.filter((group) => group.id !== id))
       setToast({ open: true, message: 'Grupo removido' })
     } catch (err) {
@@ -140,7 +139,7 @@ const AccessGroupsPage = () => {
 
   const handleBulkDelete = async (ids: AccessGroupRow['id'][]) => {
     try {
-      await Promise.all(ids.map((id) => userGroupService.remove(id as string)))
+      await Promise.all(ids.map((id) => accessGroupService.remove(id as string)))
       setGroups((prev) => prev.filter((group) => !ids.includes(group.id)))
       setToast({ open: true, message: 'Grupos removidos' })
     } catch (err) {

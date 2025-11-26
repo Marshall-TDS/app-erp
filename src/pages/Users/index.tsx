@@ -24,7 +24,7 @@ import { useSearch } from '../../context/SearchContext'
 import TextPicker from '../../components/TextPicker'
 import MultiSelectPicker from '../../components/MultiSelectPicker'
 import MailPicker from '../../components/MailPicker'
-import { userGroupService } from '../../services/userGroups'
+import { accessGroupService } from '../../services/accessGroups'
 import { userService, type UserDTO } from '../../services/users'
 import './style.css'
 
@@ -94,7 +94,7 @@ const UsersPage = () => {
   )
 
   const loadFeatures = async () => {
-    const list = await userGroupService.listFeatures()
+    const list = await accessGroupService.listFeatures()
     setFeatureOptions(list.map((feature) => ({ label: feature.name, value: feature.key })))
     setFeatureDictionary(
       list.reduce<Record<string, string>>((acc, feature) => {
@@ -105,7 +105,7 @@ const UsersPage = () => {
   }
 
   const loadGroups = async (): Promise<GroupDictionary> => {
-    const list = await userGroupService.list()
+    const list = await accessGroupService.list()
     setGroupOptions(list.map((group) => ({ label: group.name, value: group.id })))
     const dictionary = list.reduce<GroupDictionary>((acc, group) => {
       acc[group.id] = { name: group.name, features: group.features }

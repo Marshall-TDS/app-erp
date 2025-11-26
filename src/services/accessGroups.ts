@@ -6,7 +6,7 @@ export type FeatureDefinition = {
   description: string
 }
 
-export type UserGroupDTO = {
+export type AccessGroupDTO = {
   id: string
   name: string
   code: string
@@ -17,28 +17,28 @@ export type UserGroupDTO = {
   updatedBy: string
 }
 
-export type CreateUserGroupPayload = {
+export type CreateAccessGroupPayload = {
   name: string
   code: string
   features: string[]
   createdBy: string
 }
 
-export type UpdateUserGroupPayload = {
+export type UpdateAccessGroupPayload = {
   name?: string
   code?: string
   features?: string[]
   updatedBy: string
 }
 
-const list = () => api.get<UserGroupDTO[]>('/groups')
-const create = (payload: CreateUserGroupPayload) => api.post<UserGroupDTO>('/groups', payload)
-const update = (id: string, payload: UpdateUserGroupPayload) =>
-  api.put<UserGroupDTO>(`/groups/${id}`, payload)
+const list = () => api.get<AccessGroupDTO[]>('/groups')
+const create = (payload: CreateAccessGroupPayload) => api.post<AccessGroupDTO>('/groups', payload)
+const update = (id: string, payload: UpdateAccessGroupPayload) =>
+  api.put<AccessGroupDTO>(`/groups/${id}`, payload)
 const remove = (id: string) => api.delete<void>(`/groups/${id}`)
 const listFeatures = () => api.get<FeatureDefinition[]>('/features')
 
-export const userGroupService = {
+export const accessGroupService = {
   list,
   create,
   update,
