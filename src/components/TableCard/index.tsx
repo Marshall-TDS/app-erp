@@ -478,6 +478,7 @@ const TableCard = <T extends TableCardRow>({
                                 variant="body2"
                                 color="text.secondary"
                                 className="table-card__gmail-preview-item"
+                                component="div"
                               >
                                 <span className="table-card__gmail-preview-label">
                                   {column.label}:
