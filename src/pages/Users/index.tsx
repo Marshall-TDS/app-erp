@@ -71,7 +71,7 @@ const UsersPage = () => {
   const { setFilters, setPlaceholder, setQuery } = useSearch()
 
   useEffect(() => {
-    setPlaceholder('Pesquisar usuário, login ou e-mail')
+    setPlaceholder('')
     const filters = [
       { id: 'fullName', label: 'Nome', field: 'fullName', type: 'text' as const, page: 'users' },
       { id: 'login', label: 'Login', field: 'login', type: 'text' as const, page: 'users' },
@@ -80,7 +80,7 @@ const UsersPage = () => {
     setFilters(filters, 'fullName')
     return () => {
       setFilters([])
-      setPlaceholder('Pesquisar')
+      setPlaceholder('')
       setQuery('')
     }
   }, [setFilters, setPlaceholder, setQuery])
@@ -297,10 +297,26 @@ const UsersPage = () => {
     })
   }
 
+  const groupChips = useCallback(
+    (names: string[]) => {
+      if (!Array.isArray(names) || names.length === 0) {
+        return <Typography variant="body2" color="text.secondary" className="users-page__empty-text">-</Typography>
+      }
+      return (
+        <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+          {names.map((name) => (
+            <Chip key={name} label={name} size="small" />
+          ))}
+        </Stack>
+      )
+    },
+    [],
+  )
+
   const featureChips = useCallback(
     (keys: string[]) => {
       if (!Array.isArray(keys) || keys.length === 0) {
-        return <Typography color="text.secondary" className="users-page__empty-text">Nenhuma funcionalidade</Typography>
+        return <Typography variant="body2" color="text.secondary" className="users-page__empty-text">-</Typography>
       }
       return (
         <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
@@ -412,6 +428,7 @@ const UsersPage = () => {
       label: 'Enviar alteração de senha',
       icon: <PasswordOutlined />,
       onClick: handleBulkSendPasswordUpdate,
+      disabled: (ids) => ids.length !== 1,
     }
   ], [handleManageGroups, handleManageAccess, users])
 
@@ -420,9 +437,8 @@ const UsersPage = () => {
     { key: 'login', label: 'Login' },
     {
       key: 'groupNames',
-      label: 'Grupos',
-      render: (value: UserRow['groupNames']) =>
-        Array.isArray(value) && value.length > 0 ? value.join(', ') : 'Nenhum grupo',
+      label: 'Grupos de Acesso',
+      render: (value: UserRow['groupNames']) => groupChips(value),
     },
     {
       key: 'allowFeatures',
@@ -435,7 +451,7 @@ const UsersPage = () => {
       render: (value: UserRow['deniedFeatures']) => featureChips(value),
     },
     { key: 'createdAt', label: 'Criado em', dataType: 'date' },
-  ], [featureChips])
+  ], [featureChips, groupChips])
 
   return (
     <Box className="users-page">
@@ -466,55 +482,54 @@ const UsersPage = () => {
         <DialogContent dividers>
           {detailUser && (
             <Stack spacing={2}>
-              <Stack spacing={0.5}>
-                <Typography variant="caption" color="text.secondary">
-                  Nome completo
-                </Typography>
-                <Typography>{detailUser.fullName}</Typography>
-              </Stack>
-
-              <Stack spacing={0.5}>
-                <Typography variant="caption" color="text.secondary">
-                  Login
-                </Typography>
-                <Typography>{detailUser.login}</Typography>
-              </Stack>
-
-              <Stack spacing={0.5}>
-                <Typography variant="caption" color="text.secondary">
-                  E-mail
-                </Typography>
-                <Typography>{detailUser.email}</Typography>
-              </Stack>
-
-              <Stack spacing={0.5}>
-                <Typography variant="caption" color="text.secondary">
-                  Grupos
-                </Typography>
-                <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                  {detailUser.groupNames.length === 0 && (
-                    <Typography color="text.secondary">Nenhum grupo selecionado</Typography>
-                  )}
-                  {detailUser.groupNames.map((group) => (
-                    <Chip key={group} label={group} size="small" />
-                  ))}
-                </Stack>
-              </Stack>
-
-              <Stack spacing={0.5}>
-                <Typography variant="caption" color="text.secondary">
-                  Funcionalidades permitidas
-                </Typography>
-                {featureChips(detailUser.allowFeatures)}
-              </Stack>
-
-              <Stack spacing={0.5}>
-                <Typography variant="caption" color="text.secondary">
-                  Funcionalidades negadas
-                </Typography>
-                {featureChips(detailUser.deniedFeatures)}
-              </Stack>
-
+              <TextPicker
+                label="Nome completo"
+                value={detailUser.fullName}
+                onChange={() => { }}
+                fullWidth
+                disabled
+              />
+              <TextPicker
+                label="Login"
+                value={detailUser.login}
+                onChange={() => { }}
+                fullWidth
+                disabled
+              />
+              <MailPicker
+                label="E-mail"
+                value={detailUser.email}
+                onChange={() => { }}
+                fullWidth
+                disabled
+              />
+              <MultiSelectPicker
+                label="Grupos"
+                value={detailUser.groupIds}
+                onChange={() => { }}
+                options={groupOptions}
+                fullWidth
+                disabled
+                chipDisplay="block"
+              />
+              <MultiSelectPicker
+                label="Funcionalidades permitidas"
+                value={detailUser.allowFeatures}
+                onChange={() => { }}
+                options={featureOptions}
+                fullWidth
+                disabled
+                chipDisplay="block"
+              />
+              <MultiSelectPicker
+                label="Funcionalidades negadas"
+                value={detailUser.deniedFeatures}
+                onChange={() => { }}
+                options={featureOptions}
+                fullWidth
+                disabled
+                chipDisplay="block"
+              />
               <Stack spacing={0.5}>
                 <Typography variant="caption" color="text.secondary">
                   Criado por
@@ -523,7 +538,6 @@ const UsersPage = () => {
                   {detailUser.createdBy} em {new Date(detailUser.createdAt).toLocaleString()}
                 </Typography>
               </Stack>
-
               <Stack spacing={0.5}>
                 <Typography variant="caption" color="text.secondary">
                   Última atualização
@@ -536,16 +550,7 @@ const UsersPage = () => {
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDetailUser(null)}>Fechar</Button>
-          {detailUser && (
-            <Button
-              variant="outlined"
-              startIcon={<PasswordOutlined fontSize="small" />}
-              onClick={() => handleSendPasswordUpdate(detailUser)}
-            >
-              Enviar alteração de senha
-            </Button>
-          )}
+          <Button onClick={() => setDetailUser(null)} color="inherit">Fechar</Button>
         </DialogActions>
       </Dialog>
 

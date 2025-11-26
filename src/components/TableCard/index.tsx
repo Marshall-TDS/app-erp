@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react'
+import { useMemo, useState, useEffect, type ReactNode } from 'react'
 import { useSearch } from '../../context/SearchContext'
 import { createPortal } from 'react-dom'
 import {
@@ -22,6 +22,8 @@ import {
   TextField,
   Typography,
   Tooltip,
+  useTheme,
+  useMediaQuery,
 } from '@mui/material'
 import { Add, DeleteOutline, MoreVert, ViewModule, TableChart } from '@mui/icons-material'
 import type { SelectChangeEvent } from '@mui/material/Select'
@@ -110,8 +112,14 @@ const TableCard = <T extends TableCardRow>({
   bulkActions,
 }: TableCardProps<T>) => {
   const { query, selectedFilter } = useSearch()
+  const theme = useTheme()
+  const isDesktop = useMediaQuery(theme.breakpoints.up('md'))
   const [selectedIds, setSelectedIds] = useState<Array<T['id']>>([])
   const [viewMode, setViewMode] = useState<'card' | 'table'>('card')
+
+  useEffect(() => {
+    setViewMode(isDesktop ? 'table' : 'card')
+  }, [isDesktop])
   const [dialog, setDialog] = useState<DialogState<T>>({
     mode: null,
     open: false,
@@ -615,7 +623,7 @@ const TableCard = <T extends TableCardRow>({
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={closeDialog}>Cancelar</Button>
+          <Button onClick={closeDialog} color="inherit">Cancelar</Button>
           <Button variant="contained" color="primary" onClick={handleSubmit}>
             Salvar
           </Button>

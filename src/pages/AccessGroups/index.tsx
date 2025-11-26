@@ -44,7 +44,7 @@ const AccessGroupsPage = () => {
   const { setFilters, setPlaceholder, setQuery } = useSearch()
 
   useEffect(() => {
-    setPlaceholder('Pesquisar grupo por nome ou código')
+    setPlaceholder('')
     const filters = [
       { id: 'name', label: 'Nome', field: 'name', type: 'text' as const, page: 'access-groups' },
       { id: 'code', label: 'Código', field: 'code', type: 'text' as const, page: 'access-groups' },
@@ -52,7 +52,7 @@ const AccessGroupsPage = () => {
     setFilters(filters, 'name')
     return () => {
       setFilters([])
-      setPlaceholder('Pesquisar')
+      setPlaceholder('')
       setQuery('')
     }
   }, [setFilters, setPlaceholder, setQuery])

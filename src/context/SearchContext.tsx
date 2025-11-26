@@ -27,7 +27,7 @@ export const SearchProvider = ({ children }: { children: ReactNode }) => {
   const [query, setQuery] = useState('')
   const [filters, setFilterState] = useState<SearchFilter[]>([])
   const [selectedFilterId, setSelectedFilterId] = useState<string | undefined>()
-  const [placeholder, setPlaceholder] = useState('Pesquisar')
+  const [placeholder, setPlaceholder] = useState('')
   const [searchOpen, setSearchOpen] = useState(false)
 
   const setFilters = useCallback((nextFilters: SearchFilter[], defaultFilterId?: string) => {

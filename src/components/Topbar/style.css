@@ -86,6 +86,10 @@
   background: var(--color-hover);
 }
 
+.theme-dark .topbar__right .MuiButton-root {
+  color: var(--color-text);
+}
+
 .theme-dark .topbar__notif {
   color: var(--color-text);
 }

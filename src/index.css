@@ -67,39 +67,52 @@ body {
   background-color: rgba(var(--color-primary-rgb), 0.12) !important;
 }
 
+.MuiCheckbox-root.Mui-checked,
+.MuiCheckbox-root.MuiCheckbox-indeterminate {
+  color: var(--color-text) !important;
+}
+
+.MuiIconButton-colorPrimary {
+  color: var(--color-text) !important;
+}
+
+.MuiIconButton-colorPrimary:hover {
+  background-color: var(--color-hover-strong) !important;
+}
+
 .theme-dark {
   /* Cores primárias - mantém a identidade da marca */
   --color-primary: #dbaa3d;
   --color-primary-dark: #c99a2e;
   --color-primary-rgb: 219, 170, 61;
-  
+
   /* Cores de texto - seguindo padrão Google Material Design */
   --color-secondary: #e8eaed;
   --color-text: #e8eaed;
   --color-accent: #f4d189;
-  
+
   /* Cores de fundo - padrão Google Material Design Dark Theme */
   --color-background: #121212;
   --color-surface: #1e1e1e;
   --color-sidebar-bg: #1e1e1e;
-  
+
   /* Cores on-primary - texto sobre elementos primários */
   --color-on-primary: #121212;
   --color-on-primary-muted: rgba(18, 18, 18, 0.8);
   --color-on-primary-soft: rgba(18, 18, 18, 0.3);
-  
+
   /* Cores on-secondary - texto secundário */
   --color-on-secondary: rgba(232, 234, 237, 0.7);
-  
+
   /* Bordas e divisores - padrão Material Design */
   --color-border: rgba(255, 255, 255, 0.12);
   --color-border-light: rgba(255, 255, 255, 0.08);
   --color-border-lighter: rgba(255, 255, 255, 0.05);
-  
+
   /* Estados hover - padrão Material Design */
   --color-hover: rgba(255, 255, 255, 0.08);
   --color-hover-strong: rgba(255, 255, 255, 0.12);
-  
+
   /* Sombras - ajustadas para modo escuro */
   --color-shadow: rgba(0, 0, 0, 0.3);
   --color-shadow-strong: rgba(0, 0, 0, 0.5);
@@ -172,6 +185,19 @@ body {
   background-color: var(--color-hover) !important;
 }
 
+.theme-dark .MuiMenuItem-root.Mui-disabled {
+  opacity: 1 !important;
+  color: var(--color-text) !important;
+}
+
+.theme-dark .MuiMenuItem-root.Mui-disabled .MuiTypography-root {
+  color: var(--color-text) !important;
+}
+
+.theme-dark .MuiMenuItem-root.Mui-disabled .MuiTypography-colorTextSecondary {
+  color: var(--color-on-secondary) !important;
+}
+
 .theme-dark .MuiMenuItem-root .MuiSvgIcon-root {
   color: var(--color-text);
 }
@@ -212,4 +238,8 @@ body {
 
 .theme-dark .MuiIconButton-root[aria-label*="Pesquisar"]:hover .MuiSvgIcon-root {
   color: var(--color-primary);
+}
+
+.theme-dark input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
 }

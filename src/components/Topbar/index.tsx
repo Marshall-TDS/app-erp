@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import {
   Box,
+  Button,
   IconButton,
   Stack,
   TextField,
@@ -143,20 +144,26 @@ const Topbar = ({ sidebarOpen, onToggleSidebar }: TopbarProps) => {
           {user && (
             <>
               <Tooltip title="Menu do usuário">
-                <IconButton
+                <Button
                   onClick={handleUserMenuOpen}
-                  sx={{ p: 0.5 }}
+                  color="inherit"
+                  sx={{
+                    textTransform: 'none',
+                    borderRadius: '50px',
+                    p: 0.5,
+                    pr: 2,
+                    gap: 1,
+                    minWidth: 0,
+                  }}
                   aria-label="Menu do usuário"
                 >
-                  <Stack direction="row" alignItems="center" spacing={1}>
-                    <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.main' }}>
-                      {user.fullName.charAt(0).toUpperCase()}
-                    </Avatar>
-                    <Typography variant="body2" sx={{ display: { xs: 'none', sm: 'block' } }}>
-                      {user.fullName}
-                    </Typography>
-                  </Stack>
-                </IconButton>
+                  <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.main' }}>
+                    {user.fullName.charAt(0).toUpperCase()}
+                  </Avatar>
+                  <Typography variant="body2" sx={{ display: { xs: 'none', sm: 'block' }, fontWeight: 500 }}>
+                    {user.fullName}
+                  </Typography>
+                </Button>
               </Tooltip>
 
               <Menu

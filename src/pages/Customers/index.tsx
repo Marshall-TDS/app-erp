@@ -66,7 +66,7 @@ const CustomersPage = () => {
   const { setFilters, setPlaceholder, setQuery } = useSearch()
 
   useEffect(() => {
-    setPlaceholder('Pesquisar cliente, documento ou e-mail')
+    setPlaceholder('')
     const filters = [
       { id: 'name', label: 'Nome', field: 'name', type: 'text' as const, page: 'customers' },
       { id: 'email', label: 'E-mail', field: 'email', type: 'text' as const, page: 'customers' },
@@ -75,7 +75,7 @@ const CustomersPage = () => {
     setFilters(filters, 'name')
     return () => {
       setFilters([])
-      setPlaceholder('Pesquisar')
+      setPlaceholder('')
       setQuery('')
     }
   }, [setFilters, setPlaceholder, setQuery])
