@@ -1,12 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import {
   Box,
-  Chip,
   IconButton,
   Stack,
   TextField,
   Tooltip,
-  Collapse,
   Menu,
   MenuItem,
   Avatar,
@@ -36,8 +34,6 @@ const Topbar = ({ sidebarOpen, onToggleSidebar }: TopbarProps) => {
   const { user, logout } = useAuth()
   const {
     filters,
-    selectedFilter,
-    selectFilter,
     query,
     setQuery,
     placeholder,
@@ -46,7 +42,6 @@ const Topbar = ({ sidebarOpen, onToggleSidebar }: TopbarProps) => {
   } = useSearch()
   const showSearch = filters.length > 0
   const searchInputRef = useRef<HTMLInputElement>(null)
-  const [filtersVisible, setFiltersVisible] = useState(false)
   const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null)
 
   const handleUserMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
@@ -85,20 +80,14 @@ const Topbar = ({ sidebarOpen, onToggleSidebar }: TopbarProps) => {
     setQuery('')
   }
 
-  const handleInputFocus = () => {
-    setFiltersVisible(true)
-  }
 
-  const handleInputBlur = () => {
-    setFiltersVisible(false)
-  }
 
   return (
     <header className="topbar">
-      <Stack 
-        direction="row" 
-        alignItems="center" 
-        spacing={1.5} 
+      <Stack
+        direction="row"
+        alignItems="center"
+        spacing={1.5}
         className="topbar__content"
         sx={{ width: '100%' }}
       >
@@ -126,8 +115,6 @@ const Topbar = ({ sidebarOpen, onToggleSidebar }: TopbarProps) => {
                 inputRef={searchInputRef}
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                onFocus={handleInputFocus}
-                onBlur={handleInputBlur}
                 placeholder={placeholder}
                 fullWidth
                 size="small"
@@ -152,7 +139,7 @@ const Topbar = ({ sidebarOpen, onToggleSidebar }: TopbarProps) => {
               <NotificationsNone />
             </IconButton>
           </Tooltip>
-          
+
           {user && (
             <>
               <Tooltip title="Menu do usuário">
@@ -171,7 +158,7 @@ const Topbar = ({ sidebarOpen, onToggleSidebar }: TopbarProps) => {
                   </Stack>
                 </IconButton>
               </Tooltip>
-              
+
               <Menu
                 anchorEl={userMenuAnchor}
                 open={Boolean(userMenuAnchor)}
@@ -206,25 +193,7 @@ const Topbar = ({ sidebarOpen, onToggleSidebar }: TopbarProps) => {
         </Stack>
       </Stack>
 
-      {showSearch && (
-        <Collapse in={filtersVisible}>
-          <Box className="topbar__search-filters">
-            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-              {filters.map((filter) => (
-                <Chip
-                  key={filter.id}
-                  label={filter.label}
-                  size="small"
-                  onClick={() => selectFilter(filter.id)}
-                  className={`topbar__filter-chip ${
-                    selectedFilter?.id === filter.id ? 'topbar__filter-chip--active' : ''
-                  }`}
-                />
-              ))}
-            </Stack>
-          </Box>
-        </Collapse>
-      )}
+
     </header>
   )
 }
