@@ -195,7 +195,6 @@ const Sidebar = ({ open, onToggle, themeMode, onChangeTheme }: SidebarProps) => 
         variant="temporary"
         open={open}
         onClose={onToggle}
-        ModalProps={{ keepMounted: true }}
         classes={{ paper: 'sidebar-paper sidebar-paper--mobile' }}
       >
         {drawerContent}
