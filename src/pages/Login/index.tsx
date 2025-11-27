@@ -72,8 +72,8 @@ const LoginPage = () => {
 
       {/* Paper centralizado com logo e formulário */}
       <Box className="login-content-wrapper">
-        <Paper 
-          elevation={24} 
+        <Paper
+          elevation={24}
           className="login-panel"
           sx={{
             backgroundColor: 'transparent',
@@ -110,19 +110,20 @@ const LoginPage = () => {
                 autoComplete="username"
                 sx={{
                   '& .MuiOutlinedInput-root': {
-                    backgroundColor: 'white',
+                    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+                    color: 'white',
                     '& fieldset': {
-                      borderColor: 'rgba(0, 0, 0, 0.23)',
+                      borderColor: 'rgba(255, 255, 255, 0.3)',
                     },
                     '&:hover fieldset': {
-                      borderColor: 'rgba(0, 0, 0, 0.5)',
+                      borderColor: 'rgba(255, 255, 255, 0.5)',
                     },
                     '&.Mui-focused fieldset': {
-                      borderColor: 'rgba(0, 0, 0, 0.4)',
+                      borderColor: 'white',
                     },
                   },
                   '& .MuiInputBase-input::placeholder': {
-                    color: 'rgba(0, 0, 0, 0.4)',
+                    color: 'rgba(255, 255, 255, 0.7)',
                     opacity: 1,
                   },
                 }}
@@ -144,19 +145,20 @@ const LoginPage = () => {
                 autoComplete="current-password"
                 sx={{
                   '& .MuiOutlinedInput-root': {
-                    backgroundColor: 'white',
+                    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+                    color: 'white',
                     '& fieldset': {
-                      borderColor: 'rgba(0, 0, 0, 0.23)',
+                      borderColor: 'rgba(255, 255, 255, 0.3)',
                     },
                     '&:hover fieldset': {
-                      borderColor: 'rgba(0, 0, 0, 0.5)',
+                      borderColor: 'rgba(255, 255, 255, 0.5)',
                     },
                     '&.Mui-focused fieldset': {
-                      borderColor: 'rgba(0, 0, 0, 0.4)',
+                      borderColor: 'white',
                     },
                   },
                   '& .MuiInputBase-input::placeholder': {
-                    color: 'rgba(0, 0, 0, 0.4)',
+                    color: 'rgba(255, 255, 255, 0.7)',
                     opacity: 1,
                   },
                 }}
@@ -167,6 +169,7 @@ const LoginPage = () => {
                         aria-label="mostrar senha"
                         onClick={() => setShowPassword((prev) => !prev)}
                         edge="end"
+                        sx={{ color: 'rgba(255, 255, 255, 0.7)' }}
                       >
                         {showPassword ? <VisibilityOff /> : <Visibility />}
                       </IconButton>

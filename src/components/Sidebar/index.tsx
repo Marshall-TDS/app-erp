@@ -23,7 +23,7 @@ import {
   Logout,
 } from '@mui/icons-material'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useMemo } from 'react'
 import { menusService, type MenuDefinition } from '../../services/menus'
 import { useAuth } from '../../context/AuthContext'
 import logoMarshall from '../../assets/images/logo-marshall.svg'
@@ -50,44 +50,46 @@ type SidebarProps = {
 const Sidebar = ({ open, onToggle, themeMode, onChangeTheme }: SidebarProps) => {
   const location = useLocation()
   const navigate = useNavigate()
-  const { logout } = useAuth()
+  const { logout, permissions } = useAuth()
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('md'))
   const withState = (base: string, closedModifier: string) =>
     open ? base : `${base} ${closedModifier}`
 
-  const [menuStructure, setMenuStructure] = useState<{
-    title: string
-    items: { label: string; icon: React.ReactNode; path: string }[]
-  }[]>([])
+  const [allMenus, setAllMenus] = useState<MenuDefinition[]>([])
 
   useEffect(() => {
     menusService.getAll()
       .then((menus: MenuDefinition[] | null) => {
-        if (!menus) return
-
-        const groups = menus.reduce((acc: Record<string, MenuDefinition[]>, menu: MenuDefinition) => {
-          if (!acc[menu.category]) {
-            acc[menu.category] = []
-          }
-          acc[menu.category].push(menu)
-          return acc
-        }, {} as Record<string, MenuDefinition[]>)
-
-        const structure = Object.entries(groups).map(([category, items]) => ({
-          title: category,
-          items: (items as MenuDefinition[]).map((item: MenuDefinition) => ({
-            label: item.name,
-            icon: getIcon(item.icon),
-            path: item.url.startsWith('/') ? item.url : `/${item.url}`,
-          })),
-        }))
-        setMenuStructure(structure)
+        if (menus) setAllMenus(menus)
       })
       .catch((error: unknown) => {
         console.error('Failed to load menus:', error)
       })
   }, [])
+
+  const menuStructure = useMemo(() => {
+    const filteredMenus = allMenus.filter(menu =>
+      permissions.some(p => p.toLowerCase() === menu.key.toLowerCase())
+    )
+
+    const groups = filteredMenus.reduce((acc: Record<string, MenuDefinition[]>, menu: MenuDefinition) => {
+      if (!acc[menu.category]) {
+        acc[menu.category] = []
+      }
+      acc[menu.category].push(menu)
+      return acc
+    }, {} as Record<string, MenuDefinition[]>)
+
+    return Object.entries(groups).map(([category, items]) => ({
+      title: category,
+      items: (items as MenuDefinition[]).map((item: MenuDefinition) => ({
+        label: item.name,
+        icon: getIcon(item.icon),
+        path: item.url.startsWith('/') ? item.url : `/${item.url}`,
+      })),
+    }))
+  }, [allMenus, permissions])
 
   const handleLogout = async () => {
     try {
