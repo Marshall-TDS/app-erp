@@ -270,3 +270,7 @@
 .theme-dark .topbar__search-icon {
   color: var(--color-on-secondary);
 }
+
+.theme-dark .topbar__user-button:hover {
+  background-color: var(--color-hover-strong) !important;
+}

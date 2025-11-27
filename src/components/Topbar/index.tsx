@@ -147,6 +147,7 @@ const Topbar = ({ sidebarOpen, onToggleSidebar }: TopbarProps) => {
                 <Button
                   onClick={handleUserMenuOpen}
                   color="inherit"
+                  className="topbar__user-button"
                   sx={{
                     textTransform: 'none',
                     borderRadius: '50px',

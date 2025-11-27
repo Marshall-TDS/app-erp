@@ -109,9 +109,9 @@ body {
   --color-border-light: rgba(255, 255, 255, 0.08);
   --color-border-lighter: rgba(255, 255, 255, 0.05);
 
-  /* Estados hover - padrão Material Design */
-  --color-hover: rgba(255, 255, 255, 0.08);
-  --color-hover-strong: rgba(255, 255, 255, 0.12);
+  /* Estados hover - ajustado para melhor contraste (estilo Gmail) */
+  --color-hover: rgba(255, 255, 255, 0.1);
+  --color-hover-strong: rgba(255, 255, 255, 0.16);
 
   /* Sombras - ajustadas para modo escuro */
   --color-shadow: rgba(0, 0, 0, 0.3);
@@ -251,4 +251,12 @@ body {
 
 .theme-dark .button-cancel {
   color: #ffffff !important;
+}
+
+.theme-dark .button-cancel:hover {
+  background-color: var(--color-hover-strong) !important;
+}
+
+.theme-dark .MuiIconButton-root:hover {
+  background-color: var(--color-hover-strong) !important;
 }
