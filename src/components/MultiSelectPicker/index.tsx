@@ -16,8 +16,6 @@ import {
   ExpandMore,
   Search,
   Close,
-  CheckBox,
-  CheckBoxOutlineBlank,
 } from '@mui/icons-material'
 import './style.css'
 
@@ -62,7 +60,7 @@ const MultiSelectPicker = ({
   helperText,
   required = false,
   searchable = true,
-  selectAll = false,
+
   maxDisplayChips = 3,
   emptyText = 'Nenhuma opção disponível',
   searchPlaceholder = 'Buscar...',
@@ -390,6 +388,7 @@ const MultiSelectPicker = ({
             <Box className="multi-select-picker__search-container">
               <TextField
                 inputRef={searchInputRef}
+                autoFocus
                 placeholder={searchPlaceholder}
                 value={searchQuery}
                 onChange={(e) => {
@@ -439,7 +438,7 @@ const MultiSelectPicker = ({
                   <Typography variant="caption" className="multi-select-picker__group-title">
                     {group}
                   </Typography>
-                  {filteredGroupedOptions[group].map((option, index) => {
+                  {filteredGroupedOptions[group].map((option) => {
                     const globalIndex = optionsToRender.indexOf(option)
                     const selected = isSelected(option.value)
                     return (
