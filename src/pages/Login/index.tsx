@@ -25,16 +25,21 @@ const LoginPage = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [credentials, setCredentials] = useState({ loginOrEmail: '', password: '' })
+  const [initialCheckDone, setInitialCheckDone] = useState(false)
 
-  // Redirecionar se já estiver autenticado
+  // Verificar autenticação inicial apenas uma vez
   useEffect(() => {
-    if (!authLoading && isAuthenticated) {
-      navigate('/dashboard', { replace: true })
+    if (!authLoading) {
+      setInitialCheckDone(true)
+      if (isAuthenticated) {
+        navigate('/dashboard', { replace: true })
+      }
     }
-  }, [isAuthenticated, authLoading, navigate])
+  }, [authLoading, isAuthenticated, navigate])
 
-  // Não renderizar enquanto verifica autenticação
-  if (authLoading || isAuthenticated) {
+  // Não renderizar apenas durante a verificação inicial de autenticação
+  // Não retornar null durante o processo de login para evitar piscar a tela
+  if (!initialCheckDone || isAuthenticated) {
     return null
   }
 
@@ -88,12 +93,6 @@ const LoginPage = () => {
 
             {/* Formulário */}
             <Box component="form" onSubmit={handleSubmit} className="login-form" sx={{ width: '100%' }}>
-              {error && (
-                <Alert severity="error" onClose={() => setError(null)} sx={{ mb: 2 }}>
-                  {error}
-                </Alert>
-              )}
-
               <TextField
                 placeholder="Digite seu login ou e-mail"
                 type="text"
@@ -179,6 +178,11 @@ const LoginPage = () => {
               />
 
               <Stack spacing={1.5}>
+                {error && (
+                  <Alert severity="error" onClose={() => setError(null)}>
+                    {error}
+                  </Alert>
+                )}
                 <Button
                   variant="contained"
                   size="large"
