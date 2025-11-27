@@ -594,7 +594,7 @@ const UsersPage = () => {
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setManageGroupsDialog(prev => ({ ...prev, open: false }))}>Cancelar</Button>
+          <Button onClick={() => setManageGroupsDialog(prev => ({ ...prev, open: false }))} color="inherit" className="button-cancel">Cancelar</Button>
           <Button variant="contained" onClick={handleSaveGroups}>Salvar</Button>
         </DialogActions>
       </Dialog>
@@ -641,7 +641,7 @@ const UsersPage = () => {
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setManageAccessDialog(prev => ({ ...prev, open: false }))}>Cancelar</Button>
+          <Button onClick={() => setManageAccessDialog(prev => ({ ...prev, open: false }))} color="inherit" className="button-cancel">Cancelar</Button>
           <Button variant="contained" onClick={handleSaveAccess}>Salvar</Button>
         </DialogActions>
       </Dialog>

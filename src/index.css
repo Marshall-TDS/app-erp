@@ -243,3 +243,12 @@ body {
 .theme-dark input[type="date"]::-webkit-calendar-picker-indicator {
   filter: invert(1);
 }
+
+/* Botão Cancelar Global */
+.button-cancel {
+  color: #000000 !important;
+}
+
+.theme-dark .button-cancel {
+  color: #ffffff !important;
+}

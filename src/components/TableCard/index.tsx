@@ -623,7 +623,7 @@ const TableCard = <T extends TableCardRow>({
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={closeDialog} color="inherit">Cancelar</Button>
+          <Button onClick={closeDialog} color="inherit" className="button-cancel">Cancelar</Button>
           <Button variant="contained" color="primary" onClick={handleSubmit}>
             Salvar
           </Button>
