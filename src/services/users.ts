@@ -34,9 +34,30 @@ export type UpdateUserPayload = {
   updatedBy: string
 }
 
+export type UpdateUserBasicPayload = {
+  fullName: string
+  login: string
+  email: string
+  updatedBy: string
+}
+
+export type UpdateUserGroupsPayload = {
+  groupIds: string[]
+  updatedBy: string
+}
+
+export type UpdateUserPermissionsPayload = {
+  allowFeatures: string[]
+  deniedFeatures: string[]
+  updatedBy: string
+}
+
 const list = () => api.get<UserDTO[]>('/users')
 const create = (payload: CreateUserPayload) => api.post<UserDTO>('/users', payload)
 const update = (id: string, payload: UpdateUserPayload) => api.put<UserDTO>(`/users/${id}`, payload)
+const updateBasic = (id: string, payload: UpdateUserBasicPayload) => api.put<UserDTO>(`/users/${id}/basic`, payload)
+const updateGroups = (id: string, payload: UpdateUserGroupsPayload) => api.put<UserDTO>(`/users/${id}/groups`, payload)
+const updatePermissions = (id: string, payload: UpdateUserPermissionsPayload) => api.put<UserDTO>(`/users/${id}/permissions`, payload)
 const remove = (id: string) => api.delete<void>(`/users/${id}`)
 const resetPassword = (payload: { token: string; password: string; confirmPassword: string }) =>
   api.post<void>('/users/password/reset', payload)
@@ -45,6 +66,9 @@ export const userService = {
   list,
   create,
   update,
+  updateBasic,
+  updateGroups,
+  updatePermissions,
   remove,
   resetPassword,
 }

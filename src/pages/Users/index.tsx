@@ -173,7 +173,7 @@ const UsersPage = () => {
         groupIds: manageGroupsDialog.groupIds,
         updatedBy: DEFAULT_USER,
       }
-      const updated = await userService.update(manageGroupsDialog.userId, payload)
+      const updated = await userService.updateGroups(manageGroupsDialog.userId, payload)
       setUsers((prev) => prev.map((user) => (user.id === manageGroupsDialog.userId ? mapUserToRow(updated) : user)))
       setToast({ open: true, message: 'Grupos atualizados com sucesso' })
       setManageGroupsDialog((prev) => ({ ...prev, open: false }))
@@ -205,7 +205,7 @@ const UsersPage = () => {
         deniedFeatures: manageAccessDialog.deniedFeatures,
         updatedBy: DEFAULT_USER,
       }
-      const updated = await userService.update(manageAccessDialog.userId, payload)
+      const updated = await userService.updatePermissions(manageAccessDialog.userId, payload)
       setUsers((prev) => prev.map((user) => (user.id === manageAccessDialog.userId ? mapUserToRow(updated) : user)))
       setToast({ open: true, message: 'Acessos atualizados com sucesso' })
       setManageAccessDialog((prev) => ({ ...prev, open: false }))
@@ -238,17 +238,12 @@ const UsersPage = () => {
   const handleEditUser = async (id: UserRow['id'], data: Partial<UserRow>) => {
     try {
       const payload = {
-        fullName: data.fullName as string | undefined,
-        login: data.login as string | undefined,
-        email: data.email as string | undefined,
-        groupIds: Array.isArray(data.groupIds) ? (data.groupIds as string[]) : undefined,
-        allowFeatures: Array.isArray(data.allowFeatures) ? (data.allowFeatures as string[]) : undefined,
-        deniedFeatures: Array.isArray(data.deniedFeatures)
-          ? (data.deniedFeatures as string[])
-          : undefined,
+        fullName: data.fullName as string,
+        login: data.login as string,
+        email: data.email as string,
         updatedBy: DEFAULT_USER,
       }
-      const updated = await userService.update(id as string, payload)
+      const updated = await userService.updateBasic(id as string, payload)
       setUsers((prev) => prev.map((user) => (user.id === id ? mapUserToRow(updated) : user)))
       setToast({ open: true, message: 'Usuário atualizado' })
     } catch (err) {
