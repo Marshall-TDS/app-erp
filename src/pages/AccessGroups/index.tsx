@@ -8,6 +8,7 @@ import TableCard, {
 import TextPicker from '../../components/TextPicker'
 import MultiSelectPicker from '../../components/MultiSelectPicker'
 import { useSearch } from '../../context/SearchContext'
+import { useAuth } from '../../context/AuthContext'
 import {
   type AccessGroupDTO,
   type FeatureDefinition,
@@ -42,6 +43,12 @@ const AccessGroupsPage = () => {
   const [toast, setToast] = useState<{ open: boolean; message: string }>({ open: false, message: '' })
   const [error, setError] = useState<string | null>(null)
   const { setFilters, setPlaceholder, setQuery } = useSearch()
+  const { permissions } = useAuth()
+  const canDelete = permissions.includes('erp:grupos-acesso:excluir')
+  const canEdit = permissions.includes('erp:grupos-acesso:editar')
+  const canCreate = permissions.includes('erp:grupos-acesso:criar')
+  const canView = permissions.includes('erp:grupos-acesso:visualizar')
+  const canList = permissions.includes('erp:grupos-acesso:listar')
 
   useEffect(() => {
     setPlaceholder('')
@@ -87,8 +94,12 @@ const AccessGroupsPage = () => {
 
   useEffect(() => {
     loadFeatures()
-    loadGroups()
-  }, [])
+    if (canList) {
+      loadGroups()
+    } else {
+      setLoading(false)
+    }
+  }, [canList])
 
   const handleAddGroup = async (data: Partial<AccessGroupRow>) => {
     try {
@@ -182,7 +193,7 @@ const AccessGroupsPage = () => {
         key: 'name',
         label: 'Nome do grupo',
         required: true,
-        renderInput: ({ value, onChange, field }) => (
+        renderInput: ({ value, onChange, field, disabled }) => (
           <TextPicker
             label={field.label}
             value={typeof value === 'string' ? value : ''}
@@ -190,6 +201,7 @@ const AccessGroupsPage = () => {
             placeholder="Ex: Operações Norte"
             fullWidth
             required
+            disabled={disabled}
           />
         ),
       },
@@ -198,7 +210,7 @@ const AccessGroupsPage = () => {
         label: 'Código',
         required: true,
         helperText: 'Use letras maiúsculas e hífens (ex: OPERACOES-NORTE)',
-        renderInput: ({ value, onChange, field }) => (
+        renderInput: ({ value, onChange, field, disabled }) => (
           <TextPicker
             label={field.label}
             value={typeof value === 'string' ? value : ''}
@@ -206,13 +218,14 @@ const AccessGroupsPage = () => {
             placeholder="OPERACOES-NORTE"
             fullWidth
             required
+            disabled={disabled}
           />
         ),
       },
       {
         key: 'features',
         label: 'Funcionalidades padrão',
-        renderInput: ({ value, onChange, field }) => (
+        renderInput: ({ value, onChange, field, disabled }) => (
           <MultiSelectPicker
             label={field.label}
             value={Array.isArray(value) ? value : []}
@@ -222,6 +235,7 @@ const AccessGroupsPage = () => {
             fullWidth
             showSelectAll
             chipDisplay="block"
+            disabled={disabled}
           />
         ),
       },
@@ -237,15 +251,24 @@ const AccessGroupsPage = () => {
             Carregando grupos...
           </Typography>
         </Box>
+      ) : !canList ? (
+        <Box display="flex" justifyContent="center" alignItems="center" height="100%" minHeight="400px">
+          <Typography variant="h6" color="text.secondary" className="access-denied-text">
+            Você não tem permissão para listar estes dados
+          </Typography>
+        </Box>
       ) : (
         <TableCard
           title="Grupos de Acesso"
           columns={tableColumns}
           rows={groups}
-          onAdd={handleAddGroup}
+          onAdd={canCreate ? handleAddGroup : undefined}
           onEdit={handleEditGroup}
           onDelete={handleDeleteGroup}
-          onBulkDelete={handleBulkDelete}
+          disableDelete={!canDelete}
+          disableEdit={!canEdit}
+          disableView={!canView}
+          onBulkDelete={canDelete ? handleBulkDelete : undefined}
           formFields={formFields}
         />
       )}

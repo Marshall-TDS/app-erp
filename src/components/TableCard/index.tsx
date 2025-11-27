@@ -42,6 +42,7 @@ export type TableCardFieldRenderProps<T extends TableCardRow> = {
   field: TableCardFormField<T>
   formValues: Partial<T>
   setFieldValue: (key: keyof T, value: any) => void
+  disabled: boolean
 }
 
 export type TableCardFormField<T extends TableCardRow> = TableCardColumn<T> & {
@@ -92,6 +93,9 @@ type TableCardProps<T extends TableCardRow> = {
   formFields?: TableCardFormField<T>[]
   rowActions?: TableCardRowAction<T>[]
   bulkActions?: TableCardBulkAction<T>[]
+  disableDelete?: boolean
+  disableEdit?: boolean
+  disableView?: boolean
 }
 
 type DialogState<T extends TableCardRow> =
@@ -110,6 +114,9 @@ const TableCard = <T extends TableCardRow>({
   formFields,
   rowActions,
   bulkActions,
+  disableDelete = false,
+  disableEdit = false,
+  disableView = false,
 }: TableCardProps<T>) => {
   const { query, selectedFilter } = useSearch()
   const theme = useTheme()
@@ -174,27 +181,30 @@ const TableCard = <T extends TableCardRow>({
     }
 
     const initialValues = formSchema.reduce((acc, field) => {
-      const isMultiSelect = field.inputType === 'multiselect'
+      // Type assertion to access properties that might not exist on TableCardColumn
+      const formField = field as TableCardFormField<T>
+      const isMultiSelect = formField.inputType === 'multiselect'
+
       if (row) {
         const existingValue = row[field.key]
         if (isMultiSelect) {
-          acc[field.key] = Array.isArray(existingValue)
+          acc[field.key] = (Array.isArray(existingValue)
             ? existingValue
             : existingValue !== undefined && existingValue !== null
               ? [existingValue]
-              : []
+              : []) as any
         } else {
           acc[field.key] =
             existingValue !== undefined && existingValue !== null
               ? existingValue
-              : field.defaultValue ?? ''
+              : formField.defaultValue ?? ''
         }
       } else {
-        acc[field.key] = isMultiSelect
-          ? Array.isArray(field.defaultValue)
-            ? field.defaultValue
+        acc[field.key] = (isMultiSelect
+          ? Array.isArray(formField.defaultValue)
+            ? formField.defaultValue
             : []
-          : field.defaultValue ?? ''
+          : formField.defaultValue ?? '') as any
       }
       return acc
     }, {} as Partial<T>)
@@ -244,7 +254,7 @@ const TableCard = <T extends TableCardRow>({
   }
 
   const handleDeleteRow = () => {
-    if (menuRow) {
+    if (menuRow && !disableDelete) {
       onDelete?.(menuRow.id)
       handleCloseMenu()
     }
@@ -276,6 +286,7 @@ const TableCard = <T extends TableCardRow>({
             field: field as TableCardFormField<T>,
             formValues,
             setFieldValue: (key, newValue) => handleFieldChange(key, newValue),
+            disabled: ('disabled' in field ? field.disabled : false) || (dialog.mode === 'edit' && disableEdit),
           })}
         </Box>
       )
@@ -298,7 +309,7 @@ const TableCard = <T extends TableCardRow>({
           helperText={'helperText' in field ? field.helperText : undefined}
           required={'required' in field ? field.required : undefined}
           placeholder={'placeholder' in field ? field.placeholder : undefined}
-          disabled={'disabled' in field ? field.disabled : undefined}
+          disabled={('disabled' in field ? field.disabled : undefined) || (dialog.mode === 'edit' && disableEdit)}
         >
           {options.map((option) => (
             <MenuItem key={String(option.value)} value={option.value}>
@@ -339,11 +350,11 @@ const TableCard = <T extends TableCardRow>({
           helperText={'helperText' in field ? field.helperText : undefined}
           required={'required' in field ? field.required : undefined}
           placeholder={'placeholder' in field ? field.placeholder : undefined}
-          disabled={'disabled' in field ? field.disabled : undefined}
+          disabled={('disabled' in field ? field.disabled : undefined) || (dialog.mode === 'edit' && disableEdit)}
         >
           {options.map((option) => (
             <MenuItem key={String(option.value)} value={option.value}>
-              <Checkbox checked={multiValue.includes(option.value)} />
+              <Checkbox checked={(multiValue as any[]).includes(option.value)} />
               <span>{option.label}</span>
             </MenuItem>
           ))}
@@ -373,7 +384,7 @@ const TableCard = <T extends TableCardRow>({
         helperText={'helperText' in field ? field.helperText : undefined}
         required={'required' in field ? field.required : undefined}
         placeholder={'placeholder' in field ? field.placeholder : undefined}
-        disabled={'disabled' in field ? field.disabled : undefined}
+        disabled={('disabled' in field ? field.disabled : undefined) || (dialog.mode === 'edit' && disableEdit)}
         InputLabelProps={inputType === 'date' ? { shrink: true } : undefined}
       />
     )
@@ -440,7 +451,7 @@ const TableCard = <T extends TableCardRow>({
                     key={row.id}
                     className={`table-card__gmail-card ${isSelected ? 'table-card__gmail-card--selected' : ''}`}
                     onClick={() => {
-                      if (!isSelected) {
+                      if (!isSelected && !disableView) {
                         openDialog('edit', row)
                       }
                     }}
@@ -539,7 +550,7 @@ const TableCard = <T extends TableCardRow>({
                       hover
                       className={`table-card__row ${selectedIds.includes(row.id) ? 'table-card__row--selected' : ''}`}
                       onClick={() => {
-                        if (!selectedIds.includes(row.id)) {
+                        if (!selectedIds.includes(row.id) && !disableView) {
                           openDialog('edit', row)
                         }
                       }}
@@ -606,7 +617,7 @@ const TableCard = <T extends TableCardRow>({
           </MenuItem>
         ))}
         {onDelete && (
-          <MenuItem onClick={handleDeleteRow}>
+          <MenuItem onClick={handleDeleteRow} disabled={disableDelete}>
             <DeleteOutline fontSize="small" style={{ marginRight: 8 }} />
             Excluir
           </MenuItem>
@@ -623,8 +634,15 @@ const TableCard = <T extends TableCardRow>({
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={closeDialog} color="inherit" className="button-cancel">Cancelar</Button>
-          <Button variant="contained" color="primary" onClick={handleSubmit}>
+          <Button onClick={closeDialog} color="inherit" className="button-cancel">
+            {dialog.mode === 'edit' && disableEdit ? 'Fechar' : 'Cancelar'}
+          </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleSubmit}
+            disabled={dialog.mode === 'edit' && disableEdit}
+          >
             Salvar
           </Button>
         </DialogActions>

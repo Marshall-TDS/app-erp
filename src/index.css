@@ -153,6 +153,11 @@ body {
   color: var(--color-text) !important;
 }
 
+.theme-dark .MuiInputBase-input.Mui-disabled {
+  color: rgba(255, 255, 255, 0.5) !important;
+  -webkit-text-fill-color: rgba(255, 255, 255, 0.5) !important;
+}
+
 .theme-dark .MuiTableCell-root {
   border-bottom-color: var(--color-border-lighter) !important;
   color: var(--color-text) !important;
@@ -186,15 +191,20 @@ body {
 }
 
 .theme-dark .MuiMenuItem-root.Mui-disabled {
-  opacity: 1 !important;
-  color: var(--color-text) !important;
+  opacity: 0.5 !important;
+  color: var(--color-on-secondary) !important;
+  pointer-events: none !important;
 }
 
 .theme-dark .MuiMenuItem-root.Mui-disabled .MuiTypography-root {
-  color: var(--color-text) !important;
+  color: var(--color-on-secondary) !important;
 }
 
 .theme-dark .MuiMenuItem-root.Mui-disabled .MuiTypography-colorTextSecondary {
+  color: var(--color-on-secondary) !important;
+}
+
+.theme-dark .MuiMenuItem-root.Mui-disabled .MuiSvgIcon-root {
   color: var(--color-on-secondary) !important;
 }
 
@@ -259,4 +269,13 @@ body {
 
 .theme-dark .MuiIconButton-root:hover {
   background-color: var(--color-hover-strong) !important;
+}
+
+.theme-dark .MuiButton-contained.Mui-disabled {
+  background-color: rgba(255, 255, 255, 0.12) !important;
+  color: rgba(255, 255, 255, 0.3) !important;
+}
+
+.theme-dark .access-denied-text {
+  color: #ffffff !important;
 }
