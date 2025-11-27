@@ -450,7 +450,6 @@ const UsersPage = () => {
       label: 'Funcionalidades negadas',
       render: (value: UserRow['deniedFeatures']) => featureChips(value),
     },
-    { key: 'createdAt', label: 'Criado em', dataType: 'date' },
   ], [featureChips, groupChips])
 
   return (

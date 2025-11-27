@@ -173,7 +173,6 @@ const AccessGroupsPage = () => {
         label: 'Funcionalidades',
         render: (value: AccessGroupRow['features']) => renderFeaturesCell(value),
       },
-      { key: 'createdAt', label: 'Criado em', dataType: 'date' },
     ]
   }, [renderFeaturesCell])
 
