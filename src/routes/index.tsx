@@ -1,5 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import LoginPage from '../pages/Login'
+import ForgotPasswordPage from '../pages/ForgotPassword'
 import DashboardPage from '../pages/Dashboard'
 import InventoryPage from '../pages/Inventory'
 import CustomersPage from '../pages/Customers'
@@ -16,6 +17,7 @@ const AppRoutes = () => (
   <BrowserRouter>
     <Routes>
       <Route path="/" element={<LoginPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/account/set-password" element={<SetPasswordPage />} />
       <Route
         element={

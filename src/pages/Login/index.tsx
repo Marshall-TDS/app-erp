@@ -198,6 +198,7 @@ const LoginPage = () => {
                   type="button"
                   className="forgot-password"
                   underline="none"
+                  onClick={() => navigate('/forgot-password', { replace: false })}
                 >
                   Esqueci minha senha
                 </Link>

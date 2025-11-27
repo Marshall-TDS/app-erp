@@ -109,6 +109,8 @@ const Sidebar = ({ open, onToggle, themeMode, onChangeTheme }: SidebarProps) => 
           src={logoMarshall}
           alt="Logo Marshall ERP"
           className={withState('sidebar-logo', 'sidebar-logo--compact')}
+          onClick={() => navigate('/dashboard')}
+          style={{ cursor: 'pointer' }}
         />
         {isMobile && (
           <IconButton onClick={onToggle} size="small" className="sidebar-close">

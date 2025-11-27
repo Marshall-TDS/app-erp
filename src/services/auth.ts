@@ -44,6 +44,13 @@ export const authService = {
   },
 
   /**
+   * Solicita recuperação de senha
+   */
+  async forgotPassword(email: string): Promise<void> {
+    await api.post('/auth/forgot-password', { email }, { skipAuth: true })
+  },
+
+  /**
    * Realiza logout e remove tokens
    */
   async logout(): Promise<void> {

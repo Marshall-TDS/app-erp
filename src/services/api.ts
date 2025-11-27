@@ -42,7 +42,8 @@ async function request<TResponse>(path: string, options: RequestOptions = {}) {
     ...rest,
   })
 
-  // Se receber 401 (não autorizado), pode ser token expirado
+  // Se receber 401 (não autorizado), pode ser token expirado ou inválido
+  // 403 (Forbidden) significa que está autenticado mas sem permissão - não deve redirecionar
   if (response.status === 401 && !skipAuth) {
     // Remover tokens e redirecionar para login
     clearAuth()
