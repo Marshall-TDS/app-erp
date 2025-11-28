@@ -9,6 +9,7 @@ import TableCard, {
 import TextPicker from '../../components/TextPicker'
 import SelectPicker from '../../components/SelectPicker'
 import HtmlEditor from '../../components/HtmlEditor'
+import KeyPicker from '../../components/KeyPicker'
 import { useSearch } from '../../context/SearchContext'
 import { comunicacaoService, type ComunicacaoDTO } from '../../services/comunicacoes'
 import { remetenteService, type RemetenteDTO } from '../../services/remetentes'
@@ -98,6 +99,7 @@ const ComunicacoesPage = () => {
         html: (data.html as string) ?? '',
         remetenteId: (data.remetenteId as string) ?? '',
         tipoEnvio: (data.tipoEnvio as 'imediato' | 'agendado') ?? 'imediato',
+        chave: data.chave ? (data.chave as string).trim() : undefined,
         createdBy: DEFAULT_USER,
       }
       const created = await comunicacaoService.create(payload)
@@ -111,6 +113,7 @@ const ComunicacoesPage = () => {
 
   const handleEditComunicacao = async (id: ComunicacaoRow['id'], data: Partial<ComunicacaoRow>) => {
     try {
+      // A chave não pode ser alterada após a criação, então não incluímos no payload
       const payload = {
         tipo: data.tipo as 'email' | undefined,
         descricao: data.descricao as string,
@@ -242,6 +245,83 @@ const ComunicacoesPage = () => {
         ),
       },
       {
+        key: 'chave',
+        label: 'Chave',
+        required: false,
+        renderInput: ({ value, onChange, field, formValues, disabled }) => {
+          // value é o valor original do registro (quando editando)
+          // formValues.chave é o valor atual no formulário
+          const originalChave = value || ''
+          const currentChave = formValues.chave || originalChave || ''
+          
+          // Se já existe uma chave original (modo edição), mostra apenas leitura
+          const isEditMode = !!originalChave && originalChave !== ''
+          
+          // Se estiver editando e já tiver chave, mostra apenas leitura com botão de copiar
+          if (isEditMode) {
+            return (
+              <Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                  <Typography variant="body2" component="label" sx={{ fontWeight: 500 }}>
+                    {field.label}
+                  </Typography>
+                </Box>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1,
+                    padding: '12px',
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    borderRadius: '4px',
+                    backgroundColor: 'action.hover',
+                  }}
+                >
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      fontFamily: 'monospace',
+                      fontSize: '0.875rem',
+                      flex: 1,
+                      wordBreak: 'break-all',
+                    }}
+                  >
+                    {originalChave}
+                  </Typography>
+                  <Tooltip title={copiedKey === originalChave ? 'Copiado!' : 'Copiar chave'}>
+                    <IconButton
+                      size="small"
+                      onClick={() => handleCopyKey(originalChave)}
+                      sx={{ padding: '4px' }}
+                    >
+                      {copiedKey === originalChave ? (
+                        <Check sx={{ fontSize: '18px', color: 'success.main' }} />
+                      ) : (
+                        <ContentCopy sx={{ fontSize: '18px' }} />
+                      )}
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+              </Box>
+            )
+          }
+          
+          // Se estiver criando (sem chave original), permite editar
+          return (
+            <KeyPicker
+              label={field.label}
+              value={currentChave}
+              onChange={(text) => onChange(text)}
+              fullWidth
+              placeholder="Ex: EMAIL-RESET-PASSWORD"
+              disabled={disabled}
+              helperText="Apenas letras, números e hífens. Espaços são convertidos em hífen."
+            />
+          )
+        },
+      },
+      {
         key: 'tipoEnvio',
         label: 'Tipo de envio',
         required: true,
@@ -258,61 +338,6 @@ const ComunicacoesPage = () => {
             required
           />
         ),
-      },
-      {
-        key: 'chave',
-        label: 'Chave',
-        renderInput: ({ value, field, formValues }) => {
-          const chave = formValues.chave || value || ''
-          if (!chave) return null
-          
-          return (
-            <Box>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                <Typography variant="body2" component="label" sx={{ fontWeight: 500 }}>
-                  {field.label}
-                </Typography>
-              </Box>
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 1,
-                  padding: '12px',
-                  border: '1px solid',
-                  borderColor: 'divider',
-                  borderRadius: '4px',
-                  backgroundColor: 'action.hover',
-                }}
-              >
-                <Typography
-                  variant="body2"
-                  sx={{
-                    fontFamily: 'monospace',
-                    fontSize: '0.875rem',
-                    flex: 1,
-                    wordBreak: 'break-all',
-                  }}
-                >
-                  {chave}
-                </Typography>
-                <Tooltip title={copiedKey === chave ? 'Copiado!' : 'Copiar chave'}>
-                  <IconButton
-                    size="small"
-                    onClick={() => handleCopyKey(chave)}
-                    sx={{ padding: '4px' }}
-                  >
-                    {copiedKey === chave ? (
-                      <Check sx={{ fontSize: '18px', color: 'success.main' }} />
-                    ) : (
-                      <ContentCopy sx={{ fontSize: '18px' }} />
-                    )}
-                  </IconButton>
-                </Tooltip>
-              </Box>
-            </Box>
-          )
-        },
       },
     ],
     [remetenteOptions, copiedKey],

@@ -294,18 +294,37 @@ const UsersPage = () => {
     setDetailUser(user)
   }
 
-  const handleSendPasswordUpdate = (user: UserRow) => {
-    setToast({
-      open: true,
-      message: `Solicitação de alteração de senha enviada para ${user.email}`,
-    })
+  const handleSendPasswordUpdate = async (user: UserRow) => {
+    try {
+      await userService.requestPasswordReset(user.email)
+      setToast({
+        open: true,
+        message: `Solicitação de alteração de senha enviada para ${user.email}`,
+      })
+    } catch (err) {
+      console.error(err)
+      setToast({
+        open: true,
+        message: err instanceof Error ? err.message : 'Erro ao enviar solicitação de alteração de senha',
+      })
+    }
   }
 
-  const handleBulkSendPasswordUpdate = (ids: UserRow['id'][]) => {
-    setToast({
-      open: true,
-      message: `Solicitação de alteração de senha enviada para ${ids.length} usuários`,
-    })
+  const handleBulkSendPasswordUpdate = async (ids: UserRow['id'][]) => {
+    try {
+      const usersToSend = users.filter((u) => ids.includes(u.id))
+      await Promise.all(usersToSend.map((user) => userService.requestPasswordReset(user.email)))
+      setToast({
+        open: true,
+        message: `Solicitação de alteração de senha enviada para ${ids.length} usuário(s)`,
+      })
+    } catch (err) {
+      console.error(err)
+      setToast({
+        open: true,
+        message: err instanceof Error ? err.message : 'Erro ao enviar solicitação de alteração de senha',
+      })
+    }
   }
 
   const groupChips = useCallback(

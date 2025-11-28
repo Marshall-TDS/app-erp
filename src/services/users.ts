@@ -60,7 +60,10 @@ const updateGroups = (id: string, payload: UpdateUserGroupsPayload) => api.put<U
 const updatePermissions = (id: string, payload: UpdateUserPermissionsPayload) => api.put<UserDTO>(`/users/${id}/permissions`, payload)
 const remove = (id: string) => api.delete<void>(`/users/${id}`)
 const resetPassword = (payload: { token: string; password: string; confirmPassword: string }) =>
-  api.post<void>('/users/password/reset', payload)
+  api.post<void>('/users/password/reset', payload, { skipAuth: true })
+
+const requestPasswordReset = (email: string) =>
+  api.post<{ status: string; message: string }>('/users/password/reset-request', { email })
 
 export const userService = {
   list,
@@ -71,5 +74,6 @@ export const userService = {
   updatePermissions,
   remove,
   resetPassword,
+  requestPasswordReset,
 }
 

@@ -22,6 +22,7 @@ export type CreateComunicacaoPayload = {
   html: string
   remetenteId: string
   tipoEnvio: 'imediato' | 'agendado'
+  chave?: string
   createdBy: string
 }
 
@@ -32,6 +33,7 @@ export type UpdateComunicacaoPayload = {
   html?: string
   remetenteId?: string
   tipoEnvio?: 'imediato' | 'agendado'
+  chave?: string
   updatedBy: string
 }
 
