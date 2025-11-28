@@ -70,7 +70,14 @@ const UsersPage = () => {
     deniedFeatures: string[]
   }>({ open: false, userId: null, allowFeatures: [], deniedFeatures: [] })
   const { setFilters, setPlaceholder, setQuery } = useSearch()
-  const { user: currentUser, refreshPermissions } = useAuth()
+  const { user: currentUser, refreshPermissions, permissions } = useAuth()
+
+  const hasPermission = useCallback(
+    (permission: string) => {
+      return permissions.includes(permission)
+    },
+    [permissions],
+  )
 
   useEffect(() => {
     setPlaceholder('')
@@ -151,8 +158,6 @@ const UsersPage = () => {
     },
     [groupDictionary],
   )
-
-
 
   const handleManageGroups = useCallback((selectedIds: UserRow['id'][]) => {
     if (selectedIds.length !== 1) return
@@ -235,7 +240,7 @@ const UsersPage = () => {
         createdBy: DEFAULT_USER,
       }
       const created = await userService.create(payload)
-      setUsers((prev) => [...prev, mapUserToRow(created)])
+      await loadUsers()
       setToast({ open: true, message: 'Usuário criado com sucesso' })
     } catch (err) {
       console.error(err)
@@ -341,7 +346,7 @@ const UsersPage = () => {
         key: 'fullName',
         label: 'Nome completo',
         required: true,
-        renderInput: ({ value, onChange, field }) => (
+        renderInput: ({ value, onChange, field, disabled }) => (
           <TextPicker
             label={field.label}
             value={typeof value === 'string' ? value : ''}
@@ -349,6 +354,7 @@ const UsersPage = () => {
             fullWidth
             placeholder="Informe o nome completo"
             required
+            disabled={disabled}
           />
         ),
       },
@@ -356,7 +362,7 @@ const UsersPage = () => {
         key: 'login',
         label: 'Login',
         required: true,
-        renderInput: ({ value, onChange, field }) => (
+        renderInput: ({ value, onChange, field, disabled }) => (
           <TextPicker
             label={field.label}
             value={typeof value === 'string' ? value : ''}
@@ -364,6 +370,7 @@ const UsersPage = () => {
             fullWidth
             placeholder="Defina um login único"
             required
+            disabled={disabled}
           />
         ),
       },
@@ -371,13 +378,14 @@ const UsersPage = () => {
         key: 'email',
         label: 'E-mail',
         required: true,
-        renderInput: ({ value, onChange, field }) => (
+        renderInput: ({ value, onChange, field, disabled }) => (
           <MailPicker
             label={field.label}
             value={typeof value === 'string' ? value : ''}
             onChange={(text) => onChange(text)}
             fullWidth
             placeholder="usuario@empresa.com"
+            disabled={disabled}
           />
         ),
       },
@@ -390,23 +398,27 @@ const UsersPage = () => {
       label: 'Ver',
       icon: <VisibilityOutlined fontSize="small" />,
       onClick: handleViewUser,
+      disabled: !hasPermission('erp:usuarios:visualizar'),
     },
     {
       label: 'Gerenciar grupos de acessos',
       icon: <Groups2Outlined fontSize="small" />,
       onClick: (row) => handleManageGroups([row.id]),
+      disabled: !hasPermission('erp:usuarios:atribuir-grupos'),
     },
     {
       label: 'Gerenciar acessos particulares',
       icon: <SecurityOutlined fontSize="small" />,
       onClick: (row) => handleManageAccess([row.id]),
+      disabled: !hasPermission('erp:usuarios:atribuir-permissoes-particulares'),
     },
     {
       label: 'Enviar alteração de senha',
       icon: <PasswordOutlined fontSize="small" />,
       onClick: handleSendPasswordUpdate,
+      disabled: !hasPermission('erp:usuarios:resetar-senha'),
     },
-  ], [handleManageGroups, handleManageAccess])
+  ], [handleManageGroups, handleManageAccess, hasPermission])
 
   const bulkActions: TableCardBulkAction<UserRow>[] = useMemo(() => [
     {
@@ -416,27 +428,27 @@ const UsersPage = () => {
         const user = users.find((u) => u.id === ids[0])
         if (user) handleViewUser(user)
       },
-      disabled: (ids) => ids.length !== 1,
+      disabled: (ids) => ids.length !== 1 || !hasPermission('erp:usuarios:visualizar'),
     },
     {
       label: 'Gerenciar grupos de acessos',
       icon: <Groups2Outlined />,
       onClick: handleManageGroups,
-      disabled: (ids) => ids.length !== 1,
+      disabled: (ids) => ids.length !== 1 || !hasPermission('erp:usuarios:atribuir-grupos'),
     },
     {
       label: 'Gerenciar acessos particulares',
       icon: <SecurityOutlined />,
       onClick: handleManageAccess,
-      disabled: (ids) => ids.length !== 1,
+      disabled: (ids) => ids.length !== 1 || !hasPermission('erp:usuarios:atribuir-permissoes-particulares'),
     },
     {
       label: 'Enviar alteração de senha',
       icon: <PasswordOutlined />,
       onClick: handleBulkSendPasswordUpdate,
-      disabled: (ids) => ids.length !== 1,
+      disabled: (ids) => ids.length !== 1 || !hasPermission('erp:usuarios:resetar-senha'),
     }
-  ], [handleManageGroups, handleManageAccess, users])
+  ], [handleManageGroups, handleManageAccess, users, hasPermission])
 
   const tableColumns = useMemo<TableCardColumn<UserRow>[]>(() => [
     { key: 'fullName', label: 'Nome completo' },
@@ -458,6 +470,16 @@ const UsersPage = () => {
     },
   ], [featureChips, groupChips])
 
+  if (!loading && !hasPermission('erp:usuarios:listar') && !hasPermission('erp:grupos-acesso:listar')) {
+    return (
+      <Box className="users-page">
+        <Typography variant="h6" align="center" sx={{ mt: 4 }}>
+          Você não tem permissão para listar estes dados
+        </Typography>
+      </Box>
+    )
+  }
+
   return (
     <Box className="users-page">
       {loading ? (
@@ -472,13 +494,16 @@ const UsersPage = () => {
           title="Usuários"
           columns={tableColumns}
           rows={users}
-          onAdd={handleAddUser}
+          onAdd={hasPermission('erp:usuarios:criar') ? handleAddUser : undefined}
           onEdit={handleEditUser}
           onDelete={handleDeleteUser}
-          onBulkDelete={handleBulkDelete}
+          onBulkDelete={hasPermission('erp:usuarios:excluir') ? handleBulkDelete : undefined}
           formFields={userFormFields}
           rowActions={rowActions}
           bulkActions={bulkActions}
+          disableDelete={!hasPermission('erp:usuarios:excluir')}
+          disableEdit={!hasPermission('erp:usuarios:editar')}
+          disableView={!hasPermission('erp:usuarios:visualizar')}
         />
       )}
 
@@ -585,6 +610,7 @@ const UsersPage = () => {
               placeholder="Selecione um ou mais grupos"
               showSelectAll
               chipDisplay="block"
+              disabled={!hasPermission('erp:usuarios:atribuir-grupos')}
             />
             <MultiSelectPicker
               label="Funcionalidades permitidas"
@@ -600,7 +626,13 @@ const UsersPage = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setManageGroupsDialog(prev => ({ ...prev, open: false }))} color="inherit" className="button-cancel">Cancelar</Button>
-          <Button variant="contained" onClick={handleSaveGroups}>Salvar</Button>
+          <Button
+            variant="contained"
+            onClick={handleSaveGroups}
+            disabled={!hasPermission('erp:usuarios:atribuir-grupos')}
+          >
+            Salvar
+          </Button>
         </DialogActions>
       </Dialog>
 
@@ -627,6 +659,7 @@ const UsersPage = () => {
               placeholder="Selecione as funcionalidades permitidas"
               showSelectAll
               chipDisplay="block"
+              disabled={!hasPermission('erp:usuarios:atribuir-permissoes-particulares')}
             />
             <MultiSelectPicker
               label="Funcionalidades negadas"
@@ -642,12 +675,19 @@ const UsersPage = () => {
               placeholder="Selecione as funcionalidades negadas"
               showSelectAll
               chipDisplay="block"
+              disabled={!hasPermission('erp:usuarios:atribuir-permissoes-particulares')}
             />
           </Stack>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setManageAccessDialog(prev => ({ ...prev, open: false }))} color="inherit" className="button-cancel">Cancelar</Button>
-          <Button variant="contained" onClick={handleSaveAccess}>Salvar</Button>
+          <Button
+            variant="contained"
+            onClick={handleSaveAccess}
+            disabled={!hasPermission('erp:usuarios:atribuir-permissoes-particulares')}
+          >
+            Salvar
+          </Button>
         </DialogActions>
       </Dialog>
 
@@ -665,4 +705,3 @@ const UsersPage = () => {
 }
 
 export default UsersPage
-
