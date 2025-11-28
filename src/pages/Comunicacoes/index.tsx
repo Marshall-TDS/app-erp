@@ -1,0 +1,302 @@
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Box, CircularProgress, Snackbar, Typography } from '@mui/material'
+import TableCard, {
+  type TableCardColumn,
+  type TableCardFormField,
+  type TableCardRow,
+} from '../../components/TableCard'
+import TextPicker from '../../components/TextPicker'
+import SelectPicker from '../../components/SelectPicker'
+import HtmlEditor from '../../components/HtmlEditor'
+import { useSearch } from '../../context/SearchContext'
+import { comunicacaoService, type ComunicacaoDTO } from '../../services/comunicacoes'
+import { remetenteService, type RemetenteDTO } from '../../services/remetentes'
+import './style.css'
+
+type ComunicacaoRow = TableCardRow & ComunicacaoDTO
+
+const DEFAULT_USER = 'admin'
+
+const ComunicacoesPage = () => {
+  const [comunicacoes, setComunicacoes] = useState<ComunicacaoRow[]>([])
+  const [remetentes, setRemetentes] = useState<RemetenteDTO[]>([])
+  const [loading, setLoading] = useState(true)
+  const [toast, setToast] = useState<{ open: boolean; message: string }>({ open: false, message: '' })
+  const [error, setError] = useState<string | null>(null)
+  const { setFilters, setPlaceholder, setQuery } = useSearch()
+
+  useEffect(() => {
+    setPlaceholder('')
+    const filters = [
+      { id: 'descricao', label: 'Descrição', field: 'descricao', type: 'text' as const, page: 'comunicacoes' },
+      { id: 'chave', label: 'Chave', field: 'chave', type: 'text' as const, page: 'comunicacoes' },
+    ]
+    setFilters(filters, 'descricao')
+    return () => {
+      setFilters([])
+      setPlaceholder('')
+      setQuery('')
+    }
+  }, [setFilters, setPlaceholder, setQuery])
+
+  const loadRemetentes = async () => {
+    try {
+      const data = await remetenteService.list()
+      setRemetentes(data)
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
+  const loadComunicacoes = async () => {
+    try {
+      const data = await comunicacaoService.list()
+      setComunicacoes(data.map((c) => ({ ...c })))
+    } catch (err) {
+      console.error(err)
+      setError('Não foi possível carregar comunicações')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    const fetchAll = async () => {
+      await loadRemetentes()
+      await loadComunicacoes()
+    }
+    fetchAll()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const getRemetenteNome = useCallback((remetenteId: string) => {
+    const remetente = remetentes.find((r) => r.id === remetenteId)
+    return remetente?.nome ?? remetenteId
+  }, [remetentes])
+
+  const handleAddComunicacao = async (data: Partial<ComunicacaoRow>) => {
+    try {
+      const payload = {
+        tipo: 'email' as const,
+        descricao: (data.descricao as string) ?? '',
+        assunto: (data.assunto as string) ?? '',
+        html: (data.html as string) ?? '',
+        remetenteId: (data.remetenteId as string) ?? '',
+        tipoEnvio: (data.tipoEnvio as 'imediato' | 'agendado') ?? 'imediato',
+        createdBy: DEFAULT_USER,
+      }
+      const created = await comunicacaoService.create(payload)
+      setComunicacoes((prev) => [...prev, { ...created }])
+      setToast({ open: true, message: 'Comunicação criada com sucesso' })
+    } catch (err) {
+      console.error(err)
+      setToast({ open: true, message: err instanceof Error ? err.message : 'Erro ao criar comunicação' })
+    }
+  }
+
+  const handleEditComunicacao = async (id: ComunicacaoRow['id'], data: Partial<ComunicacaoRow>) => {
+    try {
+      const payload = {
+        tipo: data.tipo as 'email' | undefined,
+        descricao: data.descricao as string,
+        assunto: data.assunto as string,
+        html: data.html as string,
+        remetenteId: data.remetenteId as string,
+        tipoEnvio: data.tipoEnvio as 'imediato' | 'agendado' | undefined,
+        updatedBy: DEFAULT_USER,
+      }
+      const updated = await comunicacaoService.update(id as string, payload)
+      setComunicacoes((prev) => prev.map((c) => (c.id === id ? { ...updated } : c)))
+      setToast({ open: true, message: 'Comunicação atualizada' })
+    } catch (err) {
+      console.error(err)
+      setToast({ open: true, message: err instanceof Error ? err.message : 'Erro ao atualizar' })
+    }
+  }
+
+  const handleDeleteComunicacao = async (id: ComunicacaoRow['id']) => {
+    try {
+      await comunicacaoService.remove(id as string)
+      setComunicacoes((prev) => prev.filter((c) => c.id !== id))
+      setToast({ open: true, message: 'Comunicação removida' })
+    } catch (err) {
+      console.error(err)
+      setToast({ open: true, message: err instanceof Error ? err.message : 'Erro ao remover' })
+    }
+  }
+
+  const handleBulkDelete = async (ids: ComunicacaoRow['id'][]) => {
+    try {
+      await Promise.all(ids.map((id) => comunicacaoService.remove(id as string)))
+      setComunicacoes((prev) => prev.filter((c) => !ids.includes(c.id)))
+      setToast({ open: true, message: 'Comunicações removidas' })
+    } catch (err) {
+      console.error(err)
+      setToast({ open: true, message: err instanceof Error ? err.message : 'Erro ao remover' })
+    }
+  }
+
+  const remetenteOptions = useMemo(() => 
+    remetentes.map((r) => ({ label: r.nome, value: r.id })),
+    [remetentes]
+  )
+
+  const comunicacaoFormFields: TableCardFormField<ComunicacaoRow>[] = useMemo(
+    () => [
+      {
+        key: 'tipo',
+        label: 'Tipo de comunicação',
+        required: true,
+        defaultValue: 'email',
+        renderInput: ({ value, onChange, field }) => {
+          const tipoValue = (value && typeof value === 'string' ? value : 'email') || 'email'
+          return (
+            <SelectPicker
+              label={field.label}
+              value={tipoValue}
+              onChange={(val) => onChange(val || 'email')}
+              options={[
+                { label: 'E-mail', value: 'email' },
+              ]}
+              fullWidth
+              required
+              disabled
+            />
+          )
+        },
+      },
+      {
+        key: 'descricao',
+        label: 'Descrição',
+        required: true,
+        renderInput: ({ value, onChange, field }) => (
+          <TextPicker
+            label={field.label}
+            value={typeof value === 'string' ? value : ''}
+            onChange={(text) => onChange(text)}
+            fullWidth
+            placeholder="Informe a descrição da comunicação"
+            required
+          />
+        ),
+      },
+      {
+        key: 'assunto',
+        label: 'Assunto',
+        required: true,
+        renderInput: ({ value, onChange, field }) => (
+          <TextPicker
+            label={field.label}
+            value={typeof value === 'string' ? value : ''}
+            onChange={(text) => onChange(text)}
+            fullWidth
+            placeholder="Informe o assunto do e-mail"
+            required
+          />
+        ),
+      },
+      {
+        key: 'html',
+        label: 'HTML',
+        required: true,
+        renderInput: ({ value, onChange, field }) => (
+          <HtmlEditor
+            label={field.label}
+            value={typeof value === 'string' ? value : ''}
+            onChange={(text) => onChange(text)}
+            fullWidth
+            placeholder="Digite o HTML do e-mail aqui..."
+            required
+          />
+        ),
+      },
+      {
+        key: 'remetenteId',
+        label: 'Remetente',
+        required: true,
+        renderInput: ({ value, onChange, field }) => (
+          <SelectPicker
+            label={field.label}
+            value={typeof value === 'string' ? value : ''}
+            onChange={(val) => onChange(val)}
+            options={remetenteOptions}
+            fullWidth
+            placeholder="Selecione o remetente"
+            required
+          />
+        ),
+      },
+      {
+        key: 'tipoEnvio',
+        label: 'Tipo de envio',
+        required: true,
+        renderInput: ({ value, onChange, field }) => (
+          <SelectPicker
+            label={field.label}
+            value={typeof value === 'string' ? value : 'imediato'}
+            onChange={(val) => onChange(val)}
+            options={[
+              { label: 'Imediato', value: 'imediato' },
+              { label: 'Agendado (em desenvolvimento)', value: 'agendado', disabled: true },
+            ]}
+            fullWidth
+            required
+          />
+        ),
+      },
+    ],
+    [remetenteOptions],
+  )
+
+  const tableColumns = useMemo<TableCardColumn<ComunicacaoRow>[]>(() => [
+    { key: 'descricao', label: 'Descrição' },
+    { key: 'assunto', label: 'Assunto' },
+    {
+      key: 'remetenteId',
+      label: 'Remetente',
+      render: (value: ComunicacaoRow['remetenteId']) => (
+        <Typography variant="body2">{getRemetenteNome(value)}</Typography>
+      ),
+    },
+    { key: 'tipo', label: 'Tipo' },
+    { key: 'tipoEnvio', label: 'Tipo de envio' },
+    { key: 'chave', label: 'Chave' },
+  ], [getRemetenteNome])
+
+  return (
+    <Box className="comunicacoes-page">
+      {loading ? (
+        <Box className="comunicacoes-page__loading">
+          <CircularProgress size={32} />
+          <Typography variant="body2" color="text.secondary">
+            Carregando comunicações...
+          </Typography>
+        </Box>
+      ) : (
+        <TableCard
+          title="Comunicações"
+          columns={tableColumns}
+          rows={comunicacoes}
+          onAdd={handleAddComunicacao}
+          onEdit={handleEditComunicacao}
+          onDelete={handleDeleteComunicacao}
+          onBulkDelete={handleBulkDelete}
+          formFields={comunicacaoFormFields}
+        />
+      )}
+
+      <Snackbar
+        open={toast.open || Boolean(error)}
+        autoHideDuration={4000}
+        onClose={() => {
+          setToast({ open: false, message: '' })
+          setError(null)
+        }}
+        message={toast.open ? toast.message : error ?? ''}
+      />
+    </Box>
+  )
+}
+
+export default ComunicacoesPage
+

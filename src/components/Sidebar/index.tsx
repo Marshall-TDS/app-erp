@@ -21,6 +21,10 @@ import {
   ChevronLeft,
   DarkMode,
   Logout,
+  MailOutlined,
+  EmailOutlined,
+  ContactMailOutlined,
+  SendOutlined,
 } from '@mui/icons-material'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import React, { useEffect, useState, useMemo } from 'react'
@@ -34,6 +38,10 @@ const iconMapping: Record<string, React.ReactElement> = {
   Groups: <Groups2Outlined />,
   AdminPanelSettings: <AdminPanelSettingsOutlined />,
   Inventory: <Inventory2Outlined />,
+  Mail: <MailOutlined />,
+  Email: <EmailOutlined />,
+  ContactMail: <ContactMailOutlined />,
+  Send: <SendOutlined />,
 }
 
 const getIcon = (iconName: string) => {

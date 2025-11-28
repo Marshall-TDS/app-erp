@@ -10,6 +10,8 @@ import SettingsPage from '../pages/Settings'
 import ExemploPage from '../pages/Exemplo'
 import AccessGroupsPage from '../pages/AccessGroups'
 import SetPasswordPage from '../pages/SetPassword'
+import RemetentesPage from '../pages/Remetentes'
+import ComunicacoesPage from '../pages/Comunicacoes'
 import MainLayout from '../components/MainLayout'
 import { ProtectedRoute } from '../components/ProtectedRoute'
 
@@ -32,6 +34,8 @@ const AppRoutes = () => (
         <Route path="/team" element={<TeamPage />} />
         <Route path="/users" element={<UsersPage />} />
         <Route path="/access/access-groups" element={<AccessGroupsPage />} />
+        <Route path="/comunicacoes/remetentes" element={<RemetentesPage />} />
+        <Route path="/comunicacoes/comunicacoes" element={<ComunicacoesPage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/exemplo" element={<ExemploPage />} />
       </Route>
