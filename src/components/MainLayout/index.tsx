@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { Box } from '@mui/material'
-import { Outlet, Navigate } from 'react-router-dom'
+import { Outlet, Navigate, useLocation } from 'react-router-dom'
 import { SearchProvider } from '../../context/SearchContext'
 import { useAuth } from '../../context/AuthContext'
 import Sidebar from '../Sidebar'
@@ -12,7 +12,8 @@ type MainLayoutProps = {
 }
 
 const MainLayout = ({ children }: MainLayoutProps) => {
-  const { isAuthenticated, loading } = useAuth()
+  const { isAuthenticated, loading, refreshPermissions } = useAuth()
+  const location = useLocation()
   const prefersDark =
     typeof window !== 'undefined' &&
     window.matchMedia &&
@@ -56,11 +57,18 @@ const MainLayout = ({ children }: MainLayoutProps) => {
     window.localStorage.setItem('marshall-theme-mode', themeMode)
   }, [themeMode])
 
+  // Atualizar permissões ao navegar
+  useEffect(() => {
+    if (isAuthenticated) {
+      refreshPermissions()
+    }
+  }, [location.pathname, isAuthenticated, refreshPermissions])
+
   return (
     <SearchProvider>
       <Box className="main-layout">
-        <Sidebar 
-          open={sidebarOpen} 
+        <Sidebar
+          open={sidebarOpen}
           onToggle={() => setSidebarOpen((prev) => !prev)}
           themeMode={themeMode}
           onChangeTheme={setThemeMode}

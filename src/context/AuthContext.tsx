@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
+import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react'
 import { authService, type AuthUser } from '../services/auth'
 
 interface AuthContextType {
@@ -7,6 +7,7 @@ interface AuthContextType {
   permissions: string[]
   login: (credentials: { loginOrEmail: string; password: string }) => Promise<void>
   logout: () => Promise<void>
+  refreshPermissions: () => Promise<void>
   loading: boolean
 }
 
@@ -34,7 +35,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     const loadAuth = () => {
       const storedUser = authService.getUser()
       const storedPermissions = authService.getPermissions()
-      
+
       if (storedUser && authService.isAuthenticated() && !authService.isTokenExpired()) {
         setUser(storedUser)
         setPermissions(storedPermissions)
@@ -44,7 +45,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         setUser(null)
         setPermissions([])
       }
-      
+
       setLoading(false)
     }
 
@@ -77,6 +78,17 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   }
 
+  const refreshPermissions = useCallback(async () => {
+    try {
+      const response = await authService.refreshToken()
+      if (response) {
+        setPermissions(authService.getPermissions())
+      }
+    } catch (error) {
+      console.error('Erro ao atualizar permissões:', error)
+    }
+  }, [])
+
   return (
     <AuthContext.Provider
       value={{
@@ -85,6 +97,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         permissions,
         login,
         logout,
+        refreshPermissions,
         loading,
       }}
     >

@@ -43,7 +43,7 @@ const AccessGroupsPage = () => {
   const [toast, setToast] = useState<{ open: boolean; message: string }>({ open: false, message: '' })
   const [error, setError] = useState<string | null>(null)
   const { setFilters, setPlaceholder, setQuery } = useSearch()
-  const { permissions } = useAuth()
+  const { permissions, refreshPermissions } = useAuth()
   const canDelete = permissions.includes('erp:grupos-acesso:excluir')
   const canEdit = permissions.includes('erp:grupos-acesso:editar')
   const canCreate = permissions.includes('erp:grupos-acesso:criar')
@@ -131,6 +131,7 @@ const AccessGroupsPage = () => {
       const updated = await accessGroupService.update(id as string, payload)
       setGroups((prev) => prev.map((group) => (group.id === id ? mapGroupToRow(updated) : group)))
       setToast({ open: true, message: 'Grupo atualizado' })
+      await refreshPermissions()
     } catch (err) {
       console.error(err)
       setToast({ open: true, message: err instanceof Error ? err.message : 'Erro ao atualizar grupo' })

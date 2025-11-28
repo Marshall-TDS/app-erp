@@ -1,4 +1,4 @@
-import { api } from './api'
+import { api, ApiError } from './api'
 
 export interface LoginCredentials {
   loginOrEmail: string
@@ -34,12 +34,12 @@ export const authService = {
   async login(credentials: LoginCredentials): Promise<LoginResponse> {
     // skipAuth=true porque ainda não temos o token
     const response = await api.post<LoginResponse>('/auth/login', credentials, { skipAuth: true })
-    
+
     // Armazenar tokens e dados do usuário
     localStorage.setItem(TOKEN_KEY, response.accessToken)
     localStorage.setItem(REFRESH_TOKEN_KEY, response.refreshToken)
     localStorage.setItem(USER_KEY, JSON.stringify(response.user))
-    
+
     return response
   },
 
@@ -51,16 +51,45 @@ export const authService = {
   },
 
   /**
+   * Atualiza o token de acesso usando o refresh token
+   */
+  async refreshToken(): Promise<LoginResponse | null> {
+    const refreshToken = this.getRefreshToken()
+    if (!refreshToken) return null
+
+    try {
+      // skipAuth=true para evitar loop infinito se usarmos interceptors que checam token
+      const response = await api.post<LoginResponse>('/auth/refresh-token', { refreshToken }, { skipAuth: true })
+
+      // Atualizar tokens
+      localStorage.setItem(TOKEN_KEY, response.accessToken)
+      localStorage.setItem(REFRESH_TOKEN_KEY, response.refreshToken)
+      // Opcional: atualizar dados do usuário se vierem atualizados
+      // localStorage.setItem(USER_KEY, JSON.stringify(response.user))
+
+      return response
+    } catch (error) {
+      console.error('Erro ao atualizar token:', error)
+
+      // Apenas fazer logout se for erro de autenticação (401)
+      if (error instanceof ApiError && error.status === 401) {
+        await this.logout()
+      }
+      return null
+    }
+  },
+
+  /**
    * Realiza logout e remove tokens
    */
   async logout(): Promise<void> {
     const refreshToken = this.getRefreshToken()
-    
+
     // Sempre remove os tokens localmente, mesmo se a chamada ao servidor falhar
     localStorage.removeItem(TOKEN_KEY)
     localStorage.removeItem(REFRESH_TOKEN_KEY)
     localStorage.removeItem(USER_KEY)
-    
+
     // Tenta invalidar o token no servidor (opcional, não bloqueia o logout)
     if (refreshToken) {
       try {
@@ -92,7 +121,7 @@ export const authService = {
   getUser(): AuthUser | null {
     const userStr = localStorage.getItem(USER_KEY)
     if (!userStr) return null
-    
+
     try {
       return JSON.parse(userStr) as AuthUser
     } catch {
@@ -132,7 +161,7 @@ export const authService = {
   getPermissions(): string[] {
     const token = this.getAccessToken()
     if (!token) return []
-    
+
     const decoded = this.decodeToken(token)
     return decoded?.permissions || []
   },
@@ -143,10 +172,10 @@ export const authService = {
   isTokenExpired(): boolean {
     const token = this.getAccessToken()
     if (!token) return true
-    
+
     const decoded = this.decodeToken(token)
     if (!decoded?.exp) return true
-    
+
     // exp está em segundos, Date.now() está em milissegundos
     return decoded.exp * 1000 < Date.now()
   },

@@ -1,5 +1,15 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3333/api'
 
+export class ApiError extends Error {
+  message: string
+  status: number
+  constructor(message: string, status: number) {
+    super(message)
+    this.message = message
+    this.status = status
+  }
+}
+
 const TOKEN_KEY = 'marshall_access_token'
 const REFRESH_TOKEN_KEY = 'marshall_refresh_token'
 const USER_KEY = 'marshall_user'
@@ -22,7 +32,7 @@ type RequestOptions = RequestInit & {
 
 async function request<TResponse>(path: string, options: RequestOptions = {}) {
   const { parseJson = true, headers, skipAuth = false, ...rest } = options
-  
+
   // Adicionar token de autenticação se disponível e não for skipAuth
   const authHeaders: Record<string, string> = {}
   if (!skipAuth) {
@@ -31,7 +41,7 @@ async function request<TResponse>(path: string, options: RequestOptions = {}) {
       authHeaders.Authorization = `Bearer ${token}`
     }
   }
-  
+
   const response = await fetch(`${API_BASE_URL}${path}`, {
     headers: {
       'Content-Type': 'application/json',
@@ -52,6 +62,8 @@ async function request<TResponse>(path: string, options: RequestOptions = {}) {
     }
   }
 
+  // ...
+
   if (!response.ok) {
     let message = `Erro ${response.status}`
     try {
@@ -60,7 +72,7 @@ async function request<TResponse>(path: string, options: RequestOptions = {}) {
     } catch {
       // ignore parse error
     }
-    throw new Error(message)
+    throw new ApiError(message, response.status)
   }
 
   if (!parseJson || response.status === 204) {
@@ -71,13 +83,13 @@ async function request<TResponse>(path: string, options: RequestOptions = {}) {
 }
 
 export const api = {
-  get: <TResponse>(path: string, options?: RequestOptions) => 
+  get: <TResponse>(path: string, options?: RequestOptions) =>
     request<TResponse>(path, { method: 'GET', ...options }),
   post: <TResponse>(path: string, body?: unknown, options?: RequestOptions) =>
     request<TResponse>(path, { method: 'POST', body: JSON.stringify(body), ...options }),
   put: <TResponse>(path: string, body?: unknown, options?: RequestOptions) =>
     request<TResponse>(path, { method: 'PUT', body: JSON.stringify(body), ...options }),
-  delete: <TResponse>(path: string, options?: RequestOptions) => 
+  delete: <TResponse>(path: string, options?: RequestOptions) =>
     request<TResponse>(path, { method: 'DELETE', ...options }),
 }
 

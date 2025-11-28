@@ -21,6 +21,7 @@ import TableCard, {
   type TableCardBulkAction,
 } from '../../components/TableCard'
 import { useSearch } from '../../context/SearchContext'
+import { useAuth } from '../../context/AuthContext'
 import TextPicker from '../../components/TextPicker'
 import MultiSelectPicker from '../../components/MultiSelectPicker'
 import MailPicker from '../../components/MailPicker'
@@ -69,6 +70,7 @@ const UsersPage = () => {
     deniedFeatures: string[]
   }>({ open: false, userId: null, allowFeatures: [], deniedFeatures: [] })
   const { setFilters, setPlaceholder, setQuery } = useSearch()
+  const { user: currentUser, refreshPermissions } = useAuth()
 
   useEffect(() => {
     setPlaceholder('')
@@ -177,6 +179,9 @@ const UsersPage = () => {
       setUsers((prev) => prev.map((user) => (user.id === manageGroupsDialog.userId ? mapUserToRow(updated) : user)))
       setToast({ open: true, message: 'Grupos atualizados com sucesso' })
       setManageGroupsDialog((prev) => ({ ...prev, open: false }))
+      if (currentUser?.id === manageGroupsDialog.userId) {
+        await refreshPermissions()
+      }
     } catch (err) {
       console.error(err)
       setToast({ open: true, message: err instanceof Error ? err.message : 'Erro ao atualizar grupos' })
@@ -209,6 +214,9 @@ const UsersPage = () => {
       setUsers((prev) => prev.map((user) => (user.id === manageAccessDialog.userId ? mapUserToRow(updated) : user)))
       setToast({ open: true, message: 'Acessos atualizados com sucesso' })
       setManageAccessDialog((prev) => ({ ...prev, open: false }))
+      if (currentUser?.id === manageAccessDialog.userId) {
+        await refreshPermissions()
+      }
     } catch (err) {
       console.error(err)
       setToast({ open: true, message: err instanceof Error ? err.message : 'Erro ao atualizar acessos' })
@@ -246,6 +254,9 @@ const UsersPage = () => {
       const updated = await userService.updateBasic(id as string, payload)
       setUsers((prev) => prev.map((user) => (user.id === id ? mapUserToRow(updated) : user)))
       setToast({ open: true, message: 'Usuário atualizado' })
+      if (currentUser?.id === id) {
+        await refreshPermissions()
+      }
     } catch (err) {
       console.error(err)
       setToast({ open: true, message: err instanceof Error ? err.message : 'Erro ao atualizar' })
