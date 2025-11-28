@@ -35,6 +35,17 @@ export type UpdateComunicacaoPayload = {
   updatedBy: string
 }
 
+export type SendEmailPayload = {
+  chave: string
+  destinatario: string
+  variaveis: string[]
+  anexos?: Array<{
+    filename: string
+    content: string // base64
+    contentType?: string
+  }>
+}
+
 const list = () => {
   const token = localStorage.getItem('marshall_access_token')
   return fetch(`${API_BASE_URL}/comunicacoes`, {
@@ -108,10 +119,30 @@ const remove = (id: string) => {
   })
 }
 
+const send = (payload: SendEmailPayload) => {
+  const token = localStorage.getItem('marshall_access_token')
+  return fetch(`${API_BASE_URL}/comunicacoes/enviar`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(payload),
+  }).then(async (res) => {
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({ message: `Erro ${res.status}` }))
+      throw new Error(error.message || `Erro ${res.status}`)
+    }
+    return res.json() as Promise<{ status: string; message: string }>
+  })
+}
+
 export const comunicacaoService = {
   list,
   create,
   update,
   remove,
+  send,
 }
 

@@ -46,8 +46,12 @@ export const authService = {
   /**
    * Solicita recuperação de senha
    */
-  async forgotPassword(email: string): Promise<void> {
-    await api.post('/auth/forgot-password', { email }, { skipAuth: true })
+  async forgotPassword(email: string): Promise<{ status: string; message: string }> {
+    return await api.post<{ status: string; message: string }>(
+      '/users/password/reset-request',
+      { email },
+      { skipAuth: true }
+    )
   },
 
   /**

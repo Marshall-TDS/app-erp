@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Box, CircularProgress, Snackbar, Typography } from '@mui/material'
+import { Box, CircularProgress, Snackbar, Typography, IconButton, Tooltip } from '@mui/material'
+import { ContentCopy, Check } from '@mui/icons-material'
 import TableCard, {
   type TableCardColumn,
   type TableCardFormField,
@@ -73,6 +74,20 @@ const ComunicacoesPage = () => {
     const remetente = remetentes.find((r) => r.id === remetenteId)
     return remetente?.nome ?? remetenteId
   }, [remetentes])
+
+  const [copiedKey, setCopiedKey] = useState<string | null>(null)
+
+  const handleCopyKey = async (chave: string) => {
+    try {
+      await navigator.clipboard.writeText(chave)
+      setCopiedKey(chave)
+      setToast({ open: true, message: 'Chave copiada para a área de transferência' })
+      setTimeout(() => setCopiedKey(null), 2000)
+    } catch (err) {
+      console.error('Erro ao copiar chave:', err)
+      setToast({ open: true, message: 'Erro ao copiar chave' })
+    }
+  }
 
   const handleAddComunicacao = async (data: Partial<ComunicacaoRow>) => {
     try {
@@ -244,8 +259,63 @@ const ComunicacoesPage = () => {
           />
         ),
       },
+      {
+        key: 'chave',
+        label: 'Chave',
+        renderInput: ({ value, field, formValues }) => {
+          const chave = formValues.chave || value || ''
+          if (!chave) return null
+          
+          return (
+            <Box>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                <Typography variant="body2" component="label" sx={{ fontWeight: 500 }}>
+                  {field.label}
+                </Typography>
+              </Box>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1,
+                  padding: '12px',
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  borderRadius: '4px',
+                  backgroundColor: 'action.hover',
+                }}
+              >
+                <Typography
+                  variant="body2"
+                  sx={{
+                    fontFamily: 'monospace',
+                    fontSize: '0.875rem',
+                    flex: 1,
+                    wordBreak: 'break-all',
+                  }}
+                >
+                  {chave}
+                </Typography>
+                <Tooltip title={copiedKey === chave ? 'Copiado!' : 'Copiar chave'}>
+                  <IconButton
+                    size="small"
+                    onClick={() => handleCopyKey(chave)}
+                    sx={{ padding: '4px' }}
+                  >
+                    {copiedKey === chave ? (
+                      <Check sx={{ fontSize: '18px', color: 'success.main' }} />
+                    ) : (
+                      <ContentCopy sx={{ fontSize: '18px' }} />
+                    )}
+                  </IconButton>
+                </Tooltip>
+              </Box>
+            </Box>
+          )
+        },
+      },
     ],
-    [remetenteOptions],
+    [remetenteOptions, copiedKey],
   )
 
   const tableColumns = useMemo<TableCardColumn<ComunicacaoRow>[]>(() => [
@@ -260,8 +330,34 @@ const ComunicacoesPage = () => {
     },
     { key: 'tipo', label: 'Tipo' },
     { key: 'tipoEnvio', label: 'Tipo de envio' },
-    { key: 'chave', label: 'Chave' },
-  ], [getRemetenteNome])
+    {
+      key: 'chave',
+      label: 'Chave',
+      render: (value: ComunicacaoRow['chave'], row: ComunicacaoRow) => (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.875rem' }}>
+            {value}
+          </Typography>
+          <Tooltip title={copiedKey === value ? 'Copiado!' : 'Copiar chave'}>
+            <IconButton
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation()
+                handleCopyKey(value)
+              }}
+              sx={{ padding: '4px' }}
+            >
+              {copiedKey === value ? (
+                <Check sx={{ fontSize: '16px', color: 'success.main' }} />
+              ) : (
+                <ContentCopy sx={{ fontSize: '16px' }} />
+              )}
+            </IconButton>
+          </Tooltip>
+        </Box>
+      ),
+    },
+  ], [getRemetenteNome, copiedKey])
 
   return (
     <Box className="comunicacoes-page">
