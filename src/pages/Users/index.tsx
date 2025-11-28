@@ -561,7 +561,7 @@ const UsersPage = () => {
                 chipDisplay="block"
               />
               <Stack spacing={0.5}>
-                <Typography variant="caption" color="text.secondary">
+                <Typography variant="caption" color="text.secondary" className="users-page__label">
                   Criado por
                 </Typography>
                 <Typography>
@@ -569,7 +569,7 @@ const UsersPage = () => {
                 </Typography>
               </Stack>
               <Stack spacing={0.5}>
-                <Typography variant="caption" color="text.secondary">
+                <Typography variant="caption" color="text.secondary" className="users-page__label">
                   Última atualização
                 </Typography>
                 <Typography>
