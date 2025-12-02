@@ -2,6 +2,7 @@ const API_BASE_URL = import.meta.env.VITE_API_COMUNICACOES_BASE_URL ?? 'http://l
 
 export type RemetenteDTO = {
   id: string
+  seqId?: number
   nome: string
   email: string
   smtpHost: string

@@ -8,6 +8,7 @@ export type FeatureDefinition = {
 
 export type AccessGroupDTO = {
   id: string
+  seqId?: number
   name: string
   code: string
   features: string[]

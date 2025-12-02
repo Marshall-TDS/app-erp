@@ -2,6 +2,7 @@ import { api } from './api'
 
 export type UserDTO = {
   id: string
+  seqId?: number
   fullName: string
   login: string
   email: string
