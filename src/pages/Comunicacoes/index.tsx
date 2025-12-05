@@ -358,7 +358,7 @@ const ComunicacoesPage = () => {
     {
       key: 'chave',
       label: 'Chave',
-      render: (value: ComunicacaoRow['chave'], row: ComunicacaoRow) => (
+      render: (value: ComunicacaoRow['chave']) => (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.875rem' }}>
             {value}

@@ -1,9 +1,8 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import {
   TextField,
   Box,
   IconButton,
-  Typography,
   InputAdornment,
   LinearProgress,
 } from '@mui/material'
@@ -134,7 +133,7 @@ const PasswordPicker = ({
     return value.length >= minLength
   }, [value, minLength, required])
 
-  const displayError = error || (value && !isValid)
+  const displayError = error || (value ? !isValid : false)
   const displayHelperText =
     helperText ||
     (showStrengthIndicator && value && focused

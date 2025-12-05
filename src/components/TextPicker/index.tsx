@@ -24,7 +24,7 @@ type TextPickerProps = {
   maxLength?: number
   showClearButton?: boolean
   startIcon?: React.ReactNode
-  type?: 'text' | 'search' | 'textarea'
+  type?: 'text' | 'search' | 'textarea' | 'number'
   autoFocus?: boolean
 }
 
@@ -83,11 +83,11 @@ const TextPicker = ({
     }
   }
 
-  const handleFocus = (event: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleFocus = () => {
     setFocused(true)
   }
 
-  const handleBlur = (event: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleBlur = () => {
     setFocused(false)
   }
 
