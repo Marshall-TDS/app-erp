@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  app-erp-homolog:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL_HOMOLOG}
+        VITE_API_COMUNICACOES_BASE_URL: ${VITE_API_COMUNICACOES_BASE_URL_HOMOLOG}
+    image: homolog-app-erp:latest
+    container_name: app-erp-homolog
+    restart: unless-stopped
+    ports:
+      - "5173:80"
+    environment:
+      - NODE_ENV=production
+    networks:
+      - marshall-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
+  app-erp-main:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL_MAIN}
+        VITE_API_COMUNICACOES_BASE_URL: ${VITE_API_COMUNICACOES_BASE_URL_MAIN}
+    image: app-erp:latest
+    container_name: app-erp-main
+    restart: unless-stopped
+    ports:
+      - "3173:80"
+    environment:
+      - NODE_ENV=production
+    networks:
+      - marshall-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
+networks:
+  marshall-network:
+    driver: bridge
+
