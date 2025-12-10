@@ -24,8 +24,9 @@ import {
   Tooltip,
   useTheme,
   useMediaQuery,
+  Snackbar,
 } from '@mui/material'
-import { Add, DeleteOutline, MoreVert, ViewModule, TableChart } from '@mui/icons-material'
+import { Add, DeleteOutline, MoreVert, ViewModule, TableChart, EditOutlined } from '@mui/icons-material'
 import type { SelectChangeEvent } from '@mui/material/Select'
 import './style.css'
 
@@ -96,6 +97,7 @@ type TableCardProps<T extends TableCardRow> = {
   disableDelete?: boolean
   disableEdit?: boolean
   disableView?: boolean
+  onRowClick?: (row: T) => void
 }
 
 type DialogState<T extends TableCardRow> =
@@ -117,6 +119,7 @@ const TableCard = <T extends TableCardRow>({
   disableDelete = false,
   disableEdit = false,
   disableView = false,
+  onRowClick,
 }: TableCardProps<T>) => {
   const { query, selectedFilter } = useSearch()
   const theme = useTheme()
@@ -230,7 +233,27 @@ const TableCard = <T extends TableCardRow>({
     setFormValues({})
   }
 
+  const [validationError, setValidationError] = useState<string | null>(null)
+
   const handleSubmit = () => {
+    // Validation
+    const errors: string[] = []
+    formSchema.forEach((field) => {
+      // Type assertion for form field
+      const formField = field as TableCardFormField<T>
+      if (formField.required) {
+        const value = formValues[field.key]
+        if (value === undefined || value === null || value === '' || (Array.isArray(value) && value.length === 0)) {
+          errors.push(field.label)
+        }
+      }
+    })
+
+    if (errors.length > 0) {
+      setValidationError(`Os seguintes campos são obrigatórios: ${errors.join(', ')}`)
+      return
+    }
+
     if (dialog.mode === 'add') {
       onAdd?.(formValues)
     }
@@ -451,8 +474,12 @@ const TableCard = <T extends TableCardRow>({
                     key={row.id}
                     className={`table-card__gmail-card ${isSelected ? 'table-card__gmail-card--selected' : ''}`}
                     onClick={() => {
-                      if (!isSelected && !disableView) {
-                        openDialog('edit', row)
+                      if (!disableView) {
+                        if (onRowClick) {
+                          onRowClick(row)
+                        } else {
+                          openDialog('edit', row)
+                        }
                       }
                     }}
                   >
@@ -550,8 +577,12 @@ const TableCard = <T extends TableCardRow>({
                       hover
                       className={`table-card__row ${selectedIds.includes(row.id) ? 'table-card__row--selected' : ''}`}
                       onClick={() => {
-                        if (!selectedIds.includes(row.id) && !disableView) {
-                          openDialog('edit', row)
+                        if (!disableView) {
+                          if (onRowClick) {
+                            onRowClick(row)
+                          } else {
+                            openDialog('edit', row)
+                          }
                         }
                       }}
                     >
@@ -616,6 +647,20 @@ const TableCard = <T extends TableCardRow>({
             {action.label}
           </MenuItem>
         ))}
+        {onEdit && (
+          <MenuItem
+            onClick={() => {
+              if (menuRow) {
+                openDialog('edit', menuRow)
+              }
+              handleCloseMenu()
+            }}
+            disabled={disableEdit}
+          >
+            <EditOutlined fontSize="small" style={{ marginRight: 8 }} />
+            Editar
+          </MenuItem>
+        )}
         {onDelete && (
           <MenuItem onClick={handleDeleteRow} disabled={disableDelete}>
             <DeleteOutline fontSize="small" style={{ marginRight: 8 }} />
@@ -726,6 +771,13 @@ const TableCard = <T extends TableCardRow>({
           </Box>,
           document.body,
         )}
+
+      <Snackbar
+        open={Boolean(validationError)}
+        autoHideDuration={6000}
+        onClose={() => setValidationError(null)}
+        message={validationError}
+      />
     </Box>
   )
 }

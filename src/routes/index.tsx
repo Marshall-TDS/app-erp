@@ -14,6 +14,7 @@ import RemetentesPage from '../pages/Remetentes'
 import ComunicacoesPage from '../pages/Comunicacoes'
 import MainLayout from '../components/MainLayout'
 import { ProtectedRoute } from '../components/ProtectedRoute'
+import FilePreview from '../components/FilePreview'
 
 const AppRoutes = () => (
   <BrowserRouter>
@@ -39,6 +40,14 @@ const AppRoutes = () => (
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/exemplo" element={<ExemploPage />} />
       </Route>
+      <Route
+        path="/file-preview"
+        element={
+          <ProtectedRoute>
+            <FilePreview />
+          </ProtectedRoute>
+        }
+      />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   </BrowserRouter>

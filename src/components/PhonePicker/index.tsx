@@ -21,6 +21,7 @@ type PhonePickerProps = {
   disabled?: boolean
   error?: boolean
   helperText?: string
+  required?: boolean
 }
 
 type Country = {
@@ -77,10 +78,10 @@ const parsePhoneNumber = (value: string): { country: Country; number: string } =
 // Formatar número de telefone
 const formatPhoneNumber = (number: string, country: Country): string => {
   if (!number) return ''
-  
+
   // Remove caracteres não numéricos
   const digits = number.replace(/\D/g, '')
-  
+
   // Formatação específica para Brasil
   if (country.code === 'BR') {
     if (digits.length <= 2) {
@@ -107,6 +108,7 @@ const PhonePicker = ({
   disabled = false,
   error = false,
   helperText,
+  required = false,
 }: PhonePickerProps) => {
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
@@ -145,11 +147,11 @@ const PhonePicker = ({
   const handleNumberChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (disabled) return
     const inputValue = event.target.value
-    
+
     // Formatar o número conforme o país
     const formatted = formatPhoneNumber(inputValue, selectedCountry)
     setFormattedNumber(formatted)
-    
+
     // Enviar valor completo com DDI
     const digits = inputValue.replace(/\D/g, '')
     const fullValue = selectedCountry.dialCode + digits
@@ -180,6 +182,7 @@ const PhonePicker = ({
         error={error}
         helperText={helperText}
         type="tel"
+        required={required}
         InputProps={{
           startAdornment: (
             <InputAdornment position="start">

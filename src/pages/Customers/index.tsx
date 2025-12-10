@@ -1,76 +1,68 @@
-import { useEffect, useState } from 'react'
-import { Box } from '@mui/material'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
+import {
+  Box,
+  CircularProgress,
+  Snackbar,
+  Typography,
+} from '@mui/material'
+import { VisibilityOutlined } from '@mui/icons-material'
 import TableCard, {
   type TableCardColumn,
+  type TableCardFormField,
   type TableCardRow,
+  type TableCardRowAction,
+  type TableCardBulkAction,
 } from '../../components/TableCard'
 import { useSearch } from '../../context/SearchContext'
+import { useAuth } from '../../context/AuthContext'
+import CPFCNPJPicker from '../../components/CPFCNPJPicker'
+import TextPicker from '../../components/TextPicker'
+import DatePicker from '../../components/DatePicker'
+import { customerService, type CustomerDTO } from '../../services/customers'
+import CustomerDashboard from './CustomerDashboard'
 import './style.css'
 
-type CustomerStatus = 'Ativo' | 'Inativo' | 'Banido'
-
 type CustomerRow = TableCardRow & {
+  id: string
   name: string
-  email: string
-  document: string
-  status: CustomerStatus
+  lastName: string
+  cpfCnpj: string
+  birthDate?: string | null
   createdAt: string
+  createdBy: string
+  updatedAt: string
+  updatedBy: string
 }
 
-const customerColumns: TableCardColumn<CustomerRow>[] = [
-  { key: 'name', label: 'Nome' },
-  { key: 'email', label: 'E-mail' },
-  { key: 'document', label: 'Documento' },
-  { key: 'status', label: 'Status', dataType: 'status' },
-  { key: 'birthday', label: 'Data de Nascimento', dataType: 'date' },
-  { key: 'createdAt', label: 'Cadastro', dataType: 'date' },
-]
-
-const initialCustomers: CustomerRow[] = [
-  {
-    id: '1',
-    name: 'Felipe Quintino Torres',
-    email: 'felipe.torres@example.com',
-    document: '5511993815132',
-    status: 'Ativo',
-    createdAt: '2025-11-14',
-    birthday: '1990-01-01',
-  },
-  {
-    id: '2',
-    name: 'Bianca Carvalho',
-    email: 'bianca.carvalho@example.com',
-    document: '84851236000190',
-    status: 'Ativo',
-    createdAt: '2025-10-02',
-    birthday: '1990-01-01',
-  },
-  {
-    id: '3',
-    name: 'Marcelo Azevedo',
-    email: 'marcelo.azevedo@example.com',
-    document: '07469382000152',
-    status: 'Inativo',
-    createdAt: '2025-09-21',
-    birthday: '1990-01-01',
-  },
-]
-
-const generateId = () =>
-  typeof crypto !== 'undefined' && 'randomUUID' in crypto
-    ? crypto.randomUUID()
-    : String(Date.now())
+const DEFAULT_USER = 'admin'
 
 const CustomersPage = () => {
-  const [customers, setCustomers] = useState<CustomerRow[]>(initialCustomers)
+  const [customers, setCustomers] = useState<CustomerRow[]>([])
+  const [loading, setLoading] = useState(true)
+  const [dashboardOpen, setDashboardOpen] = useState(false)
+  const [dashboardCustomerId, setDashboardCustomerId] = useState<string | null>(null)
+
+  const [searchParams, setSearchParams] = useSearchParams()
+
+  const [toast, setToast] = useState<{ open: boolean; message: string }>({ open: false, message: '' })
+  const [error, setError] = useState<string | null>(null)
+
   const { setFilters, setPlaceholder, setQuery } = useSearch()
+  const { permissions, user: currentUser } = useAuth()
+
+  const hasPermission = useCallback(
+    (permission: string) => {
+      return permissions.includes(permission)
+    },
+    [permissions],
+  )
 
   useEffect(() => {
     setPlaceholder('')
     const filters = [
       { id: 'name', label: 'Nome', field: 'name', type: 'text' as const, page: 'customers' },
-      { id: 'email', label: 'E-mail', field: 'email', type: 'text' as const, page: 'customers' },
-      { id: 'document', label: 'Documento', field: 'document', type: 'text' as const, page: 'customers' },
+      { id: 'cpfCnpj', label: 'CPF/CNPJ', field: 'cpfCnpj', type: 'text' as const, page: 'customers' },
     ]
     setFilters(filters, 'name')
     return () => {
@@ -80,46 +72,271 @@ const CustomersPage = () => {
     }
   }, [setFilters, setPlaceholder, setQuery])
 
-  const handleAddCustomer = (data: Partial<CustomerRow>) => {
-    const newCustomer: CustomerRow = {
-      id: generateId(),
-      name: (data.name as string) ?? 'Novo cliente',
-      email: (data.email as string) ?? 'email@empresa.com',
-      document: (data.document as string) ?? '00000000000',
-      status: (data.status as CustomerStatus) ?? 'Ativo',
-      createdAt: data.createdAt ?? new Date().toISOString(),
+  const mapCustomerToRow = useCallback(
+    (customer: CustomerDTO): CustomerRow => ({
+      ...customer,
+    }),
+    [],
+  )
+
+  const loadCustomers = async () => {
+    try {
+      setLoading(true)
+      const data = await customerService.list()
+      setCustomers(data.map(mapCustomerToRow))
+    } catch (err) {
+      console.error(err)
+      setError('Não foi possível carregar clientes')
+    } finally {
+      setLoading(false)
     }
-    setCustomers((prev) => [...prev, newCustomer])
   }
 
-  const handleEditCustomer = (id: CustomerRow['id'], data: Partial<CustomerRow>) => {
-    setCustomers((prev) =>
-      prev.map((customer) => (customer.id === id ? { ...customer, ...data } : customer)),
+  useEffect(() => {
+    if (hasPermission('comercial:clientes:listar')) {
+      loadCustomers()
+    } else {
+      setLoading(false)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [permissions])
+
+  // Sync Dashboard state with URL Query Params
+  useEffect(() => {
+    const customerIdParam = searchParams.get('customerId')
+    const canView = hasPermission('comercial:clientes:visualizar')
+
+    if (customerIdParam && canView) {
+      if (dashboardCustomerId !== customerIdParam || !dashboardOpen) {
+        setDashboardCustomerId(customerIdParam)
+        setDashboardOpen(true)
+      }
+    } else {
+      if (dashboardOpen) {
+        setDashboardOpen(false)
+        setDashboardCustomerId(null)
+      }
+    }
+  }, [searchParams, hasPermission, dashboardCustomerId, dashboardOpen])
+
+  const handleAddCustomer = async (data: Partial<CustomerRow>) => {
+    try {
+      const payload = {
+        name: (data.name as string) ?? '',
+        lastName: (data.lastName as string) ?? '',
+        cpfCnpj: (data.cpfCnpj as string) ?? '',
+        birthDate: data.birthDate || null,
+        createdBy: currentUser?.login ?? DEFAULT_USER,
+      }
+      await customerService.create(payload)
+      await loadCustomers()
+      setToast({ open: true, message: 'Cliente criado com sucesso' })
+    } catch (err) {
+      console.error(err)
+      setToast({ open: true, message: err instanceof Error ? err.message : 'Erro ao criar cliente' })
+    }
+  }
+
+
+
+  const handleDeleteCustomer = async (id: CustomerRow['id']) => {
+    try {
+      await customerService.remove(id as string)
+      setCustomers((prev) => prev.filter((customer) => customer.id !== id))
+      setToast({ open: true, message: 'Cliente removido' })
+    } catch (err) {
+      console.error(err)
+      setToast({ open: true, message: err instanceof Error ? err.message : 'Erro ao remover' })
+    }
+  }
+
+  const handleBulkDelete = async (ids: CustomerRow['id'][]) => {
+    try {
+      await Promise.all(ids.map((id) => customerService.remove(id as string)))
+      setCustomers((prev) => prev.filter((customer) => !ids.includes(customer.id)))
+      setToast({ open: true, message: 'Clientes removidos' })
+    } catch (err) {
+      console.error(err)
+      setToast({ open: true, message: err instanceof Error ? err.message : 'Erro ao remover' })
+    }
+  }
+
+  const handleOpenDashboard = (customer: CustomerRow) => {
+    setSearchParams((prev) => {
+      const newParams = new URLSearchParams(prev)
+      newParams.set('customerId', customer.id as string)
+      return newParams
+    })
+  }
+
+  const handleCloseDashboard = () => {
+    setSearchParams((prev) => {
+      const newParams = new URLSearchParams(prev)
+      newParams.delete('customerId')
+      return newParams
+    })
+  }
+
+  const customerFormFields: TableCardFormField<CustomerRow>[] = useMemo(
+    () => [
+      {
+        key: 'cpfCnpj',
+        label: 'CPF/CNPJ',
+        required: true,
+        renderInput: ({ value, onChange, field, disabled }) => (
+          <CPFCNPJPicker
+            label={field.label}
+            value={typeof value === 'string' ? value : ''}
+            onChange={(text) => onChange(text)}
+            fullWidth
+            placeholder="Informe CPF ou CNPJ"
+            required={field.required}
+            disabled={disabled}
+          />
+        ),
+      },
+      {
+        key: 'name',
+        label: 'Nome',
+        required: true,
+        renderInput: ({ value, onChange, field, disabled }) => (
+          <TextPicker
+            label={field.label}
+            value={typeof value === 'string' ? value : ''}
+            onChange={(text) => onChange(text)}
+            fullWidth
+            placeholder="Nome do cliente"
+            required={field.required}
+            disabled={disabled}
+          />
+        ),
+      },
+      {
+        key: 'lastName',
+        label: 'Sobrenome',
+        required: true,
+        renderInput: ({ value, onChange, field, disabled }) => (
+          <TextPicker
+            label={field.label}
+            value={typeof value === 'string' ? value : ''}
+            onChange={(text) => onChange(text)}
+            fullWidth
+            placeholder="Sobrenome do cliente"
+            required={field.required}
+            disabled={disabled}
+          />
+        ),
+      },
+      {
+        key: 'birthDate',
+        label: 'Data de Nascimento',
+        required: false,
+        renderInput: ({ value, onChange, field, disabled }) => (
+          <DatePicker
+            label={field.label}
+            value={typeof value === 'string' ? value : ''}
+            onChange={(date) => onChange(date)}
+            fullWidth
+            placeholder="Selecione a data"
+            required={field.required}
+            disabled={disabled}
+          />
+        ),
+      },
+    ],
+    [],
+  )
+
+  const rowActions: TableCardRowAction<CustomerRow>[] = useMemo(() => [
+    {
+      label: 'Ver',
+      icon: <VisibilityOutlined fontSize="small" />,
+      onClick: handleOpenDashboard,
+      disabled: !hasPermission('comercial:clientes:visualizar'),
+    },
+  ], [hasPermission])
+
+  const bulkActions: TableCardBulkAction<CustomerRow>[] = useMemo(() => [
+    {
+      label: 'Ver',
+      icon: <VisibilityOutlined />,
+      onClick: (ids) => {
+        const customer = customers.find((c) => c.id === ids[0])
+        if (customer) handleOpenDashboard(customer)
+      },
+      disabled: (ids) => ids.length !== 1 || !hasPermission('comercial:clientes:visualizar'),
+    },
+  ], [customers, hasPermission])
+
+  const tableColumns = useMemo<TableCardColumn<CustomerRow>[]>(() => [
+    { key: 'name', label: 'Nome' },
+    { key: 'lastName', label: 'Sobrenome' },
+    { key: 'cpfCnpj', label: 'CPF/CNPJ' },
+    { key: 'birthDate', label: 'Data de Nascimento', dataType: 'date' },
+    { key: 'createdAt', label: 'Cadastro', dataType: 'date' },
+  ], [])
+
+  if (!loading && !hasPermission('comercial:clientes:listar')) {
+    return (
+      <Box className="customers-page">
+        <Typography variant="h6" align="center" sx={{ mt: 4 }}>
+          Você não tem permissão para listar clientes
+        </Typography>
+      </Box>
     )
-  }
-
-  const handleDeleteCustomer = (id: CustomerRow['id']) => {
-    setCustomers((prev) => prev.filter((customer) => customer.id !== id))
-  }
-
-  const handleBulkDelete = (ids: CustomerRow['id'][]) => {
-    setCustomers((prev) => prev.filter((customer) => !ids.includes(customer.id)))
   }
 
   return (
     <Box className="customers-page">
-      <TableCard
-        title="Clientes"
-        columns={customerColumns}
-        rows={customers}
-        onAdd={handleAddCustomer}
-        onEdit={handleEditCustomer}
-        onDelete={handleDeleteCustomer}
-        onBulkDelete={handleBulkDelete}
+      {loading ? (
+        <Box className="customers-page__loading">
+          <CircularProgress size={32} />
+          <Typography variant="body2" color="text.secondary">
+            Carregando clientes...
+          </Typography>
+        </Box>
+      ) : (
+        <TableCard
+          title="Clientes"
+          columns={tableColumns}
+          rows={customers}
+          onAdd={hasPermission('comercial:clientes:criar') ? handleAddCustomer : undefined}
+
+          onDelete={handleDeleteCustomer}
+          onBulkDelete={hasPermission('comercial:clientes:excluir') ? handleBulkDelete : undefined}
+          formFields={customerFormFields}
+          rowActions={rowActions}
+          bulkActions={bulkActions}
+          // Here we use the new onRowClick logic
+          onRowClick={(row) => {
+            if (hasPermission('comercial:clientes:visualizar')) {
+              handleOpenDashboard(row)
+            }
+          }}
+          disableDelete={!hasPermission('comercial:clientes:excluir')}
+          disableEdit={!hasPermission('comercial:clientes:editar')}
+          disableView={!hasPermission('comercial:clientes:visualizar')}
+        />
+      )}
+
+      <CustomerDashboard
+        customerId={dashboardCustomerId}
+        open={dashboardOpen}
+        onClose={handleCloseDashboard}
+        onUpdate={loadCustomers}
+      />
+
+      <Snackbar
+        open={toast.open || Boolean(error)}
+        autoHideDuration={4000}
+        onClose={() => {
+          setToast({ open: false, message: '' })
+          setError(null)
+        }}
+        message={toast.open ? toast.message : error ?? ''}
       />
     </Box>
   )
 }
 
 export default CustomersPage
-

@@ -19,6 +19,7 @@ type DatePickerProps = {
   disabled?: boolean
   error?: boolean
   helperText?: string
+  required?: boolean
 }
 
 // Normalizar o valor da data para formato YYYY-MM-DD (sem problemas de fuso horário)
@@ -65,9 +66,10 @@ const DatePicker = ({
   disabled = false,
   error = false,
   helperText,
+  required = false,
 }: DatePickerProps) => {
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null)
-  
+
   const normalizedValue = normalizeDate(value || '')
   const [tempDate, setTempDate] = useState(normalizedValue)
 
@@ -114,10 +116,10 @@ const DatePicker = ({
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (disabled) return
     const newValue = event.target.value
-    
+
     // Atualizar o estado local imediatamente
     setTempDate(newValue)
-    
+
     // Passar o valor diretamente para o onChange
     // O input type="date" já valida o formato YYYY-MM-DD
     onChange(newValue)
@@ -178,7 +180,7 @@ const DatePicker = ({
   } else {
     currentDate = new Date()
   }
-  
+
   const monthNames = [
     'Janeiro',
     'Fevereiro',
@@ -197,7 +199,7 @@ const DatePicker = ({
   const weekDays = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
   const today = new Date()
   today.setHours(0, 0, 0, 0)
-  
+
   // Função para comparar datas sem considerar hora
   const isSameDate = (date1: Date, date2: Date): boolean => {
     return (
@@ -230,6 +232,7 @@ const DatePicker = ({
         disabled={disabled}
         error={error}
         helperText={helperText}
+        required={required}
         placeholder={placeholder}
         InputLabelProps={{
           shrink: true,
@@ -309,7 +312,7 @@ const DatePicker = ({
               const dayDate = new Date(day)
               dayDate.setHours(0, 0, 0, 0)
               const isToday = isSameDate(dayDate, today)
-              
+
               // Verificar se está selecionado comparando datas locais
               let isSelected = false
               if (tempDate && /^\d{4}-\d{2}-\d{2}$/.test(tempDate)) {
@@ -321,9 +324,8 @@ const DatePicker = ({
               return (
                 <Button
                   key={index}
-                  className={`date-picker-day ${
-                    isToday ? 'date-picker-day--today' : ''
-                  } ${isSelected ? 'date-picker-day--selected' : ''}`}
+                  className={`date-picker-day ${isToday ? 'date-picker-day--today' : ''
+                    } ${isSelected ? 'date-picker-day--selected' : ''}`}
                   onClick={() => handleDateSelect(day)}
                 >
                   {day.getDate()}

@@ -28,10 +28,11 @@ const clearAuth = () => {
 type RequestOptions = RequestInit & {
   parseJson?: boolean
   skipAuth?: boolean
+  baseUrl?: string
 }
 
 async function request<TResponse>(path: string, options: RequestOptions = {}) {
-  const { parseJson = true, headers, skipAuth = false, ...rest } = options
+  const { parseJson = true, headers, skipAuth = false, baseUrl, ...rest } = options
 
   // Adicionar token de autenticação se disponível e não for skipAuth
   const authHeaders: Record<string, string> = {}
@@ -42,7 +43,7 @@ async function request<TResponse>(path: string, options: RequestOptions = {}) {
     }
   }
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  const response = await fetch(`${baseUrl ?? API_BASE_URL}${path}`, {
     headers: {
       'Content-Type': 'application/json',
       Accept: 'application/json',

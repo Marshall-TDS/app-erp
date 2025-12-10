@@ -279,3 +279,89 @@ body {
 .theme-dark .access-denied-text {
   color: #ffffff !important;
 }
+
+/* 
+ * Customer Dashboard Styles
+ * Centralized styles for Customer Dashboard to ensure consistent Light/Dark mode behavior
+ */
+
+.customer-dashboard-title {
+  color: var(--color-text) !important;
+  font-family: var(--font-title);
+  font-weight: 700;
+}
+
+.customer-dashboard-subtitle {
+  color: var(--color-text) !important;
+  opacity: 0.9;
+}
+
+.customer-dashboard-card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  height: 100%;
+}
+
+.theme-dark .customer-dashboard-card {
+  border-color: var(--color-border-lighter);
+}
+
+.customer-dashboard-section-title {
+  color: var(--color-text) !important;
+  font-weight: 600;
+}
+
+.customer-dashboard-text-primary {
+  color: var(--color-text) !important;
+}
+
+.customer-dashboard-text-secondary {
+  color: var(--color-on-secondary) !important;
+}
+
+.customer-dashboard-label {
+  color: var(--color-on-secondary) !important;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.customer-dashboard-value {
+  color: var(--color-text) !important;
+  font-size: 0.95rem;
+}
+
+.customer-dashboard-empty-text {
+  color: var(--color-on-secondary) !important;
+  font-style: italic;
+  font-size: 0.875rem;
+}
+
+.theme-dark .customer-dashboard-empty-text {
+  color: var(--color-on-secondary) !important;
+  opacity: 0.8;
+}
+
+.customer-dashboard-header {
+  background-color: var(--color-background) !important;
+  color: var(--color-text) !important;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.theme-dark .customer-dashboard-header {
+  background-color: #000000 !important;
+  border-bottom-color: var(--color-border-lighter);
+}
+
+.customer-dashboard-list-item-border {
+  border-color: rgba(50, 50, 50, 1) !important;
+}
+/* File Upload Styles */
+.theme-dark .file-upload-size-text {
+  color: #ffffff !important;
+}
