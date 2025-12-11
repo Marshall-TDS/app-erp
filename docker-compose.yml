@@ -6,7 +6,8 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        VITE_API_BASE_URL: ${VITE_API_BASE_URL_HOMOLOG}
+        VITE_API_USUARIOS_BASE_URL: ${VITE_API_USUARIOS_BASE_URL_HOMOLOG}
+        VITE_API_CLIENTES_BASE_URL: ${VITE_API_CLIENTES_BASE_URL_HOMOLOG}
         VITE_API_COMUNICACOES_BASE_URL: ${VITE_API_COMUNICACOES_BASE_URL_HOMOLOG}
     image: homolog-app-erp:latest
     container_name: app-erp-homolog
@@ -29,7 +30,8 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        VITE_API_BASE_URL: ${VITE_API_BASE_URL_MAIN}
+        VITE_API_USUARIOS_BASE_URL: ${VITE_API_USUARIOS_BASE_URL_MAIN}
+        VITE_API_CLIENTES_BASE_URL: ${VITE_API_CLIENTES_BASE_URL_MAIN}
         VITE_API_COMUNICACOES_BASE_URL: ${VITE_API_COMUNICACOES_BASE_URL_MAIN}
     image: app-erp:latest
     container_name: app-erp-main

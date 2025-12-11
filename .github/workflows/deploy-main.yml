@@ -29,14 +29,16 @@ jobs:
           VPS_USER: ${{ secrets.VPS_USER }}
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_DEPLOY_PATH: ${{ secrets.VPS_DEPLOY_PATH }}
-          VITE_API_BASE_URL_MAIN: ${{ secrets.VITE_API_BASE_URL_MAIN }}
+          VITE_API_USUARIOS_BASE_URL_MAIN: ${{ secrets.VITE_API_USUARIOS_BASE_URL_MAIN }}
+          VITE_API_CLIENTES_BASE_URL_MAIN: ${{ secrets.VITE_API_CLIENTES_BASE_URL_MAIN }}
           VITE_API_COMUNICACOES_BASE_URL_MAIN: ${{ secrets.VITE_API_COMUNICACOES_BASE_URL_MAIN }}
         run: |
           ssh -i ~/.ssh/deploy_key ${VPS_USER}@${VPS_HOST} bash << ENDSSH
             set -e
             
             export VPS_DEPLOY_PATH="${{ secrets.VPS_DEPLOY_PATH }}"
-            export VITE_API_BASE_URL_MAIN="${{ secrets.VITE_API_BASE_URL_MAIN }}"
+            export VITE_API_USUARIOS_BASE_URL_MAIN="${{ secrets.VITE_API_USUARIOS_BASE_URL_MAIN }}"
+            export VITE_API_CLIENTES_BASE_URL_MAIN="${{ secrets.VITE_API_CLIENTES_BASE_URL_MAIN }}"
             export VITE_API_COMUNICACOES_BASE_URL_MAIN="${{ secrets.VITE_API_COMUNICACOES_BASE_URL_MAIN }}"
             
             # Navegar para o diretório do projeto

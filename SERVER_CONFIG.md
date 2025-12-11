@@ -26,8 +26,10 @@ Configure as seguintes secrets no GitHub (Settings → Secrets and variables →
 ### Secrets de APIs:
 | Secret | Descrição |
 |--------|-----------|
-| `VITE_API_BASE_URL_HOMOLOG` | URL da API de usuários para homologação |
-| `VITE_API_BASE_URL_MAIN` | URL da API de usuários para produção |
+| `VITE_API_USUARIOS_BASE_URL_HOMOLOG` | URL da API de usuários para homologação |
+| `VITE_API_USUARIOS_BASE_URL_MAIN` | URL da API de usuários para produção |
+| `VITE_API_CLIENTES_BASE_URL_HOMOLOG` | URL da API de clientes para homologação |
+| `VITE_API_CLIENTES_BASE_URL_MAIN` | URL da API de clientes para produção |
 | `VITE_API_COMUNICACOES_BASE_URL_HOMOLOG` | URL da API de comunicações para homologação |
 | `VITE_API_COMUNICACOES_BASE_URL_MAIN` | URL da API de comunicações para produção |
 

@@ -1,7 +1,7 @@
 
 import { api } from './api'
 
-const API_CLIENTES_URL = 'http://localhost:3335/api'
+const API_CLIENTES_URL = import.meta.env.VITE_API_CLIENTES_BASE_URL ?? 'http://localhost:3335/api'
 
 export type CustomerAddress = {
     id: string
