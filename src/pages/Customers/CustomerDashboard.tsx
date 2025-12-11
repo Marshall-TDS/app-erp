@@ -17,10 +17,6 @@ import {
     DialogContent,
     DialogTitle,
     Grid,
-    List,
-    ListItem,
-    ListItemIcon,
-    ListItemText,
     Stack,
     TextField,
     Typography,
@@ -46,10 +42,7 @@ import {
     type CustomerAddress,
     type CustomerBankAccount,
     type CustomerDocument,
-    type CreateBankAccountPayload,
-    type UpdateBankAccountPayload,
-    type CreateDocumentPayload,
-    type UpdateDocumentPayload
+    type CreateDocumentPayload
 } from '../../services/customers'
 import { getBankName } from '../../services/bankService'
 import { DashboardTopBar } from '../../components/Dashboard/DashboardTopBar'
