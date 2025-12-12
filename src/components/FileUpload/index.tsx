@@ -15,6 +15,9 @@ type FileUploadProps = {
     accept?: string
     error?: boolean
     helperText?: string
+    showPreview?: boolean
+    showDownload?: boolean
+    disabled?: boolean
 }
 
 const FileUpload = ({
@@ -28,7 +31,10 @@ const FileUpload = ({
     required = false,
     accept = "image/*,application/pdf",
     error = false,
-    helperText
+    helperText,
+    showPreview = true,
+    showDownload = true,
+    disabled = false
 }: FileUploadProps) => {
     const inputRef = useRef<HTMLInputElement>(null)
     const readerRef = useRef<FileReader | null>(null)
@@ -161,7 +167,7 @@ const FileUpload = ({
                             startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <CloudUpload />}
                             onClick={() => inputRef.current?.click()}
                             fullWidth={fullWidth}
-                            disabled={loading}
+                            disabled={loading || disabled}
                             sx={{
                                 flexGrow: 1,
                                 ...(!error && { borderColor: 'var(--color-border)' })
@@ -226,65 +232,73 @@ const FileUpload = ({
                         </Stack>
 
                         <Stack direction="row" spacing={0} sx={{ justifyContent: { xs: 'flex-end', sm: 'flex-start' }, width: { xs: '100%', sm: 'auto' } }}>
-                            <Tooltip title="Renomear">
-                                <IconButton
-                                    size="small"
-                                    onClick={startRename}
-                                    disabled={isRenaming}
-                                >
-                                    <DriveFileRenameOutline />
-                                </IconButton>
-                            </Tooltip>
+                            {!disabled && (
+                                <Tooltip title="Renomear">
+                                    <IconButton
+                                        size="small"
+                                        onClick={startRename}
+                                        disabled={isRenaming}
+                                    >
+                                        <DriveFileRenameOutline />
+                                    </IconButton>
+                                </Tooltip>
+                            )}
 
-                            <Tooltip title="Visualizar">
-                                <IconButton
-                                    size="small"
-                                    onClick={handleView}
-                                >
-                                    <Visibility />
-                                </IconButton>
-                            </Tooltip>
+                            {showPreview && (
+                                <Tooltip title="Visualizar">
+                                    <IconButton
+                                        size="small"
+                                        onClick={handleView}
+                                    >
+                                        <Visibility />
+                                    </IconButton>
+                                </Tooltip>
+                            )}
 
-                            <Tooltip title="Download">
-                                <IconButton
-                                    size="small"
-                                    onClick={() => {
-                                        const link = document.createElement('a')
-                                        link.href = safeValue
-                                        link.download = fileName || 'download'
-                                        document.body.appendChild(link)
-                                        link.click()
-                                        document.body.removeChild(link)
-                                    }}
-                                >
-                                    <Download />
-                                </IconButton>
-                            </Tooltip>
+                            {showDownload && (
+                                <Tooltip title="Download">
+                                    <IconButton
+                                        size="small"
+                                        onClick={() => {
+                                            const link = document.createElement('a')
+                                            link.href = safeValue
+                                            link.download = fileName || 'download'
+                                            document.body.appendChild(link)
+                                            link.click()
+                                            document.body.removeChild(link)
+                                        }}
+                                    >
+                                        <Download />
+                                    </IconButton>
+                                </Tooltip>
+                            )}
 
 
-                            <ClickAwayListener onClickAway={() => setConfirmDelete(false)}>
-                                <Box>
-                                    {!confirmDelete ? (
-                                        <IconButton
-                                            size="small"
-                                            color="default"
-                                            onClick={() => setConfirmDelete(true)}
-                                            title="Remover"
-                                        >
-                                            <Close />
-                                        </IconButton>
-                                    ) : (
-                                        <IconButton
-                                            size="small"
-                                            color="error"
-                                            onClick={clearFile}
-                                            title="Confirmar Exclusão"
-                                        >
-                                            <Delete />
-                                        </IconButton>
-                                    )}
-                                </Box>
-                            </ClickAwayListener>
+                            {!disabled && (
+                                <ClickAwayListener onClickAway={() => setConfirmDelete(false)}>
+                                    <Box>
+                                        {!confirmDelete ? (
+                                            <IconButton
+                                                size="small"
+                                                color="default"
+                                                onClick={() => setConfirmDelete(true)}
+                                                title="Remover"
+                                            >
+                                                <Close />
+                                            </IconButton>
+                                        ) : (
+                                            <IconButton
+                                                size="small"
+                                                color="error"
+                                                onClick={clearFile}
+                                                title="Confirmar Exclusão"
+                                            >
+                                                <Delete />
+                                            </IconButton>
+                                        )}
+                                    </Box>
+                                </ClickAwayListener>
+                            )}
                         </Stack>
                     </Box>
                     {/* Preview if image */}

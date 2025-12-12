@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect, type ReactNode } from 'react'
+import { useMemo, useState, useEffect, useRef, type ReactNode } from 'react'
 import { useSearch } from '../../context/SearchContext'
 import { createPortal } from 'react-dom'
 import {
@@ -26,7 +26,7 @@ import {
   useMediaQuery,
   Snackbar,
 } from '@mui/material'
-import { Add, DeleteOutline, MoreVert, ViewModule, TableChart, EditOutlined } from '@mui/icons-material'
+import { Add, DeleteOutline, Delete, MoreVert, ViewModule, TableChart, EditOutlined } from '@mui/icons-material'
 import type { SelectChangeEvent } from '@mui/material/Select'
 import './style.css'
 
@@ -137,6 +137,26 @@ const TableCard = <T extends TableCardRow>({
   const [formValues, setFormValues] = useState<Partial<T>>({})
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const [menuRow, setMenuRow] = useState<T | null>(null)
+  const [isBulkDeleteArmed, setIsBulkDeleteArmed] = useState(false)
+  const [isRowDeleteArmed, setIsRowDeleteArmed] = useState(false)
+
+  // Timeouts references to clear them if needed
+  // Timeouts references to clear them if needed
+  const bulkDeleteTimeoutRef = useRef<any>(null)
+  const rowDeleteTimeoutRef = useRef<any>(null)
+
+  // Clear timeouts on unmount
+  useEffect(() => {
+    return () => {
+      if (bulkDeleteTimeoutRef.current) clearTimeout(bulkDeleteTimeoutRef.current)
+      if (rowDeleteTimeoutRef.current) clearTimeout(rowDeleteTimeoutRef.current)
+    }
+  }, [])
+
+  // Reset delete armed state when selection changes
+  // useEffect(() => {
+  //   setIsBulkDeleteArmed(false)
+  // }, [selectedIds])
 
   // Define qual coluna será exibida como título e as demais como preview
   const [primaryColumn, ...secondaryColumns] = columns
@@ -274,9 +294,23 @@ const TableCard = <T extends TableCardRow>({
   const handleCloseMenu = () => {
     setAnchorEl(null)
     setMenuRow(null)
+    setIsRowDeleteArmed(false)
+    if (rowDeleteTimeoutRef.current) clearTimeout(rowDeleteTimeoutRef.current)
   }
 
-  const handleDeleteRow = () => {
+  const handleDeleteRow = (event: React.MouseEvent) => {
+    if (!isRowDeleteArmed) {
+      event.stopPropagation()
+      setIsRowDeleteArmed(true)
+      // Reset after 3 seconds
+      if (rowDeleteTimeoutRef.current) clearTimeout(rowDeleteTimeoutRef.current)
+      rowDeleteTimeoutRef.current = setTimeout(() => {
+        setIsRowDeleteArmed(false)
+      }, 3000)
+      return
+    }
+
+    if (rowDeleteTimeoutRef.current) clearTimeout(rowDeleteTimeoutRef.current)
     if (menuRow && !disableDelete) {
       onDelete?.(menuRow.id)
       handleCloseMenu()
@@ -284,8 +318,20 @@ const TableCard = <T extends TableCardRow>({
   }
 
   const handleBulkDelete = () => {
+    if (!isBulkDeleteArmed) {
+      setIsBulkDeleteArmed(true)
+      // Reset after 3 seconds
+      if (bulkDeleteTimeoutRef.current) clearTimeout(bulkDeleteTimeoutRef.current)
+      bulkDeleteTimeoutRef.current = setTimeout(() => {
+        setIsBulkDeleteArmed(false)
+      }, 3000)
+      return
+    }
+
+    if (bulkDeleteTimeoutRef.current) clearTimeout(bulkDeleteTimeoutRef.current)
     onBulkDelete?.(selectedIds)
     setSelectedIds([])
+    setIsBulkDeleteArmed(false)
   }
 
   const handleFieldChange = (key: keyof T, value: any) => {
@@ -662,8 +708,20 @@ const TableCard = <T extends TableCardRow>({
           </MenuItem>
         )}
         {onDelete && (
-          <MenuItem onClick={handleDeleteRow} disabled={disableDelete}>
-            <DeleteOutline fontSize="small" style={{ marginRight: 8 }} />
+          <MenuItem
+            onClick={handleDeleteRow}
+            onMouseLeave={() => {
+              setIsRowDeleteArmed(false)
+              if (rowDeleteTimeoutRef.current) clearTimeout(rowDeleteTimeoutRef.current)
+            }}
+            disabled={disableDelete}
+            sx={{ color: 'error.main' }}
+          >
+            {isRowDeleteArmed ? (
+              <Delete fontSize="small" style={{ marginRight: 8 }} color="error" />
+            ) : (
+              <DeleteOutline fontSize="small" style={{ marginRight: 8 }} color="error" />
+            )}
             Excluir
           </MenuItem>
         )}
@@ -744,15 +802,16 @@ const TableCard = <T extends TableCardRow>({
                     </span>
                   </Tooltip>
                 ))}
-                <Tooltip title="Excluir selecionados">
+                <Tooltip title={isBulkDeleteArmed ? 'Confirmar exclusão' : 'Excluir selecionados'}>
                   <span>
                     <IconButton
-                      color="primary"
+                      color="error"
                       onClick={handleBulkDelete}
                       disabled={!onBulkDelete}
                       aria-label="Excluir selecionados"
+                      sx={isBulkDeleteArmed ? { bgcolor: 'action.hover' } : {}}
                     >
-                      <DeleteOutline />
+                      {isBulkDeleteArmed ? <Delete /> : <DeleteOutline />}
                     </IconButton>
                   </span>
                 </Tooltip>
