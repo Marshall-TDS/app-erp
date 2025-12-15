@@ -1,0 +1,203 @@
+/* NumberPicker - Baseado no estilo do TextPicker para consistência */
+.number-picker-container {
+  width: 95%;
+  width: -webkit-fill-available;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.number-picker {
+  width: 100%;
+}
+
+.number-picker .MuiOutlinedInput-root {
+  background-color: var(--color-surface);
+  transition: all 0.2s ease;
+}
+
+.theme-dark .number-picker .MuiOutlinedInput-root {
+  background-color: var(--color-surface);
+  color: var(--color-text);
+}
+
+/* Input quando focado */
+.number-picker--focused .MuiOutlinedInput-root {
+  background-color: var(--color-surface);
+}
+
+.theme-dark .number-picker--focused .MuiOutlinedInput-root {
+  background-color: var(--color-surface);
+}
+
+/* Input quando com erro */
+.number-picker--error .MuiOutlinedInput-root {
+  background-color: var(--color-surface);
+}
+
+.theme-dark .number-picker--error .MuiOutlinedInput-root {
+  background-color: var(--color-surface);
+}
+
+/* Ícone inicial */
+.number-picker__start-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-on-secondary);
+  margin-right: 4px;
+}
+
+.number-picker__start-icon .MuiSvgIcon-root {
+  font-size: 1.25rem;
+}
+
+.theme-dark .number-picker__start-icon {
+  color: var(--color-on-secondary);
+}
+
+/* Quando focado, o ícone muda de cor */
+.number-picker--focused .number-picker__start-icon {
+  color: var(--color-primary);
+}
+
+.theme-dark .number-picker--focused .number-picker__start-icon {
+  color: var(--color-primary);
+}
+
+/* Botão de limpar */
+.number-picker__clear-btn {
+  color: var(--color-on-secondary);
+  padding: 4px;
+  transition: all 0.2s ease;
+  margin-right: -4px;
+}
+
+.number-picker__clear-btn:hover {
+  color: var(--color-text);
+  background-color: var(--color-hover);
+}
+
+.number-picker__clear-btn:disabled {
+  color: var(--color-on-secondary);
+  opacity: 0.5;
+}
+
+.theme-dark .number-picker__clear-btn {
+  color: var(--color-on-secondary);
+}
+
+.theme-dark .number-picker__clear-btn:hover {
+  color: var(--color-text);
+  background-color: var(--color-hover);
+}
+
+.number-picker__clear-btn .MuiSvgIcon-root {
+  font-size: 1.125rem;
+}
+
+/* Placeholder animado */
+.number-picker .MuiInputBase-input::placeholder {
+  color: var(--color-on-secondary);
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
+}
+
+.theme-dark .number-picker .MuiInputBase-input::placeholder {
+  color: var(--color-on-secondary);
+  opacity: 0.6;
+}
+
+.number-picker--focused .MuiInputBase-input::placeholder {
+  opacity: 0.4;
+}
+
+/* Label */
+.number-picker .MuiInputLabel-root {
+  color: var(--color-on-secondary);
+}
+
+.theme-dark .number-picker .MuiInputLabel-root {
+  color: var(--color-on-secondary);
+}
+
+.number-picker--focused .MuiInputLabel-root {
+  color: var(--color-primary);
+}
+
+.theme-dark .number-picker--focused .MuiInputLabel-root {
+  color: var(--color-primary);
+}
+
+/* Helper text */
+.number-picker .MuiFormHelperText-root {
+  margin-top: 4px;
+  font-size: 0.75rem;
+  color: var(--color-on-secondary);
+}
+
+.theme-dark .number-picker .MuiFormHelperText-root {
+  color: var(--color-on-secondary);
+}
+
+.number-picker--error .MuiFormHelperText-root {
+  color: var(--color-error, #f44336);
+}
+
+.theme-dark .number-picker--error .MuiFormHelperText-root {
+  color: var(--color-error, #ef5350);
+}
+
+/* Input desabilitado */
+.number-picker .MuiOutlinedInput-root.Mui-disabled {
+  background-color: var(--color-surface);
+  cursor: not-allowed;
+}
+
+.theme-dark .number-picker .MuiOutlinedInput-root.Mui-disabled {
+  background-color: var(--color-surface);
+}
+
+.number-picker .MuiOutlinedInput-root.Mui-disabled .number-picker__start-icon {
+  opacity: 0.5;
+}
+
+/* Animação de foco */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.number-picker__clear-btn {
+  animation: fadeIn 0.2s ease-out;
+}
+
+.number-picker .MuiFormHelperText-root {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.number-picker input[type="text"],
+.number-picker input[type="tel"] {
+  font-size: 0.9375rem;
+}
+
+.theme-dark .number-picker input {
+  color: var(--color-text);
+}
+
+/* Transições suaves */
+.number-picker .MuiOutlinedInput-root {
+  transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.number-picker__start-icon,
+.number-picker__clear-btn {
+  transition: color 0.2s ease, background-color 0.2s ease;
+}
