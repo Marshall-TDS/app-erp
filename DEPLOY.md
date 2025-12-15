@@ -107,6 +107,8 @@ Configure as seguintes secrets no GitHub Actions:
 - `VITE_API_CLIENTES_BASE_URL_MAIN` - URL da API de clientes para produção (ex: `https://api-clientes.marshalltds.com/api`)
 - `VITE_API_COMUNICACOES_BASE_URL_HOMOLOG` - URL da API de comunicações para homologação (ex: `https://homolog-api-comunicacoes.marshalltds.com/api`)
 - `VITE_API_COMUNICACOES_BASE_URL_MAIN` - URL da API de comunicações para produção (ex: `https://api-comunicacoes.marshalltds.com/api`)
+- `VITE_API_CONTRATOS_BASE_URL_HOMOLOG` - URL da API de contratos para homologação (ex: `https://homolog-api-contratos.marshalltds.com/api`)
+- `VITE_API_CONTRATOS_BASE_URL_MAIN` - URL da API de contratos para produção (ex: `https://api-contratos.marshalltds.com/api`)
 
 **⚠️ IMPORTANTE**: 
 - Todas essas secrets serão usadas automaticamente pelo GitHub Actions durante o deploy
@@ -237,12 +239,14 @@ cd /var/www/app-erp
 export VITE_API_USUARIOS_BASE_URL_HOMOLOG="https://homolog-api-usuarios.marshalltds.com/api"
 export VITE_API_CLIENTES_BASE_URL_HOMOLOG="https://homolog-api-clientes.marshalltds.com/api"
 export VITE_API_COMUNICACOES_BASE_URL_HOMOLOG="https://homolog-api-comunicacoes.marshalltds.com/api"
+export VITE_API_CONTRATOS_BASE_URL_HOMOLOG="https://homolog-api-contratos.marshalltds.com/api"
 ./scripts/deploy.sh homolog
 
 # Para produção - exportar variáveis primeiro
 export VITE_API_USUARIOS_BASE_URL_MAIN="https://api-usuarios.marshalltds.com/api"
 export VITE_API_CLIENTES_BASE_URL_MAIN="https://api-clientes.marshalltds.com/api"
 export VITE_API_COMUNICACOES_BASE_URL_MAIN="https://api-comunicacoes.marshalltds.com/api"
+export VITE_API_CONTRATOS_BASE_URL_MAIN="https://api-contratos.marshalltds.com/api"
 ./scripts/deploy.sh main
 ```
 
@@ -253,6 +257,7 @@ Ou manualmente:
 export VITE_API_USUARIOS_BASE_URL_HOMOLOG="https://homolog-api-usuarios.marshalltds.com/api"
 export VITE_API_CLIENTES_BASE_URL_HOMOLOG="https://homolog-api-clientes.marshalltds.com/api"
 export VITE_API_COMUNICACOES_BASE_URL_HOMOLOG="https://homolog-api-comunicacoes.marshalltds.com/api"
+export VITE_API_CONTRATOS_BASE_URL_HOMOLOG="https://homolog-api-contratos.marshalltds.com/api"
 git checkout homolog
 git pull origin homolog
 docker-compose build app-erp-homolog
@@ -262,6 +267,7 @@ docker-compose up -d app-erp-homolog
 export VITE_API_USUARIOS_BASE_URL_MAIN="https://api-usuarios.marshalltds.com/api"
 export VITE_API_CLIENTES_BASE_URL_MAIN="https://api-clientes.marshalltds.com/api"
 export VITE_API_COMUNICACOES_BASE_URL_MAIN="https://api-comunicacoes.marshalltds.com/api"
+export VITE_API_CONTRATOS_BASE_URL_MAIN="https://api-contratos.marshalltds.com/api"
 git checkout main
 git pull origin main
 docker-compose build app-erp-main
