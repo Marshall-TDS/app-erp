@@ -47,7 +47,7 @@ const CEPPicker = ({
 }: CEPPickerProps) => {
     const [loading, setLoading] = useState(false)
     const [fetchError, setFetchError] = useState(false)
-    const [lastFetchedCEP, setLastFetchedCEP] = useState('')
+    const [lastFetchedCEP, setLastFetchedCEP] = useState(cleanCEP(value))
     const inputRef = useRef<HTMLInputElement>(null)
 
     const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {

@@ -7,6 +7,10 @@ import DatePicker from '../../components/DatePicker'
 import CEPPicker from '../../components/CEPPicker'
 import BankCodePicker from '../../components/BankCodePicker'
 import FileUpload from '../../components/FileUpload'
+import PhonePicker from '../../components/PhonePicker'
+import { parsePhoneNumber, formatPhoneNumber } from '../../components/PhonePicker/utils'
+import MailPicker from '../../components/MailPicker'
+import NamePicker from '../../components/NamePicker'
 import {
     Box,
     Button,
@@ -22,6 +26,8 @@ import {
     Typography,
     FormControlLabel,
     Checkbox,
+    Snackbar,
+    Alert
 } from '@mui/material'
 import {
     LocationOn,
@@ -129,6 +135,15 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
     const [savingDocument, setSavingDocument] = useState(false)
 
     const [saving, setSaving] = useState(false)
+    const [snackbar, setSnackbar] = useState<{ open: boolean, message: string, severity: 'success' | 'error' | 'warning' | 'info' }>({
+        open: false,
+        message: '',
+        severity: 'error'
+    })
+
+    const handleCloseSnackbar = () => {
+        setSnackbar({ ...snackbar, open: false })
+    }
 
     useEffect(() => {
         if (customerId && open) {
@@ -173,6 +188,31 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
 
     const handleSaveEdit = async () => {
         if (!customer) return
+
+        const requiredFields = []
+        if (!editForm.cpfCnpj) requiredFields.push('CPF/CNPJ')
+        if (!editForm.name) requiredFields.push('Nome')
+        if (!editForm.lastName) requiredFields.push('Sobrenome')
+
+        if (requiredFields.length > 0) {
+            setSnackbar({
+                open: true,
+                message: `Preencha os campos obrigatórios: ${requiredFields.join(', ')}`,
+                severity: 'warning'
+            })
+            return
+        }
+
+        const cleanCpfCnpj = editForm.cpfCnpj.replace(/\D/g, '')
+        if (cleanCpfCnpj.length !== 11 && cleanCpfCnpj.length !== 14) {
+            setSnackbar({
+                open: true,
+                message: 'CPF/CNPJ inválido',
+                severity: 'warning'
+            })
+            return
+        }
+
         try {
             setSaving(true)
             await customerService.update(customer.id, {
@@ -188,8 +228,18 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
                 onUpdate()
             }
             setEditOpen(false)
+            setSnackbar({
+                open: true,
+                message: 'Cliente atualizado com sucesso!',
+                severity: 'success'
+            })
         } catch (error) {
             console.error('Erro ao salvar edição:', error)
+            setSnackbar({
+                open: true,
+                message: 'Erro ao atualizar cliente',
+                severity: 'error'
+            })
         } finally {
             setSaving(false)
         }
@@ -229,6 +279,40 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
 
     const handleSaveContact = async () => {
         if (!customer) return
+
+        const requiredFields = []
+        if (!contactForm.contactType) requiredFields.push('Tipo')
+        if (!contactForm.contactValue) requiredFields.push(contactForm.contactType || 'Valor')
+
+        if (requiredFields.length > 0) {
+            setSnackbar({
+                open: true,
+                message: `Preencha os campos obrigatórios: ${requiredFields.join(', ')}`,
+                severity: 'warning'
+            })
+            return
+        }
+
+        const invalidFields = []
+        if (contactForm.contactType === 'Email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactForm.contactValue)) {
+            invalidFields.push('Email')
+        }
+        if (['Telefone', 'Whatsapp'].includes(contactForm.contactType)) {
+            const digits = contactForm.contactValue.replace(/\D/g, '')
+            if (digits.length < 10) {
+                invalidFields.push(contactForm.contactType)
+            }
+        }
+
+        if (invalidFields.length > 0) {
+            setSnackbar({
+                open: true,
+                message: `Dados inválidos nos campos: ${invalidFields.join(', ')}`,
+                severity: 'warning'
+            })
+            return
+        }
+
         try {
             setSavingContact(true)
             if (editingContact) {
@@ -302,6 +386,38 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
 
     const handleSaveAddress = async () => {
         if (!customer) return
+
+        const requiredFields = []
+        if (!addressForm.addressType) requiredFields.push('Tipo')
+        if (!addressForm.postalCode) requiredFields.push('CEP')
+        if (!addressForm.street) requiredFields.push('Rua')
+        if (!addressForm.number) requiredFields.push('Número')
+        if (!addressForm.neighborhood) requiredFields.push('Bairro')
+        if (!addressForm.city) requiredFields.push('Cidade')
+        if (!addressForm.state) requiredFields.push('Estado')
+
+        if (requiredFields.length > 0) {
+            setSnackbar({
+                open: true,
+                message: `Preencha os campos obrigatórios: ${requiredFields.join(', ')}`,
+                severity: 'warning'
+            })
+            return
+        }
+
+        const invalidFields = []
+        if (addressForm.postalCode.replace(/\D/g, '').length !== 8) invalidFields.push('CEP')
+        if (addressForm.state.length !== 2) invalidFields.push('Estado')
+
+        if (invalidFields.length > 0) {
+            setSnackbar({
+                open: true,
+                message: `Dados inválidos nos campos: ${invalidFields.join(', ')}`,
+                severity: 'warning'
+            })
+            return
+        }
+
         try {
             setSavingAddress(true)
             if (editingAddress) {
@@ -370,6 +486,22 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
 
     const handleSaveAccount = async () => {
         if (!customer) return
+
+        const requiredFields = []
+        if (!bankForm.accountType) requiredFields.push('Tipo de Conta')
+        if (!bankForm.bankCode) requiredFields.push('Código do Banco')
+        if (!bankForm.branchCode) requiredFields.push('Agência')
+        if (!bankForm.accountNumber) requiredFields.push('Conta')
+
+        if (requiredFields.length > 0) {
+            setSnackbar({
+                open: true,
+                message: `Preencha os campos obrigatórios: ${requiredFields.join(', ')}`,
+                severity: 'warning'
+            })
+            return
+        }
+
         try {
             setSavingAccount(true)
             const payload = {
@@ -440,6 +572,20 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
 
     const handleSaveDocument = async () => {
         if (!customer) return
+
+        const requiredFields = []
+        if (!documentForm.documentType) requiredFields.push('Tipo de Documento')
+        if (!documentForm.file) requiredFields.push('Arquivo')
+
+        if (requiredFields.length > 0) {
+            setSnackbar({
+                open: true,
+                message: `Preencha os campos obrigatórios: ${requiredFields.join(', ')}`,
+                severity: 'warning'
+            })
+            return
+        }
+
         try {
             setSavingDocument(true)
             const payload: CreateDocumentPayload = {
@@ -539,7 +685,13 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
                                             items={customer.contacts || []}
                                             keyExtractor={(item) => item.id}
                                             renderIcon={(item) => item.contactType === 'Email' ? <Email /> : <Phone />}
-                                            renderText={(item) => item.contactValue}
+                                            renderText={(item) => {
+                                                if (['Telefone', 'Whatsapp', 'Celular'].includes(item.contactType)) {
+                                                    const parsed = parsePhoneNumber(item.contactValue)
+                                                    return formatPhoneNumber(parsed.number, parsed.country)
+                                                }
+                                                return item.contactValue
+                                            }}
                                             renderSecondaryText={(item) => `${item.contactType}${item.label ? ' • ' + item.label : ''}`}
                                             onAdd={permissions.includes('comercial:clientes:contatos:criar') ? handleAddContact : undefined}
                                             addButtonLabel="Adicionar contato"
@@ -692,7 +844,7 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
                             />
                         </Grid>
                         <Grid size={{ xs: 12 }}>
-                            <TextPicker
+                            <NamePicker
                                 label="Nome"
                                 value={editForm.name}
                                 onChange={(val) => setEditForm(prev => ({ ...prev, name: val }))}
@@ -701,7 +853,7 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
                             />
                         </Grid>
                         <Grid size={{ xs: 12 }}>
-                            <TextPicker
+                            <NamePicker
                                 label="Sobrenome"
                                 value={editForm.lastName}
                                 onChange={(val) => setEditForm(prev => ({ ...prev, lastName: val }))}
@@ -737,7 +889,11 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
                             <TextField
                                 label="Tipo"
                                 value={contactForm.contactType}
-                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setContactForm(prev => ({ ...prev, contactType: e.target.value }))}
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setContactForm(prev => ({
+                                    ...prev,
+                                    contactType: e.target.value,
+                                    contactValue: '' // Clear value on type change
+                                }))}
                                 fullWidth
                                 select
                                 required
@@ -749,15 +905,35 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
                             </TextField>
                         </Grid>
                         <Grid size={{ xs: 12, sm: 8 }}>
-                            <TextPicker
-                                label={contactForm.contactType}
-                                value={contactForm.contactValue}
-                                onChange={(val) => setContactForm(prev => ({ ...prev, contactValue: val }))}
-                                fullWidth
-                                required
-                                placeholder={contactForm.contactType === 'Email' ? 'exemplo@email.com' : '(00) 00000-0000'}
-                                disabled={!permissions.includes('comercial:clientes:contatos:editar')}
-                            />
+                            {contactForm.contactType === 'Email' ? (
+                                <MailPicker
+                                    label="Email"
+                                    value={contactForm.contactValue}
+                                    onChange={(val) => setContactForm(prev => ({ ...prev, contactValue: val }))}
+                                    fullWidth
+                                    required
+                                    disabled={!permissions.includes('comercial:clientes:contatos:editar')}
+                                />
+                            ) : ['Telefone', 'Whatsapp'].includes(contactForm.contactType) ? (
+                                <PhonePicker
+                                    label={contactForm.contactType}
+                                    value={contactForm.contactValue}
+                                    onChange={(val) => setContactForm(prev => ({ ...prev, contactValue: val }))}
+                                    fullWidth
+                                    required
+                                    disabled={!permissions.includes('comercial:clientes:contatos:editar')}
+                                />
+                            ) : (
+                                <TextPicker
+                                    label={contactForm.contactType}
+                                    value={contactForm.contactValue}
+                                    onChange={(val) => setContactForm(prev => ({ ...prev, contactValue: val }))}
+                                    fullWidth
+                                    required
+                                    placeholder={'(00) 00000-0000'}
+                                    disabled={!permissions.includes('comercial:clientes:contatos:editar')}
+                                />
+                            )}
                         </Grid>
                         <Grid size={{ xs: 12 }}>
                             <TextPicker
@@ -925,7 +1101,7 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
                             <TextPicker
                                 label="Agência"
                                 value={bankForm.branchCode}
-                                onChange={(val) => setBankForm(prev => ({ ...prev, branchCode: val }))}
+                                onChange={(val) => setBankForm(prev => ({ ...prev, branchCode: val.replace(/\D/g, '') }))}
                                 fullWidth
                                 required
                                 disabled={!permissions.includes('comercial:clientes:dados-bancarios:editar')}
@@ -935,7 +1111,7 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
                             <TextPicker
                                 label="Conta"
                                 value={bankForm.accountNumber}
-                                onChange={(val) => setBankForm(prev => ({ ...prev, accountNumber: val }))}
+                                onChange={(val) => setBankForm(prev => ({ ...prev, accountNumber: val.replace(/\D/g, '') }))}
                                 fullWidth
                                 required
                                 disabled={!permissions.includes('comercial:clientes:dados-bancarios:editar')}
@@ -960,7 +1136,7 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
                                         disabled={!permissions.includes('comercial:clientes:dados-bancarios:editar')}
                                     />
                                 }
-                                label="Conta Principal para Recebimento"
+                                label="Marcar como Conta Principal para Recebimento"
                             />
                         </Grid>
                     </Grid>
@@ -1036,6 +1212,12 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
                     </Button>
                 </DialogActions>
             </Dialog>
+
+            <Snackbar open={snackbar.open} autoHideDuration={6000} onClose={handleCloseSnackbar}>
+                <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
+                    {snackbar.message}
+                </Alert>
+            </Snackbar>
         </>
     )
 }

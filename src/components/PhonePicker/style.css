@@ -36,8 +36,8 @@
 }
 
 .phone-picker__country-btn {
-  padding: 4px 8px;
-  border-radius: 8px;
+  padding: 8px 8px;
+  border-radius: 4px;
   transition: background-color 0.2s ease;
   display: flex;
   align-items: center;
@@ -276,4 +276,3 @@
 .theme-dark .phone-picker__no-results .MuiTypography-root {
   color: var(--color-on-secondary);
 }
-

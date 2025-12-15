@@ -12,6 +12,8 @@ import {
 import { Phone, ExpandMore, Search } from '@mui/icons-material'
 import './style.css'
 
+import { COUNTRIES, type Country, parsePhoneNumber, formatPhoneNumber } from './utils'
+
 type PhonePickerProps = {
   label?: string
   value: string
@@ -22,81 +24,6 @@ type PhonePickerProps = {
   error?: boolean
   helperText?: string
   required?: boolean
-}
-
-type Country = {
-  code: string
-  name: string
-  dialCode: string
-  flag: string
-}
-
-// Lista de países com códigos DDI
-const COUNTRIES: Country[] = [
-  { code: 'BR', name: 'Brasil', dialCode: '+55', flag: '🇧🇷' },
-  { code: 'US', name: 'Estados Unidos', dialCode: '+1', flag: '🇺🇸' },
-  { code: 'AR', name: 'Argentina', dialCode: '+54', flag: '🇦🇷' },
-  { code: 'CL', name: 'Chile', dialCode: '+56', flag: '🇨🇱' },
-  { code: 'CO', name: 'Colômbia', dialCode: '+57', flag: '🇨🇴' },
-  { code: 'MX', name: 'México', dialCode: '+52', flag: '🇲🇽' },
-  { code: 'PE', name: 'Peru', dialCode: '+51', flag: '🇵🇪' },
-  { code: 'PT', name: 'Portugal', dialCode: '+351', flag: '🇵🇹' },
-  { code: 'ES', name: 'Espanha', dialCode: '+34', flag: '🇪🇸' },
-  { code: 'FR', name: 'França', dialCode: '+33', flag: '🇫🇷' },
-  { code: 'DE', name: 'Alemanha', dialCode: '+49', flag: '🇩🇪' },
-  { code: 'IT', name: 'Itália', dialCode: '+39', flag: '🇮🇹' },
-  { code: 'GB', name: 'Reino Unido', dialCode: '+44', flag: '🇬🇧' },
-  { code: 'JP', name: 'Japão', dialCode: '+81', flag: '🇯🇵' },
-  { code: 'CN', name: 'China', dialCode: '+86', flag: '🇨🇳' },
-  { code: 'IN', name: 'Índia', dialCode: '+91', flag: '🇮🇳' },
-  { code: 'AU', name: 'Austrália', dialCode: '+61', flag: '🇦🇺' },
-  { code: 'CA', name: 'Canadá', dialCode: '+1', flag: '🇨🇦' },
-]
-
-const DEFAULT_COUNTRY = COUNTRIES[0] // Brasil por padrão
-
-// Parsear número de telefone para extrair país e número
-const parsePhoneNumber = (value: string): { country: Country; number: string } => {
-  if (!value) {
-    return { country: DEFAULT_COUNTRY, number: '' }
-  }
-
-  // Se começa com +, tentar encontrar o país
-  if (value.startsWith('+')) {
-    for (const country of COUNTRIES) {
-      if (value.startsWith(country.dialCode)) {
-        const number = value.substring(country.dialCode.length).trim()
-        return { country, number }
-      }
-    }
-  }
-
-  // Se não encontrou, assumir país padrão e usar o valor completo
-  return { country: DEFAULT_COUNTRY, number: value.replace(/^\+?\d*/, '') }
-}
-
-// Formatar número de telefone
-const formatPhoneNumber = (number: string, country: Country): string => {
-  if (!number) return ''
-
-  // Remove caracteres não numéricos
-  const digits = number.replace(/\D/g, '')
-
-  // Formatação específica para Brasil
-  if (country.code === 'BR') {
-    if (digits.length <= 2) {
-      return digits
-    } else if (digits.length <= 6) {
-      return `(${digits.slice(0, 2)}) ${digits.slice(2)}`
-    } else if (digits.length <= 10) {
-      return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`
-    } else {
-      return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7, 11)}`
-    }
-  }
-
-  // Para outros países, retorna os dígitos
-  return digits
 }
 
 const PhonePicker = ({
@@ -120,7 +47,8 @@ const PhonePicker = ({
   useEffect(() => {
     const parsed = parsePhoneNumber(value || '')
     setSelectedCountry(parsed.country)
-    setFormattedNumber(parsed.number)
+    // Formata o número ao carregar ou receber atualização externa
+    setFormattedNumber(formatPhoneNumber(parsed.number, parsed.country))
   }, [value])
 
   const open = Boolean(anchorEl)
@@ -136,10 +64,60 @@ const PhonePicker = ({
     setSearchQuery('')
   }
 
+  // Validação de número de telefone (celular ou fixo)
+  const isValidPhone = (phoneNumber: string, countryCode: string): boolean => {
+    // Remove não numéricos
+    const cleanNumber = phoneNumber.replace(/\D/g, '')
+
+    // Validação específica para Brasil
+    if (countryCode === 'BR') {
+      // Verifica se começa com 55 (Brasil)
+      if (!cleanNumber.startsWith('55')) return false
+
+      // Pode ter 12 dígitos (55 + 2 DDD + 8 fixo) ou 13 dígitos (55 + 2 DDD + 9 celular)
+      if (cleanNumber.length === 12) {
+        // Validação básica de fixo (opcional: verificar se não começa com 0 ou 1 após DDD)
+        return true
+      }
+
+      if (cleanNumber.length === 13) {
+        // Celular: Pega o DDD (posições 2 e 3) e o primeiro dígito do número (posição 4)
+        const firstDigit = cleanNumber.substring(4, 5)
+        return firstDigit === '9'
+      }
+
+      return false
+    }
+
+    // Regra genérica para outros países
+    return cleanNumber.length >= 10 && cleanNumber.length <= 15
+  }
+
+  const [touched, setTouched] = useState(false)
+
+  const handleBlur = () => {
+    setTouched(true)
+  }
+
+  // Verifica erro
+  // O valor 'value' externo já vem completo (ex: 5511999999999)
+  const isPhoneValid = value ? isValidPhone(value.replace(/\D/g, ''), selectedCountry.code) : true
+  const hasError = error || (touched && !!value && !isPhoneValid)
+
   const handleCountrySelect = (country: Country) => {
     setSelectedCountry(country)
-    // Manter o número atual e atualizar apenas o DDI
-    const newValue = country.dialCode + (formattedNumber || '')
+
+    // Atualizar valor mantendo o número digitado mas mudando o DDI
+    // Remover DDI antigo do value se existir, ou usar formattedNumber limpo
+    let rawNumber = formattedNumber.replace(/\D/g, '')
+
+    // Reformata o número para o novo país
+    const formatted = formatPhoneNumber(rawNumber, country)
+    setFormattedNumber(formatted)
+
+    // Monta novo valor: DDI (sem +) + número
+    const dialCodeClean = country.dialCode.replace(/\D/g, '')
+    const newValue = dialCodeClean + rawNumber
     onChange(newValue)
     handleClose()
   }
@@ -148,13 +126,21 @@ const PhonePicker = ({
     if (disabled) return
     const inputValue = event.target.value
 
-    // Formatar o número conforme o país
-    const formatted = formatPhoneNumber(inputValue, selectedCountry)
+    // Remove caracteres não numéricos da entrada para processamento
+    const inputDigits = inputValue.replace(/\D/g, '')
+
+    // Formatar o número para exibição
+    const formatted = formatPhoneNumber(inputDigits, selectedCountry)
     setFormattedNumber(formatted)
 
-    // Enviar valor completo com DDI
-    const digits = inputValue.replace(/\D/g, '')
-    const fullValue = selectedCountry.dialCode + digits
+    // Para salvar: DDI (sem +) + dígitos do número
+    // Precisamos tomar cuidado para não duplicar o DDI se o usuário estiver editando
+    // O inputDigits aqui é apenas a parte do número (teoricamente), mas o formatPhoneNumber
+    // pode estar tratando de formas diferentes.
+    // Vamos assumir que o usuário digita apenas o número local (sem DDI) no input
+
+    const dialCodeClean = selectedCountry.dialCode.replace(/\D/g, '')
+    const fullValue = dialCodeClean + inputDigits
     onChange(fullValue)
   }
 
@@ -176,11 +162,12 @@ const PhonePicker = ({
         label={label}
         value={formattedNumber}
         onChange={handleNumberChange}
+        onBlur={handleBlur}
         fullWidth={fullWidth}
         placeholder={placeholder}
         disabled={disabled}
-        error={error}
-        helperText={helperText}
+        error={hasError}
+        helperText={hasError && !error ? 'Telefone inválido' : helperText}
         type="tel"
         required={required}
         InputProps={{

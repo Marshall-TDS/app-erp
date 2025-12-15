@@ -113,23 +113,59 @@ const DatePicker = ({
     handleDateSelect(today)
   }
 
+  const [localError, setLocalError] = useState(false)
+  const [localHelperText, setLocalHelperText] = useState('')
+
+  // ... (existing code)
+
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (disabled) return
     const newValue = event.target.value
+
+    // Validar se o ano tem mais de 4 dígitos
+    const year = newValue.split('-')[0]
+    if (year && year.length > 4) {
+      return
+    }
+
+    setLocalError(false)
+    setLocalHelperText('')
 
     // Atualizar o estado local imediatamente
     setTempDate(newValue)
 
     // Passar o valor diretamente para o onChange
-    // O input type="date" já valida o formato YYYY-MM-DD
     onChange(newValue)
   }
 
   // Handler para quando o campo perder o foco
   const handleBlur = () => {
     if (disabled) return
-    // Normalizar a data quando o campo perde o foco
+
     if (tempDate) {
+      // Validação estrita de data (ex: 31/02)
+      const parts = tempDate.split('-')
+      if (parts.length === 3) {
+        const year = parseInt(parts[0])
+        const month = parseInt(parts[1])
+        const day = parseInt(parts[2])
+        const date = new Date(year, month - 1, day)
+
+        if (
+          date.getFullYear() !== year ||
+          date.getMonth() !== month - 1 ||
+          date.getDate() !== day
+        ) {
+          setLocalError(true)
+          setLocalHelperText('Data inválida')
+          return
+        }
+
+        // Validação de ano mínimo razoável (opcional, mas evita 0001 se desejado,
+        // mas o pedido foi sobre "inválida". Vamos manter validação lógica de calendário)
+      }
+
+      // Normalizar a data quando o campo perde o foco
       const normalized = normalizeDate(tempDate)
       if (normalized && normalized !== tempDate) {
         setTempDate(normalized)
@@ -230,12 +266,15 @@ const DatePicker = ({
         fullWidth={fullWidth}
         type="date"
         disabled={disabled}
-        error={error}
-        helperText={helperText}
+        error={error || localError}
+        helperText={localError ? localHelperText : helperText}
         required={required}
         placeholder={placeholder}
         InputLabelProps={{
           shrink: true,
+        }}
+        inputProps={{
+          max: '9999-12-31',
         }}
         InputProps={{
           endAdornment: (
