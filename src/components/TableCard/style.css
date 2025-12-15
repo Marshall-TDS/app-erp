@@ -492,3 +492,107 @@
 .theme-dark .MuiSvgIcon-root {
   color: white;
 }
+
+/* Estilos modernos do Dialog - Design Apple */
+.table-card .MuiDialog-paper {
+  border-radius: 20px !important;
+  overflow: visible !important;
+}
+
+.table-card .MuiDialog-paper .MuiDialogContent-root {
+  overflow: visible !important;
+}
+
+.table-card .MuiDialogTitle-root {
+  padding: 24px 24px 16px 24px !important;
+  font-size: 20px !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.01em !important;
+  border-bottom: none !important;
+}
+
+.table-card .MuiDialogContent-root {
+  padding: 24px 24px 24px 24px !important;
+  padding-top: 24px !important;
+  overflow: visible !important;
+}
+
+/* Garantir espaço para o label flutuante do primeiro campo */
+.table-card .MuiDialogContent-root > *:first-child {
+  margin-top: 0 !important;
+}
+
+.table-card .MuiDialogContent-root .MuiStack-root > *:first-child {
+  margin-top: 8px !important;
+}
+
+.table-card .MuiDialogContent-root .MuiTextField-root:first-of-type {
+  margin-top: 8px !important;
+}
+
+/* Garantir que os labels flutuantes não sejam cortados */
+.table-card .MuiDialogContent-root .MuiInputLabel-root {
+  overflow: visible !important;
+}
+
+.table-card .MuiDialogContent-root .MuiFormLabel-root {
+  overflow: visible !important;
+}
+
+.table-card .MuiDialogActions-root {
+  padding: 16px 24px 24px 24px !important;
+  gap: 8px !important;
+  border-top: none !important;
+}
+
+/* TextFields menores e mais arredondados */
+.table-card .MuiDialog-root .MuiTextField-root {
+  margin-bottom: 0;
+}
+
+.table-card .MuiDialog-root .MuiOutlinedInput-root {
+  border-radius: 12px !important;
+  font-size: 15px !important;
+}
+
+.table-card .MuiDialog-root .MuiOutlinedInput-input {
+  padding: 10px 14px !important;
+}
+
+.table-card .MuiDialog-root .MuiInputLabel-root {
+  font-size: 15px !important;
+}
+
+.table-card .MuiDialog-root .MuiFormHelperText-root {
+  font-size: 13px !important;
+  margin-top: 4px !important;
+}
+
+/* Botões com bordas arredondadas */
+.table-card .MuiDialog-root .MuiButton-root {
+  border-radius: 10px !important;
+  padding: 8px 16px !important;
+  text-transform: none !important;
+  font-weight: 500 !important;
+  font-size: 15px !important;
+}
+
+.table-card .MuiDialog-root .MuiButton-contained {
+  font-weight: 600 !important;
+  padding: 8px 20px !important;
+  box-shadow: none !important;
+}
+
+.table-card .MuiDialog-root .MuiButton-contained:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Backdrop com blur (estilo Apple) */
+.table-card .MuiBackdrop-root {
+  backdrop-filter: blur(8px) !important;
+  background-color: rgba(0, 0, 0, 0.3) !important;
+}
+
+.theme-dark .table-card .MuiBackdrop-root {
+  background-color: rgba(0, 0, 0, 0.5) !important;
+}

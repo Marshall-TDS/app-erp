@@ -379,6 +379,23 @@ const TableCard = <T extends TableCardRow>({
           required={'required' in field ? field.required : undefined}
           placeholder={'placeholder' in field ? field.placeholder : undefined}
           disabled={('disabled' in field ? field.disabled : undefined) || (dialog.mode === 'edit' && disableEdit)}
+          size="small"
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              borderRadius: '12px',
+              fontSize: '15px',
+              '& fieldset': {
+                borderWidth: '1px',
+              },
+            },
+            '& .MuiInputLabel-root': {
+              fontSize: '15px',
+            },
+            '& .MuiFormHelperText-root': {
+              fontSize: '13px',
+              marginTop: '4px',
+            },
+          }}
         >
           {options.map((option) => (
             <MenuItem key={String(option.value)} value={option.value}>
@@ -420,6 +437,23 @@ const TableCard = <T extends TableCardRow>({
           required={'required' in field ? field.required : undefined}
           placeholder={'placeholder' in field ? field.placeholder : undefined}
           disabled={('disabled' in field ? field.disabled : undefined) || (dialog.mode === 'edit' && disableEdit)}
+          size="small"
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              borderRadius: '12px',
+              fontSize: '15px',
+              '& fieldset': {
+                borderWidth: '1px',
+              },
+            },
+            '& .MuiInputLabel-root': {
+              fontSize: '15px',
+            },
+            '& .MuiFormHelperText-root': {
+              fontSize: '13px',
+              marginTop: '4px',
+            },
+          }}
         >
           {options.map((option) => (
             <MenuItem key={String(option.value)} value={option.value}>
@@ -455,6 +489,23 @@ const TableCard = <T extends TableCardRow>({
         placeholder={'placeholder' in field ? field.placeholder : undefined}
         disabled={('disabled' in field ? field.disabled : undefined) || (dialog.mode === 'edit' && disableEdit)}
         InputLabelProps={inputType === 'date' ? { shrink: true } : undefined}
+        size="small"
+        sx={{
+          '& .MuiOutlinedInput-root': {
+            borderRadius: '12px',
+            fontSize: '15px',
+            '& fieldset': {
+              borderWidth: '1px',
+            },
+          },
+          '& .MuiInputLabel-root': {
+            fontSize: '15px',
+          },
+          '& .MuiFormHelperText-root': {
+            fontSize: '13px',
+            marginTop: '4px',
+          },
+        }}
       />
     )
   }
@@ -727,17 +778,73 @@ const TableCard = <T extends TableCardRow>({
         )}
       </Menu>
 
-      <Dialog open={dialog.open} onClose={closeDialog} fullWidth maxWidth="sm">
-        <DialogTitle>
+      <Dialog 
+        open={dialog.open} 
+        onClose={closeDialog} 
+        fullWidth 
+        maxWidth="sm"
+        PaperProps={{
+          sx: {
+            borderRadius: '20px',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
+            overflow: 'hidden',
+            '& .MuiDialogContent-root': {
+              overflow: 'visible',
+              paddingTop: '28px !important',
+            },
+          }
+        }}
+        BackdropProps={{
+          sx: {
+            backdropFilter: 'blur(8px)',
+            backgroundColor: 'rgba(0, 0, 0, 0.3)',
+          }
+        }}
+      >
+        <DialogTitle
+          sx={{
+            padding: '24px 24px 16px 24px',
+            fontSize: '20px',
+            fontWeight: 600,
+            letterSpacing: '-0.01em',
+            borderBottom: 'none',
+          }}
+        >
           {dialog.mode === 'add' ? 'Adicionar registro' : 'Editar registro'}
         </DialogTitle>
-        <DialogContent dividers>
-          <Stack spacing={2}>
+        <DialogContent 
+          dividers={false}
+          sx={{
+            padding: '24px 24px 24px 24px',
+            paddingTop: '24px !important',
+            '& > *:first-child': {
+              marginTop: '0 !important',
+            },
+          }}
+        >
+          <Stack spacing={1.5} sx={{ '& > *:first-child': { marginTop: '8px' } }}>
             {formSchema.map((field) => renderFormField(field))}
           </Stack>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={closeDialog} color="inherit" className="button-cancel">
+        <DialogActions
+          sx={{
+            padding: '16px 24px 24px 24px',
+            gap: '8px',
+            borderTop: 'none',
+          }}
+        >
+          <Button 
+            onClick={closeDialog} 
+            color="inherit" 
+            className="button-cancel"
+            sx={{
+              borderRadius: '10px',
+              padding: '8px 16px',
+              textTransform: 'none',
+              fontWeight: 500,
+              fontSize: '15px',
+            }}
+          >
             {dialog.mode === 'edit' && disableEdit ? 'Fechar' : 'Cancelar'}
           </Button>
           <Button
@@ -745,6 +852,17 @@ const TableCard = <T extends TableCardRow>({
             color="primary"
             onClick={handleSubmit}
             disabled={dialog.mode === 'edit' && disableEdit}
+            sx={{
+              borderRadius: '10px',
+              padding: '8px 20px',
+              textTransform: 'none',
+              fontWeight: 600,
+              fontSize: '15px',
+              boxShadow: 'none',
+              '&:hover': {
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+              }
+            }}
           >
             Salvar
           </Button>
