@@ -12,7 +12,6 @@ import TableCard, {
 } from '../../components/TableCard'
 import { useSearch } from '../../context/SearchContext'
 import { useAuth } from '../../context/AuthContext'
-import TextPicker from '../../components/TextPicker'
 import NumberPicker from '../../components/NumberPicker'
 import SelectPicker from '../../components/SelectPicker'
 import { modalidadeRentabilidadeService, type ModalidadeRentabilidadeDTO } from '../../services/modalidadesRentabilidade'
@@ -25,7 +24,7 @@ type ModalidadeRentabilidadeRow = TableCardRow & {
   rentabilidadePercentual: number
   prazoMeses: number
   cicloPagamentoId: string
-  frequenciaPagamento: 'MENSAL' | 'TRIMESTRAL' | 'FINAL'
+  frequenciaPagamento: number
   createdAt: string
   createdBy: string
   updatedAt?: string | null
@@ -109,7 +108,7 @@ const ModalidadesRentabilidadePage = () => {
         rentabilidadePercentual: (data.rentabilidadePercentual as number) ?? 0,
         prazoMeses: (data.prazoMeses as number) ?? 1,
         cicloPagamentoId: (data.cicloPagamentoId as string) ?? '',
-        frequenciaPagamento: (data.frequenciaPagamento as 'MENSAL' | 'TRIMESTRAL' | 'FINAL') ?? 'MENSAL',
+        frequenciaPagamento: (data.frequenciaPagamento as number) ?? 1,
         createdBy: currentUser?.login ?? DEFAULT_USER,
       }
       await modalidadeRentabilidadeService.create(payload)
@@ -127,7 +126,7 @@ const ModalidadesRentabilidadePage = () => {
         rentabilidadePercentual: data.rentabilidadePercentual as number | undefined,
         prazoMeses: data.prazoMeses as number | undefined,
         cicloPagamentoId: data.cicloPagamentoId as string | undefined,
-        frequenciaPagamento: data.frequenciaPagamento as 'MENSAL' | 'TRIMESTRAL' | 'FINAL' | undefined,
+        frequenciaPagamento: data.frequenciaPagamento as number | undefined,
         updatedBy: currentUser?.login ?? DEFAULT_USER,
       }
       await modalidadeRentabilidadeService.update(id as string, payload)
@@ -208,6 +207,26 @@ const ModalidadesRentabilidadePage = () => {
         ),
       },
       {
+        key: 'frequenciaPagamento',
+        label: 'Frequência de pagamento em meses',
+        required: true,
+        inputType: 'number',
+        renderInput: ({ value, onChange, field, disabled }) => (
+          <NumberPicker
+            label={field.label}
+            value={typeof value === 'number' && value >= 0 ? value : 1}
+            onChange={(num) => onChange(num)}
+            format="integer"
+            fullWidth
+            placeholder="Frequência de pagamento em meses"
+            required={field.required}
+            disabled={disabled}
+            min={0}
+            showClearButton={false}
+          />
+        ),
+      },
+      {
         key: 'cicloPagamentoId',
         label: 'Ciclo de Pagamento',
         required: true,
@@ -226,29 +245,6 @@ const ModalidadesRentabilidadePage = () => {
           />
         ),
       },
-      {
-        key: 'frequenciaPagamento',
-        label: 'Frequência de Pagamento',
-        required: true,
-        inputType: 'select',
-        options: [
-          { label: 'Mensal', value: 'MENSAL' },
-          { label: 'Trimestral', value: 'TRIMESTRAL' },
-          { label: 'Final', value: 'FINAL' },
-        ],
-        renderInput: ({ value, onChange, field, disabled }) => (
-          <SelectPicker
-            label={field.label}
-            value={typeof value === 'string' ? value : ''}
-            onChange={(val) => onChange(val as string)}
-            fullWidth
-            placeholder="Selecione a frequência"
-            required={field.required}
-            disabled={disabled}
-            options={field.options || []}
-          />
-        ),
-      },
     ],
     [ciclos],
   )
@@ -257,14 +253,15 @@ const ModalidadesRentabilidadePage = () => {
     { key: 'rentabilidadePercentual', label: 'Rentabilidade %', dataType: 'number', render: (value) => `${value}%` },
     { key: 'prazoMeses', label: 'Prazo (meses)', dataType: 'number' },
     { key: 'cicloPagamentoId', label: 'Ciclo de Pagamento', render: (value) => getCicloDescricao(value as string) },
-    { key: 'frequenciaPagamento', label: 'Frequência', render: (value) => {
-      const map: Record<string, string> = {
-        'MENSAL': 'Mensal',
-        'TRIMESTRAL': 'Trimestral',
-        'FINAL': 'Final',
+    { 
+      key: 'frequenciaPagamento', 
+      label: 'Frequência', 
+      dataType: 'number',
+      render: (value) => {
+        const num = typeof value === 'number' ? value : 0
+        return `${num} ${num === 1 ? 'mês' : 'meses'}`
       }
-      return map[value as string] || value
-    } },
+    },
     { key: 'createdAt', label: 'Cadastro', dataType: 'date' },
   ], [ciclos])
 

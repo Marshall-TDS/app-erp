@@ -8,7 +8,7 @@ export type ModalidadeRentabilidadeDTO = {
   rentabilidadePercentual: number
   prazoMeses: number
   cicloPagamentoId: string
-  frequenciaPagamento: 'MENSAL' | 'TRIMESTRAL' | 'FINAL'
+  frequenciaPagamento: number
   createdBy: string
   updatedBy?: string | null
   createdAt: string
@@ -19,7 +19,7 @@ export type CreateModalidadeRentabilidadePayload = {
   rentabilidadePercentual: number
   prazoMeses: number
   cicloPagamentoId: string
-  frequenciaPagamento: 'MENSAL' | 'TRIMESTRAL' | 'FINAL'
+  frequenciaPagamento: number
   createdBy: string
 }
 
@@ -27,7 +27,7 @@ export type UpdateModalidadeRentabilidadePayload = {
   rentabilidadePercentual?: number
   prazoMeses?: number
   cicloPagamentoId?: string
-  frequenciaPagamento?: 'MENSAL' | 'TRIMESTRAL' | 'FINAL'
+  frequenciaPagamento?: number
   updatedBy: string
 }
 
