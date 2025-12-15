@@ -7,7 +7,7 @@ import {
   Typography,
   Button,
 } from '@mui/material'
-import { CalendarToday } from '@mui/icons-material'
+import { CalendarToday, Close } from '@mui/icons-material'
 import './style.css'
 
 type DatePickerProps = {
@@ -256,6 +256,12 @@ const DatePicker = ({
     setTempDate(formattedDate)
   }
 
+  const handleClear = (event: React.MouseEvent) => {
+    event.stopPropagation()
+    setTempDate('')
+    onChange('')
+  }
+
   return (
     <>
       <TextField
@@ -278,16 +284,30 @@ const DatePicker = ({
         }}
         InputProps={{
           endAdornment: (
-            <IconButton
-              onClick={handleClick}
-              edge="end"
-              size="small"
-              aria-label="Abrir calendário"
-              disabled={disabled}
-              sx={{ mr: -1 }}
-            >
-              <CalendarToday fontSize="small" />
-            </IconButton>
+            <>
+              {(tempDate || normalizedValue) && !disabled && (
+                <IconButton
+                  onClick={handleClear}
+                  edge="end"
+                  size="small"
+                  aria-label="Limpar data"
+                  disabled={disabled}
+                  sx={{ mr: 1 }}
+                >
+                  <Close fontSize="small" />
+                </IconButton>
+              )}
+              <IconButton
+                onClick={handleClick}
+                edge="end"
+                size="small"
+                aria-label="Abrir calendário"
+                disabled={disabled}
+                sx={{ mr: -1 }}
+              >
+                <CalendarToday fontSize="small" />
+              </IconButton>
+            </>
           ),
         }}
         className="date-picker"

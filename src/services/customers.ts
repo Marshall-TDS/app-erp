@@ -68,6 +68,7 @@ export type CustomerDTO = {
     contacts?: CustomerContact[]
     bankAccounts?: CustomerBankAccount[]
     documents?: CustomerDocument[]
+    details?: CustomerDetail | null
 }
 
 export type CreateCustomerPayload = {
@@ -162,6 +163,7 @@ const adaptCustomer = (data: any): CustomerDTO => {
         // AND the key `addresses` is camelCase because the repository explicitly set it so.
         // So `data.addresses` is correct. `data.bankAccounts` is correct.
         documents: data.documents?.map(adaptDocument),
+        details: data.details ? adaptDetail(data.details) : null,
     }
 }
 
@@ -296,6 +298,52 @@ const updateDocument = async (customerId: string, documentId: string, payload: U
 const removeDocument = (customerId: string, documentId: string) =>
     api.delete<void>(`/clientes/${customerId}/documentos/${documentId}`, { baseUrl: API_CLIENTES_URL })
 
+// Details
+export type CustomerDetail = {
+    id: string
+    sex?: string
+    maritalStatus?: string
+    nationality?: string
+    occupation?: string
+    birthDate?: string | null
+    createdAt: string
+    updatedAt: string
+}
+
+export type CreateDetailPayload = {
+    sex?: string | null
+    maritalStatus?: string | null
+    nationality?: string | null
+    occupation?: string | null
+    birthDate?: string | null
+}
+
+export type UpdateDetailPayload = Partial<CreateDetailPayload>
+
+const adaptDetail = (data: any): CustomerDetail => ({
+    id: data.id,
+    sex: data.sex,
+    maritalStatus: data.marital_status,
+    nationality: data.nationality,
+    occupation: data.occupation,
+    birthDate: data.birth_date,
+    createdAt: data.created_at,
+    updatedAt: data.updated_at,
+})
+
+const createDetail = async (customerId: string, payload: CreateDetailPayload) => {
+    const response = await api.post<any>(`/clientes/${customerId}/detalhes`, payload, { baseUrl: API_CLIENTES_URL })
+    return adaptDetail(response)
+}
+
+const updateDetail = async (customerId: string, detailId: string, payload: UpdateDetailPayload) => {
+    const response = await api.put<any>(`/clientes/${customerId}/detalhes/${detailId}`, payload, { baseUrl: API_CLIENTES_URL })
+    return adaptDetail(response)
+}
+
+const removeDetail = (customerId: string, detailId: string) =>
+    api.delete<void>(`/clientes/${customerId}/detalhes/${detailId}`, { baseUrl: API_CLIENTES_URL })
+
 export const customerService = {
     list,
     create,
@@ -318,4 +366,8 @@ export const customerService = {
     createDocument,
     updateDocument,
     removeDocument,
+    // Details
+    createDetail,
+    updateDetail,
+    removeDetail,
 }

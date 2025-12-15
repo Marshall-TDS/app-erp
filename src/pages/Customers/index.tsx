@@ -18,7 +18,7 @@ import { useSearch } from '../../context/SearchContext'
 import { useAuth } from '../../context/AuthContext'
 import CPFCNPJPicker from '../../components/CPFCNPJPicker'
 import TextPicker from '../../components/TextPicker'
-import DatePicker from '../../components/DatePicker'
+
 import { customerService, type CustomerDTO } from '../../services/customers'
 import CustomerDashboard from './CustomerDashboard'
 import './style.css'
@@ -227,22 +227,7 @@ const CustomersPage = () => {
           />
         ),
       },
-      {
-        key: 'birthDate',
-        label: 'Data de Nascimento',
-        required: false,
-        renderInput: ({ value, onChange, field, disabled }) => (
-          <DatePicker
-            label={field.label}
-            value={typeof value === 'string' ? value : ''}
-            onChange={(date) => onChange(date)}
-            fullWidth
-            placeholder="Selecione a data"
-            required={field.required}
-            disabled={disabled}
-          />
-        ),
-      },
+
     ],
     [],
   )
@@ -272,7 +257,6 @@ const CustomersPage = () => {
     { key: 'name', label: 'Nome' },
     { key: 'lastName', label: 'Sobrenome' },
     { key: 'cpfCnpj', label: 'CPF/CNPJ' },
-    { key: 'birthDate', label: 'Data de Nascimento', dataType: 'date' },
     { key: 'createdAt', label: 'Cadastro', dataType: 'date' },
   ], [])
 

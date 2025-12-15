@@ -11,6 +11,7 @@ import PhonePicker from '../../components/PhonePicker'
 import { parsePhoneNumber, formatPhoneNumber } from '../../components/PhonePicker/utils'
 import MailPicker from '../../components/MailPicker'
 import NamePicker from '../../components/NamePicker'
+import SelectPicker from '../../components/SelectPicker'
 import {
     Box,
     Button,
@@ -57,6 +58,14 @@ import { DashboardBodyCard } from '../../components/Dashboard/DashboardBodyCard'
 import React from 'react'
 import { MenuItem } from '@mui/material'
 
+const MARITAL_STATUS_MAP: Record<string, string> = {
+    'solteiro(a)': 'Solteiro(a)',
+    'casado(a)': 'Casado(a)',
+    'separado(a) judicialmente': 'Separado(a) Judicialmente',
+    'divorciado(a)': 'Divorciado(a)',
+    'viúvo(a)': 'Viúvo(a)'
+}
+
 type CustomerDashboardProps = {
     customerId: string | null
     open: boolean
@@ -75,7 +84,6 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
         name: '',
         lastName: '',
         cpfCnpj: '',
-        birthDate: null as string | null
     })
 
     // Contact Management State
@@ -134,6 +142,67 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
     })
     const [savingDocument, setSavingDocument] = useState(false)
 
+    // Details State
+    const [detailsDialogOpen, setDetailsDialogOpen] = useState(false)
+    const [detailsForm, setDetailsForm] = useState({
+        sex: '',
+        maritalStatus: '',
+        nationality: 'Brasileiro',
+        occupation: '',
+        birthDate: null as string | null
+    })
+    const [savingDetails, setSavingDetails] = useState(false)
+
+    const handleEditDetails = () => {
+        if (!customer) return
+        const details = customer.details
+        setDetailsForm({
+            sex: details?.sex || '',
+            maritalStatus: details?.maritalStatus || '',
+            nationality: details?.nationality || 'Brasileiro',
+            occupation: details?.occupation || '',
+            birthDate: details?.birthDate || null
+        })
+        setDetailsDialogOpen(true)
+    }
+
+    const handleSaveDetails = async () => {
+        if (!customer) return
+
+        try {
+            setSavingDetails(true)
+            const payload = {
+                ...detailsForm,
+                // Ensure empty strings are treated as needed or just passed.
+                // The API schema handles optional/nullable.
+                sex: detailsForm.sex || null,
+                maritalStatus: detailsForm.maritalStatus || null,
+            }
+
+            if (customer.details?.id) {
+                await customerService.updateDetail(customer.id, customer.details.id, payload)
+            } else {
+                await customerService.createDetail(customer.id, payload)
+            }
+            await loadCustomerData(customer.id)
+            setDetailsDialogOpen(false)
+            setSnackbar({
+                open: true,
+                message: 'Detalhes atualizados com sucesso!',
+                severity: 'success'
+            })
+        } catch (error) {
+            console.error('Erro ao salvar detalhes:', error)
+            setSnackbar({
+                open: true,
+                message: 'Erro ao salvar detalhes',
+                severity: 'error'
+            })
+        } finally {
+            setSavingDetails(false)
+        }
+    }
+
     const [saving, setSaving] = useState(false)
     const [snackbar, setSnackbar] = useState<{ open: boolean, message: string, severity: 'success' | 'error' | 'warning' | 'info' }>({
         open: false,
@@ -181,7 +250,6 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
             name: customer.name,
             lastName: customer.lastName,
             cpfCnpj: customer.cpfCnpj,
-            birthDate: customer.birthDate || null
         })
         setEditOpen(true)
     }
@@ -220,7 +288,6 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
                 name: editForm.name,
                 lastName: editForm.lastName,
                 cpfCnpj: editForm.cpfCnpj,
-                birthDate: editForm.birthDate,
                 updatedBy: user?.login || 'system'
             })
             await loadCustomerData(customer.id)
@@ -665,166 +732,221 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
                                     CPF/CNPJ: {customer.cpfCnpj}
                                 </Typography>
                             )}
-                            {customer.birthDate && (
-                                <Typography variant="body1" className="customer-dashboard-subtitle" sx={{ mt: 0.5 }}>
-                                    Nascimento: {new Date(customer.birthDate).toLocaleDateString()}
-                                </Typography>
-                            )}
+
                         </DashboardTopCard>
 
                         {/* Google Contacts Style Grid */}
+                        {/* Main Grid: All items in one column flow or adjusted grid */}
+                        {/* Main Grid: All items in one responsive grid */}
                         <Grid container spacing={3}>
 
-                            {/* Left Column: Contacts & Addresses */}
-                            <Grid size={{ xs: 12, md: 4 }}>
-                                <Stack spacing={3}>
-                                    {/* Contacts Card */}
-                                    {permissions.includes('comercial:clientes:contatos:listar') && (
-                                        <DashboardBodyCardList<CustomerContact>
-                                            title="Contatos"
-                                            items={customer.contacts || []}
-                                            keyExtractor={(item) => item.id}
-                                            renderIcon={(item) => item.contactType === 'Email' ? <Email /> : <Phone />}
-                                            renderText={(item) => {
-                                                if (['Telefone', 'Whatsapp', 'Celular'].includes(item.contactType)) {
-                                                    const parsed = parsePhoneNumber(item.contactValue)
-                                                    return formatPhoneNumber(parsed.number, parsed.country)
-                                                }
-                                                return item.contactValue
-                                            }}
-                                            renderSecondaryText={(item) => `${item.contactType}${item.label ? ' • ' + item.label : ''}`}
-                                            onAdd={permissions.includes('comercial:clientes:contatos:criar') ? handleAddContact : undefined}
-                                            addButtonLabel="Adicionar contato"
-                                            onEdit={permissions.includes('comercial:clientes:contatos:editar') || permissions.includes('comercial:clientes:contatos:visualizar') ? handleEditContact : undefined}
-                                            onDelete={permissions.includes('comercial:clientes:contatos:excluir') ? handleDeleteContact : undefined}
-                                            emptyText="Nenhum contato registrado."
-                                        />
-                                    )}
-
-                                    {/* Addresses Card */}
-                                    {permissions.includes('comercial:clientes:enderecos:listar') && (
-                                        <DashboardBodyCardList<CustomerAddress>
-                                            title="Endereços"
-                                            items={customer.addresses || []}
-                                            keyExtractor={(item) => item.id}
-                                            renderIcon={() => <LocationOn />}
-                                            renderText={(item) => (
-                                                <>
-                                                    {item.street}, {item.number} {item.complement ? `- ${item.complement}` : ''}
-                                                </>
-                                            )}
-                                            renderSecondaryText={(item) => (
-                                                <Box component="span" sx={{ display: 'flex', flexDirection: 'column' }}>
-                                                    <Typography variant="body2" component="span" color="inherit">
-                                                        {item.neighborhood}, {item.city} - {item.state}
-                                                    </Typography>
-                                                    <Typography variant="caption" component="span" color="inherit">
-                                                        {item.postalCode} • {item.addressType}
-                                                    </Typography>
-                                                </Box>
-                                            )}
-                                            onAdd={permissions.includes('comercial:clientes:enderecos:criar') ? handleAddAddress : undefined}
-                                            addButtonLabel="Adicionar endereço"
-                                            onEdit={permissions.includes('comercial:clientes:enderecos:editar') || permissions.includes('comercial:clientes:enderecos:visualizar') ? handleEditAddress : undefined}
-                                            onDelete={permissions.includes('comercial:clientes:enderecos:excluir') ? handleDeleteAddress : undefined}
-                                            emptyText="Nenhum endereço registrado."
-                                        />
-                                    )}
-                                </Stack>
-                            </Grid>
-
-                            {/* Middle/Right Column: Bank Accounts, Documents, System Info */}
-                            <Grid size={{ xs: 12, md: 8 }}>
-                                <Grid container spacing={3}>
-                                    {/* Bank Accounts */}
-                                    {permissions.includes('comercial:clientes:dados-bancarios:listar') && (
-                                        <Grid size={{ xs: 12, lg: 6 }}>
-                                            <DashboardBodyCardList<CustomerBankAccount>
-                                                title="Dados Bancários"
-                                                items={customer.bankAccounts || []}
-                                                keyExtractor={(item) => item.id}
-                                                renderIcon={() => <AccountBalance />}
-                                                renderText={(item) => (
-                                                    <Stack direction="row" alignItems="center" spacing={1}>
-                                                        <Typography variant="subtitle2" fontWeight="bold">
-                                                            {item.bankCode}
-                                                        </Typography>
-                                                        <BankNameDisplay code={item.bankCode} />
-                                                        {item.isDefaultReceipt && <Chip label="Principal" size="small" color="success" sx={{ height: 20, fontSize: '0.625rem' }} />}
-                                                    </Stack>
-                                                )}
-                                                renderSecondaryText={(item) => (
-                                                    <Box>
-                                                        <Typography variant="body2" className="customer-dashboard-text-primary">
-                                                            {item.accountType} • Ag: {item.branchCode} • CC: {item.accountNumber}
-                                                        </Typography>
-                                                        {item.pixKey && (
-                                                            <Typography variant="caption" className="customer-dashboard-text-secondary" display="block">
-                                                                PIX: {item.pixKey}
-                                                            </Typography>
-                                                        )}
+                            {/* 1. Detalhes */}
+                            {permissions.includes('comercial:clientes:detalhes:visualizar') && (
+                                <Grid size={{ xs: 12, md: 4 }} sx={{ order: { xs: 1, md: 1 } }}>
+                                    <DashboardBodyCard
+                                        title="Detalhes"
+                                        action={
+                                            permissions.includes('comercial:clientes:detalhes:editar') && (
+                                                <Button
+                                                    variant="outlined"
+                                                    size="small"
+                                                    onClick={handleEditDetails}
+                                                    sx={{
+                                                        color: '#2196f3', // Blue color
+                                                        borderColor: '#2196f3', // Blue border
+                                                        '&:hover': {
+                                                            borderColor: '#1976d2',
+                                                            backgroundColor: 'rgba(33, 150, 243, 0.04)',
+                                                        },
+                                                        minWidth: { xs: 36, md: 64 },
+                                                        p: { xs: 0.5, md: '4px 10px' },
+                                                        textTransform: 'uppercase'
+                                                    }}
+                                                >
+                                                    <Edit fontSize="small" sx={{ mr: { xs: 0, md: 1 } }} />
+                                                    <Box component="span" sx={{ display: { xs: 'none', md: 'block' } }}>
+                                                        Editar
                                                     </Box>
-                                                )}
-                                                onAdd={permissions.includes('comercial:clientes:dados-bancarios:criar') ? handleAddAccount : undefined}
-                                                onEdit={permissions.includes('comercial:clientes:dados-bancarios:editar') || permissions.includes('comercial:clientes:dados-bancarios:visualizar') ? (item) => handleEditAccount(item as CustomerBankAccount) : undefined}
-                                                onDelete={permissions.includes('comercial:clientes:dados-bancarios:excluir') ? (item) => handleDeleteAccount(item as CustomerBankAccount) : undefined}
-                                                emptyText="Nenhuma conta bancária registrada."
-                                            />
-                                        </Grid>
-                                    )}
-
-                                    {/* Documents */}
-                                    {permissions.includes('comercial:clientes:documentos:listar') && (
-                                        <Grid size={{ xs: 12, lg: 6 }}>
-                                            <DashboardBodyCardList<CustomerDocument>
-                                                title="Documentos"
-                                                items={customer.documents || []}
-                                                keyExtractor={(item) => item.id}
-                                                renderIcon={() => <Description />}
-                                                renderText={(item) => item.documentType}
-                                                renderSecondaryText={(item) => (
-                                                    <React.Fragment>
-                                                        <Typography component="span" variant="caption" display="block" className="customer-dashboard-text-secondary">
-                                                            Enviado: {new Date(item.createdAt).toLocaleDateString()}
-                                                        </Typography>
-                                                        <Stack direction="row" spacing={1} mt={0.5} alignItems="center">
-                                                            {item.verificationStatus === 'verified' && <Typography variant="caption" color="success.main" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}><CheckCircle fontSize="inherit" /> Verificado</Typography>}
-                                                            {item.verificationStatus === 'rejected' && <Typography variant="caption" color="error.main" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}><Error fontSize="inherit" /> Rejeitado</Typography>}
-                                                            {item.verificationStatus === 'pending' && <Typography variant="caption" color="warning.main" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}><Warning fontSize="inherit" /> Pendente</Typography>}
-                                                        </Stack>
-                                                    </React.Fragment>
-                                                )}
-                                                onAdd={permissions.includes('comercial:clientes:documentos:criar') ? handleAddDocument : undefined}
-                                                onEdit={permissions.includes('comercial:clientes:documentos:editar') || permissions.includes('comercial:clientes:documentos:visualizar') ? (item) => handleEditDocument(item as CustomerDocument) : undefined}
-                                                onDelete={permissions.includes('comercial:clientes:documentos:excluir') ? (item) => handleDeleteDocument(item as CustomerDocument) : undefined}
-                                                emptyText="Nenhum documento registrado."
-                                            />
-                                        </Grid>
-                                    )}
-
-                                    {/* System Info */}
-                                    {permissions.includes('comercial:clientes:auditoria') && (
-                                        <Grid size={{ xs: 12 }}>
-                                            <DashboardBodyCard title="Informações do Sistema">
-                                                <Grid container spacing={2}>
-                                                    <Grid size={{ xs: 12, sm: 6 }}>
-                                                        <Typography variant="subtitle2" className="customer-dashboard-label">ID do Sistema</Typography>
-                                                        <Typography variant="body2" className="customer-dashboard-value" sx={{ fontFamily: 'monospace' }}>{customer.id}</Typography>
-                                                    </Grid>
-                                                    <Grid size={{ xs: 12, sm: 6 }}>
-                                                        <Typography variant="subtitle2" className="customer-dashboard-label">Criado por</Typography>
-                                                        <Typography variant="body2" className="customer-dashboard-value">{customer.createdBy} em {new Date(customer.createdAt).toLocaleString()}</Typography>
-                                                    </Grid>
-                                                    <Grid size={{ xs: 12, sm: 6 }}>
-                                                        <Typography variant="subtitle2" className="customer-dashboard-label">Atualizado por</Typography>
-                                                        <Typography variant="body2" className="customer-dashboard-value">{customer.updatedBy} em {new Date(customer.updatedAt).toLocaleString()}</Typography>
-                                                    </Grid>
+                                                </Button>
+                                            )
+                                        }
+                                    >
+                                        <Stack spacing={2}>
+                                            <Box>
+                                                <Typography variant="caption" className="customer-dashboard-label">Data de Nascimento</Typography>
+                                                <Typography variant="body1">
+                                                    {customer.details?.birthDate ? new Date(customer.details.birthDate).toLocaleDateString() : '-'}
+                                                </Typography>
+                                            </Box>
+                                            <Grid container spacing={2}>
+                                                <Grid size={{ xs: 6 }}>
+                                                    <Typography variant="caption" className="customer-dashboard-label">Sexo</Typography>
+                                                    <Typography variant="body2">{customer.details?.sex || '-'}</Typography>
                                                 </Grid>
-                                            </DashboardBodyCard>
-                                        </Grid>
-                                    )}
+                                                <Grid size={{ xs: 6 }}>
+                                                    <Typography variant="caption" className="customer-dashboard-label">Estado Civil</Typography>
+                                                    <Typography variant="body2">
+                                                        {customer.details?.maritalStatus ? (MARITAL_STATUS_MAP[customer.details.maritalStatus] || customer.details.maritalStatus) : '-'}
+                                                    </Typography>
+                                                </Grid>
+                                                <Grid size={{ xs: 6 }}>
+                                                    <Typography variant="caption" className="customer-dashboard-label">Nacionalidade</Typography>
+                                                    <Typography variant="body2">{customer.details?.nationality || '-'}</Typography>
+                                                </Grid>
+                                                <Grid size={{ xs: 6 }}>
+                                                    <Typography variant="caption" className="customer-dashboard-label">Profissão</Typography>
+                                                    <Typography variant="body2">{customer.details?.occupation || '-'}</Typography>
+                                                </Grid>
+                                            </Grid>
+                                        </Stack>
+                                    </DashboardBodyCard>
                                 </Grid>
-                            </Grid>
+                            )}
+
+                            {/* 2. Endereços (Desktop: 2, Mobile: 3) */}
+                            {permissions.includes('comercial:clientes:enderecos:listar') && (
+                                <Grid size={{ xs: 12, md: 4 }} sx={{ order: { xs: 3, md: 2 } }}>
+                                    <DashboardBodyCardList<CustomerAddress>
+                                        title="Endereços"
+                                        items={customer.addresses || []}
+                                        keyExtractor={(item) => item.id}
+                                        renderIcon={() => <LocationOn />}
+                                        renderText={(item) => (
+                                            <>
+                                                {item.street}, {item.number} {item.complement ? `- ${item.complement}` : ''}
+                                            </>
+                                        )}
+                                        renderSecondaryText={(item) => (
+                                            <Box component="span" sx={{ display: 'flex', flexDirection: 'column' }}>
+                                                <Typography variant="body2" component="span" color="inherit">
+                                                    {item.neighborhood}, {item.city} - {item.state}
+                                                </Typography>
+                                                <Typography variant="caption" component="span" color="inherit">
+                                                    {item.postalCode} • {item.addressType}
+                                                </Typography>
+                                            </Box>
+                                        )}
+                                        onAdd={permissions.includes('comercial:clientes:enderecos:criar') ? handleAddAddress : undefined}
+                                        addButtonLabel="Adicionar endereço"
+                                        onEdit={permissions.includes('comercial:clientes:enderecos:editar') || permissions.includes('comercial:clientes:enderecos:visualizar') ? handleEditAddress : undefined}
+                                        onDelete={permissions.includes('comercial:clientes:enderecos:excluir') ? handleDeleteAddress : undefined}
+                                        emptyText="Nenhum endereço registrado."
+                                    />
+                                </Grid>
+                            )}
+
+                            {/* 3. Contatos (Desktop: 3, Mobile: 2) */}
+                            {permissions.includes('comercial:clientes:contatos:listar') && (
+                                <Grid size={{ xs: 12, md: 4 }} sx={{ order: { xs: 2, md: 3 } }}>
+                                    <DashboardBodyCardList<CustomerContact>
+                                        title="Contatos"
+                                        items={customer.contacts || []}
+                                        keyExtractor={(item) => item.id}
+                                        renderIcon={(item) => item.contactType === 'Email' ? <Email /> : <Phone />}
+                                        renderText={(item) => {
+                                            if (['Telefone', 'Whatsapp', 'Celular'].includes(item.contactType)) {
+                                                const parsed = parsePhoneNumber(item.contactValue)
+                                                return formatPhoneNumber(parsed.number, parsed.country)
+                                            }
+                                            return item.contactValue
+                                        }}
+                                        renderSecondaryText={(item) => `${item.contactType}${item.label ? ' • ' + item.label : ''}`}
+                                        onAdd={permissions.includes('comercial:clientes:contatos:criar') ? handleAddContact : undefined}
+                                        addButtonLabel="Adicionar contato"
+                                        onEdit={permissions.includes('comercial:clientes:contatos:editar') || permissions.includes('comercial:clientes:contatos:visualizar') ? handleEditContact : undefined}
+                                        onDelete={permissions.includes('comercial:clientes:contatos:excluir') ? handleDeleteContact : undefined}
+                                        emptyText="Nenhum contato registrado."
+                                    />
+                                </Grid>
+                            )}
+
+                            {/* 4. Dados Bancários (Desktop: 4, Mobile: 4) */}
+                            {permissions.includes('comercial:clientes:dados-bancarios:listar') && (
+                                <Grid size={{ xs: 12, md: 4 }} sx={{ order: { xs: 4, md: 4 } }}>
+                                    <DashboardBodyCardList<CustomerBankAccount>
+                                        title="Dados Bancários"
+                                        items={customer.bankAccounts || []}
+                                        keyExtractor={(item) => item.id}
+                                        renderIcon={() => <AccountBalance />}
+                                        renderText={(item) => (
+                                            <Stack direction="row" alignItems="center" spacing={1}>
+                                                <Typography variant="subtitle2" fontWeight="bold">
+                                                    {item.bankCode}
+                                                </Typography>
+                                                <BankNameDisplay code={item.bankCode} />
+                                                {item.isDefaultReceipt && <Chip label="Principal" size="small" color="success" sx={{ height: 20, fontSize: '0.625rem' }} />}
+                                            </Stack>
+                                        )}
+                                        renderSecondaryText={(item) => (
+                                            <Box>
+                                                <Typography variant="body2" className="customer-dashboard-text-primary">
+                                                    {item.accountType} • Ag: {item.branchCode} • CC: {item.accountNumber}
+                                                </Typography>
+                                                {item.pixKey && (
+                                                    <Typography variant="caption" className="customer-dashboard-text-secondary" display="block">
+                                                        PIX: {item.pixKey}
+                                                    </Typography>
+                                                )}
+                                            </Box>
+                                        )}
+                                        onAdd={permissions.includes('comercial:clientes:dados-bancarios:criar') ? handleAddAccount : undefined}
+                                        onEdit={permissions.includes('comercial:clientes:dados-bancarios:editar') || permissions.includes('comercial:clientes:dados-bancarios:visualizar') ? (item) => handleEditAccount(item as CustomerBankAccount) : undefined}
+                                        onDelete={permissions.includes('comercial:clientes:dados-bancarios:excluir') ? (item) => handleDeleteAccount(item as CustomerBankAccount) : undefined}
+                                        emptyText="Nenhuma conta bancária registrada."
+                                    />
+                                </Grid>
+                            )}
+
+                            {/* 5. Documentos (Desktop: 5, Mobile: 5) */}
+                            {permissions.includes('comercial:clientes:documentos:listar') && (
+                                <Grid size={{ xs: 12, md: 4 }} sx={{ order: { xs: 5, md: 5 } }}>
+                                    <DashboardBodyCardList<CustomerDocument>
+                                        title="Documentos"
+                                        items={customer.documents || []}
+                                        keyExtractor={(item) => item.id}
+                                        renderIcon={() => <Description />}
+                                        renderText={(item) => item.documentType}
+                                        renderSecondaryText={(item) => (
+                                            <React.Fragment>
+                                                <Typography component="span" variant="caption" display="block" className="customer-dashboard-text-secondary">
+                                                    Enviado: {new Date(item.createdAt).toLocaleDateString()}
+                                                </Typography>
+                                                <Stack direction="row" spacing={1} mt={0.5} alignItems="center">
+                                                    {item.verificationStatus === 'verified' && <Typography variant="caption" color="success.main" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}><CheckCircle fontSize="inherit" /> Verificado</Typography>}
+                                                    {item.verificationStatus === 'rejected' && <Typography variant="caption" color="error.main" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}><Error fontSize="inherit" /> Rejeitado</Typography>}
+                                                    {item.verificationStatus === 'pending' && <Typography variant="caption" color="warning.main" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}><Warning fontSize="inherit" /> Pendente</Typography>}
+                                                </Stack>
+                                            </React.Fragment>
+                                        )}
+                                        onAdd={permissions.includes('comercial:clientes:documentos:criar') ? handleAddDocument : undefined}
+                                        onEdit={permissions.includes('comercial:clientes:documentos:editar') || permissions.includes('comercial:clientes:documentos:visualizar') ? (item) => handleEditDocument(item as CustomerDocument) : undefined}
+                                        onDelete={permissions.includes('comercial:clientes:documentos:excluir') ? (item) => handleDeleteDocument(item as CustomerDocument) : undefined}
+                                        emptyText="Nenhum documento registrado."
+                                    />
+                                </Grid>
+                            )}
+
+                            {/* 6. System Info (Desktop: 6, Mobile: 6) */}
+                            {permissions.includes('comercial:clientes:auditoria') && (
+                                <Grid size={{ xs: 12, md: 4 }} sx={{ order: { xs: 6, md: 6 } }}>
+                                    <DashboardBodyCard title="Informações do Sistema">
+                                        <Grid container spacing={2}>
+                                            <Grid size={{ xs: 12 }}>
+                                                <Typography variant="subtitle2" className="customer-dashboard-label">ID do Sistema</Typography>
+                                                <Typography variant="body2" className="customer-dashboard-value" sx={{ fontFamily: 'monospace' }}>{customer.id}</Typography>
+                                            </Grid>
+                                            <Grid size={{ xs: 12 }}>
+                                                <Typography variant="subtitle2" className="customer-dashboard-label">Criado por</Typography>
+                                                <Typography variant="body2" className="customer-dashboard-value">{customer.createdBy} em {new Date(customer.createdAt).toLocaleString()}</Typography>
+                                            </Grid>
+                                            <Grid size={{ xs: 12 }}>
+                                                <Typography variant="subtitle2" className="customer-dashboard-label">Atualizado por</Typography>
+                                                <Typography variant="body2" className="customer-dashboard-value">{customer.updatedBy} em {new Date(customer.updatedAt).toLocaleString()}</Typography>
+                                            </Grid>
+                                        </Grid>
+                                    </DashboardBodyCard>
+                                </Grid>
+                            )}
                         </Grid>
                     </Box>
                 ) : null}
@@ -861,14 +983,7 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
                                 required
                             />
                         </Grid>
-                        <Grid size={{ xs: 12 }}>
-                            <DatePicker
-                                label="Data de Nascimento"
-                                value={editForm.birthDate ?? ''}
-                                onChange={(val) => setEditForm(prev => ({ ...prev, birthDate: val }))}
-                                fullWidth
-                            />
-                        </Grid>
+
                     </Grid>
                 </DialogContent>
                 <DialogActions>
@@ -1209,6 +1324,72 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
                     </Button>
                     <Button onClick={handleSaveDocument} variant="contained" disabled={savingDocument || !permissions.includes('comercial:clientes:documentos:editar')}>
                         {savingDocument ? 'Salvando...' : 'Salvar'}
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            <Dialog open={detailsDialogOpen} onClose={() => setDetailsDialogOpen(false)} maxWidth="sm" fullWidth>
+                <DialogTitle>Editar Detalhes</DialogTitle>
+                <DialogContent dividers>
+                    <Grid container spacing={2}>
+                        <Grid size={{ xs: 12 }}>
+                            <DatePicker
+                                label="Data de Nascimento"
+                                value={detailsForm.birthDate ?? ''}
+                                onChange={(val) => setDetailsForm(prev => ({ ...prev, birthDate: val }))}
+                                fullWidth
+                            />
+                        </Grid>
+                        <Grid size={{ xs: 12, sm: 6 }}>
+                            <SelectPicker
+                                label="Sexo"
+                                value={detailsForm.sex}
+                                onChange={(val) => setDetailsForm(prev => ({ ...prev, sex: val as string }))}
+                                options={[
+                                    { value: 'Homem', label: 'Homem' },
+                                    { value: 'Mulher', label: 'Mulher' }
+                                ]}
+                                fullWidth
+                                placeholder="Selecione"
+                            />
+                        </Grid>
+                        <Grid size={{ xs: 12, sm: 6 }}>
+                            <SelectPicker
+                                label="Estado Civil"
+                                value={detailsForm.maritalStatus}
+                                onChange={(val) => setDetailsForm(prev => ({ ...prev, maritalStatus: val as string }))}
+                                options={Object.entries(MARITAL_STATUS_MAP).map(([value, label]) => ({
+                                    value,
+                                    label
+                                }))}
+                                fullWidth
+                                placeholder="Selecione"
+                            />
+                        </Grid>
+                        <Grid size={{ xs: 12 }}>
+                            <TextPicker
+                                label="Nacionalidade"
+                                value={detailsForm.nationality}
+                                onChange={(val) => setDetailsForm(prev => ({ ...prev, nationality: val }))}
+                                fullWidth
+                            />
+                        </Grid>
+                        <Grid size={{ xs: 12 }}>
+                            <TextPicker
+                                label="Profissão"
+                                value={detailsForm.occupation}
+                                onChange={(val) => setDetailsForm(prev => ({ ...prev, occupation: val }))}
+                                fullWidth
+                            />
+                        </Grid>
+                    </Grid>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setDetailsDialogOpen(false)} color="inherit">
+                        Cancelar
+                    </Button>
+                    <Button onClick={handleSaveDetails} variant="contained" disabled={savingDetails}>
+                        {savingDetails ? 'Salvando...' : 'Salvar'}
                     </Button>
                 </DialogActions>
             </Dialog>
