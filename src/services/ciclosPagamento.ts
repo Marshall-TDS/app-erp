@@ -1,6 +1,31 @@
 import { api } from './api'
 
-const API_CONTRATOS_URL = import.meta.env.VITE_API_CONTRATOS_BASE_URL ?? 'http://localhost:3336/api'
+// Obter a URL da API de contratos, tratando undefined e strings vazias
+const getApiContratosUrl = () => {
+  const envUrl = import.meta.env.VITE_API_CONTRATOS_BASE_URL
+  // Se a variável existir e não for vazia, usar ela
+  if (envUrl && envUrl.trim() !== '') {
+    return envUrl
+  }
+  
+  // Fallback: detectar ambiente baseado no hostname
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname
+    // Se estiver em um domínio de homologação
+    if (hostname.includes('homolog') || hostname.includes('staging')) {
+      return 'https://homolog-api-contratos.marshalltds.com/api'
+    }
+    // Se estiver em produção
+    if (hostname.includes('marshalltds.com') && !hostname.includes('homolog')) {
+      return 'https://api-contratos.marshalltds.com/api'
+    }
+  }
+  
+  // Fallback padrão para desenvolvimento local
+  return 'http://localhost:3336/api'
+}
+
+const API_CONTRATOS_URL = getApiContratosUrl()
 
 export type CicloPagamentoDTO = {
   id: string
