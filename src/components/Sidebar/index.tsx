@@ -25,6 +25,8 @@ import {
   EmailOutlined,
   ContactMailOutlined,
   SendOutlined,
+  AccountBalance,
+  TrendingUp,
 } from '@mui/icons-material'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import React, { useEffect, useState, useMemo } from 'react'
@@ -42,6 +44,8 @@ const iconMapping: Record<string, React.ReactElement> = {
   Email: <EmailOutlined />,
   ContactMail: <ContactMailOutlined />,
   Send: <SendOutlined />,
+  AccountBalance: <AccountBalance />,
+  TrendingUp: <TrendingUp />,
 }
 
 const getIcon = (iconName: string) => {
