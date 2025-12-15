@@ -2,6 +2,12 @@ import { api } from './api'
 
 const API_CONTRATOS_URL = import.meta.env.VITE_API_CONTRATOS_BASE_URL ?? 'http://localhost:3336/api'
 
+// Debug: verificar se a variável está sendo lida corretamente
+if (typeof window !== 'undefined') {
+  console.log('[DEBUG] VITE_API_CONTRATOS_BASE_URL:', import.meta.env.VITE_API_CONTRATOS_BASE_URL)
+  console.log('[DEBUG] API_CONTRATOS_URL final:', API_CONTRATOS_URL)
+}
+
 export type ModalidadeRentabilidadeDTO = {
   id: string
   seqId?: number | null
