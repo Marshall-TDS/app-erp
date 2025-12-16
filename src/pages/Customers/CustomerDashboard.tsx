@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import TextPicker from '../../components/TextPicker'
-import CPFCNPJPicker from '../../components/CPFCNPJPicker'
+
 import DatePicker from '../../components/DatePicker'
 import CEPPicker from '../../components/CEPPicker'
 import BankCodePicker from '../../components/BankCodePicker'
@@ -10,7 +10,7 @@ import FileUpload from '../../components/FileUpload'
 import PhonePicker from '../../components/PhonePicker'
 import { parsePhoneNumber, formatPhoneNumber } from '../../components/PhonePicker/utils'
 import MailPicker from '../../components/MailPicker'
-import NamePicker from '../../components/NamePicker'
+
 import SelectPicker from '../../components/SelectPicker'
 import {
     Box,
@@ -55,6 +55,7 @@ import { getBankName } from '../../services/bankService'
 import { DashboardTopBar } from '../../components/Dashboard/DashboardTopBar'
 import { DashboardTopCard } from '../../components/Dashboard/DashboardTopCard'
 import { DashboardBodyCard } from '../../components/Dashboard/DashboardBodyCard'
+import CustomerFormDialog from './components/CustomerFormDialog'
 import React from 'react'
 import { MenuItem } from '@mui/material'
 
@@ -254,13 +255,16 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
         setEditOpen(true)
     }
 
-    const handleSaveEdit = async () => {
+    const handleSaveEdit = async (data?: { name: string; lastName: string; cpfCnpj: string }) => {
         if (!customer) return
 
+        // Use data if provided (from CustomerFormDialog), otherwise fallback to editForm state
+        const formData = data || editForm
+
         const requiredFields = []
-        if (!editForm.cpfCnpj) requiredFields.push('CPF/CNPJ')
-        if (!editForm.name) requiredFields.push('Nome')
-        if (!editForm.lastName) requiredFields.push('Sobrenome')
+        if (!formData.cpfCnpj) requiredFields.push('CPF/CNPJ')
+        if (!formData.name) requiredFields.push('Nome')
+        if (!formData.lastName) requiredFields.push('Sobrenome')
 
         if (requiredFields.length > 0) {
             setSnackbar({
@@ -271,7 +275,7 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
             return
         }
 
-        const cleanCpfCnpj = editForm.cpfCnpj.replace(/\D/g, '')
+        const cleanCpfCnpj = formData.cpfCnpj.replace(/\D/g, '')
         if (cleanCpfCnpj.length !== 11 && cleanCpfCnpj.length !== 14) {
             setSnackbar({
                 open: true,
@@ -285,9 +289,9 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
             setSaving(true)
             await customerService.update(customer.id, {
                 ...customer,
-                name: editForm.name,
-                lastName: editForm.lastName,
-                cpfCnpj: editForm.cpfCnpj,
+                name: formData.name,
+                lastName: formData.lastName,
+                cpfCnpj: formData.cpfCnpj,
                 updatedBy: user?.login || 'system'
             })
             await loadCustomerData(customer.id)
@@ -952,49 +956,24 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
                 ) : null}
             </Dialog>
 
-            <Dialog open={editOpen} onClose={() => setEditOpen(false)} maxWidth="sm" fullWidth>
-                <DialogTitle>Editar Cliente</DialogTitle>
-                <DialogContent dividers>
-                    <Grid container spacing={2}>
-                        <Grid size={{ xs: 12 }}>
-                            <CPFCNPJPicker
-                                label="CPF/CNPJ"
-                                value={editForm.cpfCnpj}
-                                onChange={(val) => setEditForm(prev => ({ ...prev, cpfCnpj: val }))}
-                                fullWidth
-                                required
-                            />
-                        </Grid>
-                        <Grid size={{ xs: 12 }}>
-                            <NamePicker
-                                label="Nome"
-                                value={editForm.name}
-                                onChange={(val) => setEditForm(prev => ({ ...prev, name: val }))}
-                                fullWidth
-                                required
-                            />
-                        </Grid>
-                        <Grid size={{ xs: 12 }}>
-                            <NamePicker
-                                label="Sobrenome"
-                                value={editForm.lastName}
-                                onChange={(val) => setEditForm(prev => ({ ...prev, lastName: val }))}
-                                fullWidth
-                                required
-                            />
-                        </Grid>
-
-                    </Grid>
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setEditOpen(false)} color="inherit">
-                        Cancelar
-                    </Button>
-                    <Button onClick={handleSaveEdit} variant="contained" disabled={saving}>
-                        {saving ? 'Salvando...' : 'Salvar'}
-                    </Button>
-                </DialogActions>
-            </Dialog>
+            {/* Reusing CustomerFormDialog for editing */}
+            <CustomerFormDialog
+                open={editOpen}
+                onClose={() => setEditOpen(false)}
+                onSave={(data) => {
+                    // Adapt the data structure if needed, but handleSaveEdit used editForm state.
+                    // We need to update editForm with data from onSave, or better, refactor handleSaveEdit to accept data.
+                    // But for now, let's update state and call save.
+                    setEditForm(prev => ({ ...prev, ...data }))
+                    // We need to trigger save, but handleSaveEdit uses editForm state which is async.
+                    // Better to pass data directly to a new save function or updated handleSaveEdit.
+                    // Let's refactor handleSaveEdit to accept data optionally.
+                    handleSaveEdit(data)
+                }}
+                initialValues={editForm}
+                title="Editar Cliente"
+                saving={saving}
+            />
 
             <Dialog open={contactDialogOpen} onClose={handleCloseContactDialog} maxWidth="sm" fullWidth>
                 <DialogTitle>{editingContact ? 'Editar Contato' : 'Adicionar Contato'}</DialogTitle>
