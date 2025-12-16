@@ -175,7 +175,7 @@ const ModalidadesRentabilidadePage = () => {
         renderInput: ({ value, onChange, field, disabled }) => (
           <NumberPicker
             label={field.label}
-            value={typeof value === 'number' ? value : 0}
+            value={typeof value === 'number' ? value : undefined}
             onChange={(num) => onChange(num)}
             format="percent"
             decimalScale={1}
@@ -184,6 +184,7 @@ const ModalidadesRentabilidadePage = () => {
             required={field.required}
             disabled={disabled}
             min={0}
+            max={10}
           />
         ),
       },
@@ -195,7 +196,7 @@ const ModalidadesRentabilidadePage = () => {
         renderInput: ({ value, onChange, field, disabled }) => (
           <NumberPicker
             label={field.label}
-            value={typeof value === 'number' && value > 0 ? value : 1}
+            value={typeof value === 'number' ? value : undefined}
             onChange={(num) => onChange(num)}
             format="integer"
             fullWidth
@@ -203,6 +204,7 @@ const ModalidadesRentabilidadePage = () => {
             required={field.required}
             disabled={disabled}
             min={1}
+            max={60}
           />
         ),
       },
@@ -214,7 +216,7 @@ const ModalidadesRentabilidadePage = () => {
         renderInput: ({ value, onChange, field, disabled }) => (
           <NumberPicker
             label={field.label}
-            value={typeof value === 'number' && value >= 0 ? value : 1}
+            value={typeof value === 'number' ? value : undefined}
             onChange={(num) => onChange(num)}
             format="integer"
             fullWidth
@@ -222,6 +224,7 @@ const ModalidadesRentabilidadePage = () => {
             required={field.required}
             disabled={disabled}
             min={0}
+            max={60}
             showClearButton={false}
           />
         ),
