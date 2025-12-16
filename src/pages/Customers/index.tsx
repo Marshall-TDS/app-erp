@@ -9,15 +9,12 @@ import {
 import { VisibilityOutlined } from '@mui/icons-material'
 import TableCard, {
   type TableCardColumn,
-  type TableCardFormField,
   type TableCardRow,
   type TableCardRowAction,
   type TableCardBulkAction,
 } from '../../components/TableCard'
 import { useSearch } from '../../context/SearchContext'
 import { useAuth } from '../../context/AuthContext'
-import CPFCNPJPicker from '../../components/CPFCNPJPicker'
-import TextPicker from '../../components/TextPicker'
 
 import { customerService, type CustomerDTO } from '../../services/customers'
 import CustomerDashboard from './CustomerDashboard'
@@ -181,60 +178,6 @@ const CustomersPage = () => {
       return newParams
     })
   }
-
-  const customerFormFields: TableCardFormField<CustomerRow>[] = useMemo(
-    () => [
-      {
-        key: 'cpfCnpj',
-        label: 'CPF/CNPJ',
-        required: true,
-        renderInput: ({ value, onChange, field, disabled }) => (
-          <CPFCNPJPicker
-            label={field.label}
-            value={typeof value === 'string' ? value : ''}
-            onChange={(text) => onChange(text)}
-            fullWidth
-            placeholder="Informe CPF ou CNPJ"
-            required={field.required}
-            disabled={disabled}
-          />
-        ),
-      },
-      {
-        key: 'name',
-        label: 'Nome',
-        required: true,
-        renderInput: ({ value, onChange, field, disabled }) => (
-          <TextPicker
-            label={field.label}
-            value={typeof value === 'string' ? value : ''}
-            onChange={(text) => onChange(text)}
-            fullWidth
-            placeholder="Nome do cliente"
-            required={field.required}
-            disabled={disabled}
-          />
-        ),
-      },
-      {
-        key: 'lastName',
-        label: 'Sobrenome',
-        required: true,
-        renderInput: ({ value, onChange, field, disabled }) => (
-          <TextPicker
-            label={field.label}
-            value={typeof value === 'string' ? value : ''}
-            onChange={(text) => onChange(text)}
-            fullWidth
-            placeholder="Sobrenome do cliente"
-            required={field.required}
-            disabled={disabled}
-          />
-        ),
-      },
-    ],
-    [],
-  )
 
   const rowActions: TableCardRowAction<CustomerRow>[] = useMemo(() => [
     {
