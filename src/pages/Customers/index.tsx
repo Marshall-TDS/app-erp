@@ -21,6 +21,7 @@ import TextPicker from '../../components/TextPicker'
 
 import { customerService, type CustomerDTO } from '../../services/customers'
 import CustomerDashboard from './CustomerDashboard'
+import CustomerFormDialog from './components/CustomerFormDialog'
 import './style.css'
 
 type CustomerRow = TableCardRow & {
@@ -42,6 +43,8 @@ const CustomersPage = () => {
   const [loading, setLoading] = useState(true)
   const [dashboardOpen, setDashboardOpen] = useState(false)
   const [dashboardCustomerId, setDashboardCustomerId] = useState<string | null>(null)
+  const [createModalOpen, setCreateModalOpen] = useState(false)
+  const [creating, setCreating] = useState(false)
 
   const [searchParams, setSearchParams] = useSearchParams()
 
@@ -119,25 +122,27 @@ const CustomersPage = () => {
     }
   }, [searchParams, hasPermission, dashboardCustomerId, dashboardOpen])
 
-  const handleAddCustomer = async (data: Partial<CustomerRow>) => {
+  const handleAddCustomer = async (data: { name: string; lastName: string; cpfCnpj: string }) => {
     try {
+      setCreating(true)
       const payload = {
-        name: (data.name as string) ?? '',
-        lastName: (data.lastName as string) ?? '',
-        cpfCnpj: (data.cpfCnpj as string) ?? '',
-        birthDate: data.birthDate || null,
+        name: data.name,
+        lastName: data.lastName,
+        cpfCnpj: data.cpfCnpj,
+        birthDate: null,
         createdBy: currentUser?.login ?? DEFAULT_USER,
       }
       await customerService.create(payload)
       await loadCustomers()
       setToast({ open: true, message: 'Cliente criado com sucesso' })
+      setCreateModalOpen(false)
     } catch (err) {
       console.error(err)
       setToast({ open: true, message: err instanceof Error ? err.message : 'Erro ao criar cliente' })
+    } finally {
+      setCreating(false)
     }
   }
-
-
 
   const handleDeleteCustomer = async (id: CustomerRow['id']) => {
     try {
@@ -227,7 +232,6 @@ const CustomersPage = () => {
           />
         ),
       },
-
     ],
     [],
   )
@@ -284,14 +288,11 @@ const CustomersPage = () => {
           title="Clientes"
           columns={tableColumns}
           rows={customers}
-          onAdd={hasPermission('comercial:clientes:criar') ? handleAddCustomer : undefined}
-
+          onAddClick={hasPermission('comercial:clientes:criar') ? () => setCreateModalOpen(true) : undefined}
           onDelete={handleDeleteCustomer}
           onBulkDelete={hasPermission('comercial:clientes:excluir') ? handleBulkDelete : undefined}
-          formFields={customerFormFields}
           rowActions={rowActions}
           bulkActions={bulkActions}
-          // Here we use the new onRowClick logic
           onRowClick={(row) => {
             if (hasPermission('comercial:clientes:visualizar')) {
               handleOpenDashboard(row)
@@ -302,6 +303,15 @@ const CustomersPage = () => {
           disableView={!hasPermission('comercial:clientes:visualizar')}
         />
       )}
+
+      {/* Add Customer Modal */}
+      <CustomerFormDialog
+        open={createModalOpen}
+        onClose={() => setCreateModalOpen(false)}
+        onSave={handleAddCustomer}
+        title="Adicionar Cliente"
+        saving={creating}
+      />
 
       <CustomerDashboard
         customerId={dashboardCustomerId}

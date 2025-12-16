@@ -98,6 +98,7 @@ type TableCardProps<T extends TableCardRow> = {
   disableEdit?: boolean
   disableView?: boolean
   onRowClick?: (row: T) => void
+  onAddClick?: () => void
 }
 
 type DialogState<T extends TableCardRow> =
@@ -120,6 +121,7 @@ const TableCard = <T extends TableCardRow>({
   disableEdit = false,
   disableView = false,
   onRowClick,
+  onAddClick,
 }: TableCardProps<T>) => {
   const { query, selectedFilter } = useSearch()
   const theme = useTheme()
@@ -778,10 +780,10 @@ const TableCard = <T extends TableCardRow>({
         )}
       </Menu>
 
-      <Dialog 
-        open={dialog.open} 
-        onClose={closeDialog} 
-        fullWidth 
+      <Dialog
+        open={dialog.open}
+        onClose={closeDialog}
+        fullWidth
         maxWidth="sm"
         PaperProps={{
           sx: {
@@ -812,7 +814,7 @@ const TableCard = <T extends TableCardRow>({
         >
           {dialog.mode === 'add' ? 'Adicionar registro' : 'Editar registro'}
         </DialogTitle>
-        <DialogContent 
+        <DialogContent
           dividers={false}
           sx={{
             padding: '24px 24px 24px 24px',
@@ -833,9 +835,9 @@ const TableCard = <T extends TableCardRow>({
             borderTop: 'none',
           }}
         >
-          <Button 
-            onClick={closeDialog} 
-            color="inherit" 
+          <Button
+            onClick={closeDialog}
+            color="inherit"
             className="button-cancel"
             sx={{
               borderRadius: '10px',
@@ -869,11 +871,17 @@ const TableCard = <T extends TableCardRow>({
         </DialogActions>
       </Dialog>
 
-      {onAdd && createPortal(
+      {(onAdd || onAddClick) && createPortal(
         <Fab
           color="primary"
           aria-label="adicionar"
-          onClick={() => openDialog('add')}
+          onClick={() => {
+            if (onAddClick) {
+              onAddClick()
+            } else {
+              openDialog('add')
+            }
+          }}
           className="table-card__fab"
         >
           <Add />

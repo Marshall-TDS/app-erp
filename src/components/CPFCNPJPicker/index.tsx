@@ -22,7 +22,7 @@ type CPFCNPJPickerProps = {
 }
 
 // Utils for validation and formatting
-const cleanString = (str: string) => str.replace(/\D/g, '')
+export const cleanString = (str: string) => str.replace(/\D/g, '')
 
 const formatCPF = (value: string) => {
     return value
@@ -41,7 +41,7 @@ const formatCNPJ = (value: string) => {
         .replace(/(-\d{2})\d+?$/, '$1')
 }
 
-const validateCPF = (cpf: string) => {
+export const validateCPF = (cpf: string) => {
     const clean = cleanString(cpf)
     if (clean.length !== 11 || /^(\d)\1{10}$/.test(clean)) return false
 
@@ -68,7 +68,7 @@ const validateCPF = (cpf: string) => {
     return true
 }
 
-const validateCNPJ = (cnpj: string) => {
+export const validateCNPJ = (cnpj: string) => {
     const clean = cleanString(cnpj)
     if (clean.length !== 14) return false
 
