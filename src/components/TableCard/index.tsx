@@ -232,6 +232,24 @@ const TableCard = <T extends TableCardRow>({
       return acc
     }, {} as Partial<T>)
 
+    // Se estiver editando, incluir campos importantes do row original (como id, editable, etc)
+    // para que possam ser usados na lógica de permissões
+    if (row) {
+      // Incluir id e outros campos que podem ser necessários para validação
+      if (row.id !== undefined) {
+        initialValues.id = row.id
+      }
+      // Incluir todos os campos do row que não estão no formSchema mas podem ser necessários
+      Object.keys(row).forEach((key) => {
+        if (!(key in initialValues) && key !== 'id') {
+          // Incluir campos importantes como 'editable' que são usados na lógica de permissões
+          if (key === 'editable' || key === 'scopeType' || key === 'scopeTargetId') {
+            initialValues[key as keyof T] = row[key as keyof T]
+          }
+        }
+      })
+    }
+
     return initialValues
   }
 
@@ -788,10 +806,9 @@ const TableCard = <T extends TableCardRow>({
             borderRadius: '20px',
             boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
             overflow: 'hidden',
-            '& .MuiDialogContent-root': {
-              overflow: 'visible',
-              paddingTop: '28px !important',
-            },
+            maxHeight: '90vh',
+            display: 'flex',
+            flexDirection: 'column',
           }
         }}
         BackdropProps={{
@@ -808,6 +825,7 @@ const TableCard = <T extends TableCardRow>({
             fontWeight: 600,
             letterSpacing: '-0.01em',
             borderBottom: 'none',
+            flexShrink: 0,
           }}
         >
           {dialog.mode === 'add' ? 'Adicionar registro' : 'Editar registro'}
@@ -817,6 +835,10 @@ const TableCard = <T extends TableCardRow>({
           sx={{
             padding: '24px 24px 24px 24px',
             paddingTop: '24px !important',
+            overflowY: 'auto',
+            overflowX: 'hidden',
+            flex: '1 1 auto',
+            minHeight: 0,
             '& > *:first-child': {
               marginTop: '0 !important',
             },
@@ -831,6 +853,7 @@ const TableCard = <T extends TableCardRow>({
             padding: '16px 24px 24px 24px',
             gap: '8px',
             borderTop: 'none',
+            flexShrink: 0,
           }}
         >
           <Button 

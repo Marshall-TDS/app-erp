@@ -14,6 +14,7 @@ import RemetentesPage from '../pages/Remetentes'
 import ComunicacoesPage from '../pages/Comunicacoes'
 import CiclosPagamentoPage from '../pages/CiclosPagamento'
 import ModalidadesRentabilidadePage from '../pages/ModalidadesRentabilidade'
+import ParametrizacoesPage from '../pages/Parametrizacoes'
 import MainLayout from '../components/MainLayout'
 import { ProtectedRoute } from '../components/ProtectedRoute'
 import FilePreview from '../components/FilePreview'
@@ -41,6 +42,7 @@ const AppRoutes = () => (
         <Route path="/comunicacoes/comunicacoes" element={<ComunicacoesPage />} />
         <Route path="/contratos/ciclos-pagamento" element={<CiclosPagamentoPage />} />
         <Route path="/contratos/modalidades-rentabilidade" element={<ModalidadesRentabilidadePage />} />
+        <Route path="/parametros/parametrizacoes" element={<ParametrizacoesPage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/exemplo" element={<ExemploPage />} />
       </Route>

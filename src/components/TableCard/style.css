@@ -180,6 +180,7 @@
   text-overflow: ellipsis;
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   margin: 0;
 }
@@ -496,11 +497,17 @@
 /* Estilos modernos do Dialog - Design Apple */
 .table-card .MuiDialog-paper {
   border-radius: 20px !important;
-  overflow: visible !important;
+  overflow: hidden !important;
+  max-height: 90vh !important;
+  display: flex !important;
+  flex-direction: column !important;
 }
 
 .table-card .MuiDialog-paper .MuiDialogContent-root {
-  overflow: visible !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
 }
 
 .table-card .MuiDialogTitle-root {
@@ -509,12 +516,16 @@
   font-weight: 600 !important;
   letter-spacing: -0.01em !important;
   border-bottom: none !important;
+  flex-shrink: 0 !important;
 }
 
 .table-card .MuiDialogContent-root {
   padding: 24px 24px 24px 24px !important;
   padding-top: 24px !important;
-  overflow: visible !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
 }
 
 /* Garantir espaço para o label flutuante do primeiro campo */
@@ -543,6 +554,7 @@
   padding: 16px 24px 24px 24px !important;
   gap: 8px !important;
   border-top: none !important;
+  flex-shrink: 0 !important;
 }
 
 /* TextFields menores e mais arredondados */
