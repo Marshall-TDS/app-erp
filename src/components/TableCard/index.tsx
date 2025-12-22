@@ -25,6 +25,7 @@ import {
   useTheme,
   useMediaQuery,
   Snackbar,
+  CircularProgress,
 } from '@mui/material'
 import { Add, DeleteOutline, Delete, MoreVert, ViewModule, TableChart, EditOutlined } from '@mui/icons-material'
 import type { SelectChangeEvent } from '@mui/material/Select'
@@ -99,6 +100,7 @@ type TableCardProps<T extends TableCardRow> = {
   disableView?: boolean
   onRowClick?: (row: T) => void
   onAddClick?: () => void
+  loading?: boolean
 }
 
 type DialogState<T extends TableCardRow> =
@@ -122,6 +124,7 @@ const TableCard = <T extends TableCardRow>({
   disableView = false,
   onRowClick,
   onAddClick,
+  loading = false,
 }: TableCardProps<T>) => {
   const { query, selectedFilter } = useSearch()
   const theme = useTheme()
@@ -132,6 +135,7 @@ const TableCard = <T extends TableCardRow>({
   useEffect(() => {
     setViewMode(isDesktop ? 'table' : 'card')
   }, [isDesktop])
+
   const [dialog, setDialog] = useState<DialogState<T>>({
     mode: null,
     open: false,
@@ -142,12 +146,9 @@ const TableCard = <T extends TableCardRow>({
   const [isBulkDeleteArmed, setIsBulkDeleteArmed] = useState(false)
   const [isRowDeleteArmed, setIsRowDeleteArmed] = useState(false)
 
-  // Timeouts references to clear them if needed
-  // Timeouts references to clear them if needed
   const bulkDeleteTimeoutRef = useRef<any>(null)
   const rowDeleteTimeoutRef = useRef<any>(null)
 
-  // Clear timeouts on unmount
   useEffect(() => {
     return () => {
       if (bulkDeleteTimeoutRef.current) clearTimeout(bulkDeleteTimeoutRef.current)
@@ -155,12 +156,6 @@ const TableCard = <T extends TableCardRow>({
     }
   }, [])
 
-  // Reset delete armed state when selection changes
-  // useEffect(() => {
-  //   setIsBulkDeleteArmed(false)
-  // }, [selectedIds])
-
-  // Define qual coluna será exibida como título e as demais como preview
   const [primaryColumn, ...secondaryColumns] = columns
   const formSchema = formFields ?? columns
 
@@ -206,7 +201,6 @@ const TableCard = <T extends TableCardRow>({
     }
 
     const initialValues = formSchema.reduce((acc, field) => {
-      // Type assertion to access properties that might not exist on TableCardColumn
       const formField = field as TableCardFormField<T>
       const isMultiSelect = formField.inputType === 'multiselect'
 
@@ -234,17 +228,12 @@ const TableCard = <T extends TableCardRow>({
       return acc
     }, {} as Partial<T>)
 
-    // Se estiver editando, incluir campos importantes do row original (como id, editable, etc)
-    // para que possam ser usados na lógica de permissões
     if (row) {
-      // Incluir id e outros campos que podem ser necessários para validação
       if (row.id !== undefined) {
         initialValues.id = row.id
       }
-      // Incluir todos os campos do row que não estão no formSchema mas podem ser necessários
       Object.keys(row).forEach((key) => {
         if (!(key in initialValues) && key !== 'id') {
-          // Incluir campos importantes como 'editable' que são usados na lógica de permissões
           if (key === 'editable' || key === 'scopeType' || key === 'scopeTargetId') {
             initialValues[key as keyof T] = row[key as keyof T]
           }
@@ -276,10 +265,8 @@ const TableCard = <T extends TableCardRow>({
   const [validationError, setValidationError] = useState<string | null>(null)
 
   const handleSubmit = () => {
-    // Validation
     const errors: string[] = []
     formSchema.forEach((field) => {
-      // Type assertion for form field
       const formField = field as TableCardFormField<T>
       if (formField.required) {
         const value = formValues[field.key]
@@ -322,7 +309,6 @@ const TableCard = <T extends TableCardRow>({
     if (!isRowDeleteArmed) {
       event.stopPropagation()
       setIsRowDeleteArmed(true)
-      // Reset after 3 seconds
       if (rowDeleteTimeoutRef.current) clearTimeout(rowDeleteTimeoutRef.current)
       rowDeleteTimeoutRef.current = setTimeout(() => {
         setIsRowDeleteArmed(false)
@@ -340,7 +326,6 @@ const TableCard = <T extends TableCardRow>({
   const handleBulkDelete = () => {
     if (!isBulkDeleteArmed) {
       setIsBulkDeleteArmed(true)
-      // Reset after 3 seconds
       if (bulkDeleteTimeoutRef.current) clearTimeout(bulkDeleteTimeoutRef.current)
       bulkDeleteTimeoutRef.current = setTimeout(() => {
         setIsBulkDeleteArmed(false)
@@ -579,171 +564,207 @@ const TableCard = <T extends TableCardRow>({
           </Stack>
         </Stack>
 
-        {/* Visualização em Cards ou Tabela */}
-        {viewMode === 'card' ? (
-          <Box className="table-card__list-container">
-            <Stack spacing={0.5} className="table-card__list">
-              {filteredRows.map((row) => {
-                const isSelected = selectedIds.includes(row.id)
-
-                return (
-                  <Box
-                    key={row.id}
-                    className={`table-card__gmail-card ${isSelected ? 'table-card__gmail-card--selected' : ''}`}
-                    onClick={() => {
-                      if (!disableView) {
-                        if (onRowClick) {
-                          onRowClick(row)
-                        } else {
-                          openDialog('edit', row)
-                        }
-                      }
-                    }}
-                  >
-                    <Box className="table-card__gmail-card-content">
-                      <Checkbox
-                        checked={isSelected}
-                        onChange={() => handleToggleSelectRow(row.id)}
-                        onClick={(event) => event.stopPropagation()}
-                        className="table-card__checkbox"
-                      />
-
-                      <Box className="table-card__gmail-card-main" flex={1}>
-                        <Box className="table-card__gmail-card-header">
-                          {primaryColumn && (
-                            <Typography
-                              variant="subtitle1"
-                              fontWeight={600}
-                              className="table-card__gmail-title"
-                              component="div"
-                            >
-                              {renderCell(row, primaryColumn)}
-                            </Typography>
-                          )}
-
-                          <IconButton
-                            className="table-card__gmail-actions"
-                            onClick={(event) => {
-                              event.stopPropagation()
-                              handleOpenMenu(event, row)
-                            }}
-                            size="small"
-                          >
-                            <MoreVert fontSize="small" />
-                          </IconButton>
-                        </Box>
-
-                        {secondaryColumns.length > 0 && (
-                          <Box className="table-card__gmail-card-preview">
-                            {secondaryColumns.map((column) => (
-                              <Typography
-                                key={String(column.key)}
-                                variant="body2"
-                                color="text.secondary"
-                                className="table-card__gmail-preview-item"
-                                component="div"
-                              >
-                                <span className="table-card__gmail-preview-label">
-                                  {column.label}:
-                                </span>{' '}
-                                {renderCell(row, column)}
-                              </Typography>
-                            ))}
-                          </Box>
-                        )}
-                      </Box>
-                    </Box>
-                  </Box>
-                )
-              })}
-
-              {filteredRows.length === 0 && (
-                <Box className="table-card__empty-state">
-                  <Typography align="center" color="text.secondary" variant="body1" className="table-card__empty-text">
-                    Nenhum registro encontrado.
-                  </Typography>
+        <Box sx={{ position: 'relative', minHeight: 200 }}>
+          {loading && filteredRows.length === 0 ? (
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                py: 8,
+                gap: 2,
+              }}
+            >
+              <CircularProgress size={32} />
+              <Typography variant="body2" color="text.secondary">
+                Carregando registros...
+              </Typography>
+            </Box>
+          ) : (
+            <>
+              {loading && filteredRows.length > 0 && (
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    top: 8,
+                    right: 8,
+                    zIndex: 2,
+                    bgcolor: 'background.paper',
+                    borderRadius: '50%',
+                    p: 0.5,
+                    display: 'flex',
+                    boxShadow: 2,
+                    border: '1px solid',
+                    borderColor: 'divider',
+                  }}
+                >
+                  <CircularProgress size={20} thickness={4} />
                 </Box>
               )}
-            </Stack>
-          </Box>
-        ) : (
-          <Box className="table-card__table-container">
-            <Box className="table-card__table-wrapper">
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell padding="checkbox">
-                      <Checkbox
-                        checked={allSelected}
-                        onChange={handleToggleSelectAll}
-                        indeterminate={
-                          selectedIds.length > 0 && !allSelected && filteredRows.length > 0
-                        }
-                      />
-                    </TableCell>
-                    {columns.map((column) => (
-                      <TableCell key={String(column.key)}>{column.label}</TableCell>
-                    ))}
-                    <TableCell align="right">Ações</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {filteredRows.map((row) => (
-                    <TableRow
-                      key={row.id}
-                      hover
-                      className={`table-card__row ${selectedIds.includes(row.id) ? 'table-card__row--selected' : ''}`}
-                      onClick={() => {
-                        if (!disableView) {
-                          if (onRowClick) {
-                            onRowClick(row)
-                          } else {
-                            openDialog('edit', row)
-                          }
-                        }
-                      }}
-                    >
-                      <TableCell
-                        padding="checkbox"
-                        onClick={(event) => event.stopPropagation()}
-                      >
-                        <Checkbox
-                          checked={selectedIds.includes(row.id)}
-                          onChange={() => handleToggleSelectRow(row.id)}
-                        />
-                      </TableCell>
-                      {columns.map((column) => (
-                        <TableCell key={String(column.key)}>
-                          {renderCell(row, column)}
-                        </TableCell>
-                      ))}
-                      <TableCell align="right" onClick={(event) => event.stopPropagation()}>
-                        <IconButton
-                          onClick={(event) => {
-                            event.stopPropagation()
-                            handleOpenMenu(event, row)
-                          }}
-                          size="small"
-                        >
-                          <MoreVert fontSize="small" />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {filteredRows.length === 0 && (
-                    <TableRow>
-                      <TableCell colSpan={columns.length + 2}>
-                        <Typography align="center" color="text.secondary" className="table-card__empty-text">
-                          Nenhum registro encontrado.
-                        </Typography>
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </Box>
-          </Box>
-        )}
+              <Box
+                sx={{
+                  opacity: loading ? 0.7 : 1,
+                  pointerEvents: loading ? 'none' : 'auto',
+                  transition: 'opacity 0.2s',
+                }}
+              >
+                {viewMode === 'card' ? (
+                  <Box className="table-card__list-container">
+                    <Stack spacing={0.5} className="table-card__list">
+                      {filteredRows.map((row) => {
+                        const isSelected = selectedIds.includes(row.id)
+
+                        return (
+                          <Box
+                            key={row.id}
+                            className={`table-card__gmail-card ${isSelected ? 'table-card__gmail-card--selected' : ''}`}
+                            onClick={() => {
+                              if (!disableView) {
+                                if (onRowClick) {
+                                  onRowClick(row)
+                                } else {
+                                  openDialog('edit', row)
+                                }
+                              }
+                            }}
+                          >
+                            <Box className="table-card__gmail-card-content">
+                              <Checkbox
+                                checked={isSelected}
+                                onChange={() => handleToggleSelectRow(row.id)}
+                                onClick={(event) => event.stopPropagation()}
+                                className="table-card__checkbox"
+                              />
+
+                              <Box className="table-card__gmail-card-main" flex={1}>
+                                <Box className="table-card__gmail-card-header">
+                                  {primaryColumn && (
+                                    <Typography
+                                      variant="subtitle1"
+                                      fontWeight={600}
+                                      className="table-card__gmail-title"
+                                      component="div"
+                                    >
+                                      {renderCell(row, primaryColumn)}
+                                    </Typography>
+                                  )}
+
+                                  <IconButton
+                                    className="table-card__gmail-actions"
+                                    onClick={(event) => {
+                                      event.stopPropagation()
+                                      handleOpenMenu(event, row)
+                                    }}
+                                    size="small"
+                                  >
+                                    <MoreVert fontSize="small" />
+                                  </IconButton>
+                                </Box>
+
+                                {secondaryColumns.length > 0 && (
+                                  <Box className="table-card__gmail-card-preview">
+                                    {secondaryColumns.map((column) => (
+                                      <Typography
+                                        key={String(column.key)}
+                                        variant="body2"
+                                        color="text.secondary"
+                                        className="table-card__gmail-preview-item"
+                                        component="div"
+                                      >
+                                        <span className="table-card__gmail-preview-label">{column.label}:</span>{' '}
+                                        {renderCell(row, column)}
+                                      </Typography>
+                                    ))}
+                                  </Box>
+                                )}
+                              </Box>
+                            </Box>
+                          </Box>
+                        )
+                      })}
+
+                      {filteredRows.length === 0 && (
+                        <Box className="table-card__empty-state">
+                          <Typography align="center" color="text.secondary" variant="body1" className="table-card__empty-text">
+                            Nenhum registro encontrado.
+                          </Typography>
+                        </Box>
+                      )}
+                    </Stack>
+                  </Box>
+                ) : (
+                  <Box className="table-card__table-container">
+                    <Box className="table-card__table-wrapper">
+                      <Table size="small">
+                        <TableHead>
+                          <TableRow>
+                            <TableCell padding="checkbox">
+                              <Checkbox
+                                checked={allSelected}
+                                onChange={handleToggleSelectAll}
+                                indeterminate={selectedIds.length > 0 && !allSelected && filteredRows.length > 0}
+                              />
+                            </TableCell>
+                            {columns.map((column) => (
+                              <TableCell key={String(column.key)}>{column.label}</TableCell>
+                            ))}
+                            <TableCell align="right">Ações</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {filteredRows.map((row) => (
+                            <TableRow
+                              key={row.id}
+                              hover
+                              className={`table-card__row ${selectedIds.includes(row.id) ? 'table-card__row--selected' : ''}`}
+                              onClick={() => {
+                                if (!disableView) {
+                                  if (onRowClick) {
+                                    onRowClick(row)
+                                  } else {
+                                    openDialog('edit', row)
+                                  }
+                                }
+                              }}
+                            >
+                              <TableCell padding="checkbox" onClick={(event) => event.stopPropagation()}>
+                                <Checkbox checked={selectedIds.includes(row.id)} onChange={() => handleToggleSelectRow(row.id)} />
+                              </TableCell>
+                              {columns.map((column) => (
+                                <TableCell key={String(column.key)}>{renderCell(row, column)}</TableCell>
+                              ))}
+                              <TableCell align="right" onClick={(event) => event.stopPropagation()}>
+                                <IconButton
+                                  onClick={(event) => {
+                                    event.stopPropagation()
+                                    handleOpenMenu(event, row)
+                                  }}
+                                  size="small"
+                                >
+                                  <MoreVert fontSize="small" />
+                                </IconButton>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                          {filteredRows.length === 0 && (
+                            <TableRow>
+                              <TableCell colSpan={columns.length + 2}>
+                                <Typography align="center" color="text.secondary" className="table-card__empty-text">
+                                  Nenhum registro encontrado.
+                                </Typography>
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </TableBody>
+                      </Table>
+                    </Box>
+                  </Box>
+                )}
+              </Box>
+            </>
+          )}
+        </Box>
       </Stack>
 
       <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleCloseMenu}>
@@ -758,9 +779,7 @@ const TableCard = <T extends TableCardRow>({
             }}
             disabled={action.disabled}
           >
-            {action.icon && (
-              <span style={{ display: 'inline-flex', marginRight: 8 }}>{action.icon}</span>
-            )}
+            {action.icon && <span style={{ display: 'inline-flex', marginRight: 8 }}>{action.icon}</span>}
             {action.label}
           </MenuItem>
         ))}
@@ -811,13 +830,13 @@ const TableCard = <T extends TableCardRow>({
             maxHeight: '90vh',
             display: 'flex',
             flexDirection: 'column',
-          }
+          },
         }}
         BackdropProps={{
           sx: {
             backdropFilter: 'blur(8px)',
             backgroundColor: 'rgba(0, 0, 0, 0.3)',
-          }
+          },
         }}
       >
         <DialogTitle
@@ -886,7 +905,7 @@ const TableCard = <T extends TableCardRow>({
               boxShadow: 'none',
               '&:hover': {
                 boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-              }
+              },
             }}
           >
             Salvar
@@ -894,23 +913,24 @@ const TableCard = <T extends TableCardRow>({
         </DialogActions>
       </Dialog>
 
-      {(onAdd || onAddClick) && createPortal(
-        <Fab
-          color="primary"
-          aria-label="adicionar"
-          onClick={() => {
-            if (onAddClick) {
-              onAddClick()
-            } else {
-              openDialog('add')
-            }
-          }}
-          className="table-card__fab"
-        >
-          <Add />
-        </Fab>,
-        document.body,
-      )}
+      {(onAdd || onAddClick) &&
+        createPortal(
+          <Fab
+            color="primary"
+            aria-label="adicionar"
+            onClick={() => {
+              if (onAddClick) {
+                onAddClick()
+              } else {
+                openDialog('add')
+              }
+            }}
+            className="table-card__fab"
+          >
+            <Add />
+          </Fab>,
+          document.body
+        )}
 
       {selectedIds.length > 0 &&
         createPortal(
@@ -931,7 +951,7 @@ const TableCard = <T extends TableCardRow>({
                 sx={{
                   alignSelf: { xs: 'flex-end', sm: 'center' },
                   width: { xs: '100%', sm: 'auto' },
-                  justifyContent: { xs: 'flex-end', sm: 'flex-start' }
+                  justifyContent: { xs: 'flex-end', sm: 'flex-start' },
                 }}
               >
                 {bulkActions?.map((action) => (
@@ -940,11 +960,7 @@ const TableCard = <T extends TableCardRow>({
                       <IconButton
                         color="primary"
                         onClick={() => action.onClick(selectedIds)}
-                        disabled={
-                          typeof action.disabled === 'function'
-                            ? action.disabled(selectedIds)
-                            : action.disabled
-                        }
+                        disabled={typeof action.disabled === 'function' ? action.disabled(selectedIds) : action.disabled}
                       >
                         {action.icon}
                       </IconButton>
@@ -968,16 +984,14 @@ const TableCard = <T extends TableCardRow>({
                   <Checkbox
                     checked={allSelected}
                     onChange={handleToggleSelectAll}
-                    indeterminate={
-                      selectedIds.length > 0 && !allSelected && filteredRows.length > 0
-                    }
+                    indeterminate={selectedIds.length > 0 && !allSelected && filteredRows.length > 0}
                     aria-label="Selecionar todos"
                   />
                 </Tooltip>
               </Stack>
             </Stack>
           </Box>,
-          document.body,
+          document.body
         )}
 
       <Snackbar
@@ -991,4 +1005,3 @@ const TableCard = <T extends TableCardRow>({
 }
 
 export default TableCard
-

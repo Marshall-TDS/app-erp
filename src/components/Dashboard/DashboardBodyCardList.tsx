@@ -27,6 +27,8 @@ type DashboardBodyCardListProps<T> = {
     onEdit?: (item: T) => void
     onDelete?: (item: T) => void
     emptyText?: string
+    primaryClassName?: string
+    secondaryClassName?: string
 }
 
 const DeleteButton = ({ onDelete }: { onDelete: () => void }) => {
@@ -67,14 +69,42 @@ export function DashboardBodyCardList<T>({
     renderText,
     renderSecondaryText,
     onAdd,
-    addButtonLabel = 'Adicionar',
+    addButtonLabel = 'Criar',
     onEdit,
     onDelete,
-    emptyText = 'Nenhum item registrado.'
+    emptyText = 'Nenhum item registrado.',
+    primaryClassName = 'dashboard-text-primary',
+    secondaryClassName = 'dashboard-text-secondary'
 }: DashboardBodyCardListProps<T>) {
     return (
-        <DashboardBodyCard title={title}>
-            <List dense>
+        <DashboardBodyCard
+            title={title}
+            action={onAdd && (
+                <Button
+                    variant="outlined"
+                    size="small"
+                    onClick={onAdd}
+                    sx={{
+                        color: 'text.primary',
+                        borderColor: 'divider',
+                        '&:hover': {
+                            borderColor: 'text.primary',
+                            backgroundColor: 'action.hover',
+                        },
+                        minWidth: { xs: 36, md: 64 },
+                        p: { xs: 0.5, md: '4px 10px' },
+                        borderRadius: '10px',
+                        textTransform: 'none'
+                    }}
+                >
+                    <Add fontSize="small" sx={{ mr: { xs: 0, md: 1 } }} />
+                    <Box component="span" sx={{ display: { xs: 'none', md: 'block' } }}>
+                        {addButtonLabel === 'Criar' ? 'Criar' : addButtonLabel}
+                    </Box>
+                </Button>
+            )}
+        >
+            <List dense disablePadding>
                 {items && items.length > 0 ? (
                     items.map((item) => (
                         <ListItem
@@ -86,68 +116,46 @@ export function DashboardBodyCardList<T>({
                                 )
                             }
                             sx={{ borderBottom: '1px solid' }}
-                            className="people-dashboard-list-item-border"
+                            className="dashboard-list-item-border"
                         >
                             {onEdit ? (
                                 <ListItemButton onClick={() => onEdit(item)}>
                                     {renderIcon && (
-                                        <ListItemIcon sx={{ minWidth: 40 }}>
+                                        <ListItemIcon>
                                             {renderIcon(item)}
                                         </ListItemIcon>
                                     )}
                                     <ListItemText
                                         primary={renderText(item)}
                                         secondary={renderSecondaryText && renderSecondaryText(item)}
-                                        primaryTypographyProps={{ className: 'people-dashboard-text-primary' }}
-                                        secondaryTypographyProps={{ className: 'people-dashboard-text-secondary' }}
+                                        primaryTypographyProps={{ className: primaryClassName }}
+                                        secondaryTypographyProps={{ className: secondaryClassName }}
                                     />
                                 </ListItemButton>
                             ) : (
-                                <Box sx={{ display: 'flex', width: '100%', p: 1, pl: 2 }}>
+                                <Box sx={{ display: 'flex', width: '100%', p: 1 }}>
                                     {renderIcon && (
-                                        <ListItemIcon sx={{ minWidth: 40 }}>
+                                        <ListItemIcon>
                                             {renderIcon(item)}
                                         </ListItemIcon>
                                     )}
                                     <ListItemText
                                         primary={renderText(item)}
                                         secondary={renderSecondaryText && renderSecondaryText(item)}
-                                        primaryTypographyProps={{ className: 'people-dashboard-text-primary' }}
-                                        secondaryTypographyProps={{ className: 'people-dashboard-text-secondary' }}
+                                        primaryTypographyProps={{ className: primaryClassName }}
+                                        secondaryTypographyProps={{ className: secondaryClassName }}
                                     />
                                 </Box>
                             )}
                         </ListItem>
                     ))
                 ) : (
-                    <Typography variant="body2" className="people-dashboard-empty-text">
+                    <Typography variant="body2" className="dashboard-empty-text">
                         {emptyText}
                     </Typography>
                 )}
             </List>
-            {onAdd && (
-                <Box sx={{ mt: 2 }}>
-                    <Button
-                        fullWidth
-                        variant="text"
-                        sx={{
-                            bgcolor: 'rgba(0, 0, 0, 0.15)',
-                            color: 'var(--color-text)',
-                            justifyContent: 'center',
-                            textTransform: 'none',
-                            fontWeight: 'medium',
-                            '&:hover': {
-                                bgcolor: 'action.selected'
-                            }
-                        }}
-                        startIcon={<Add />}
-                        onClick={onAdd}
-                        disabled={!onAdd}
-                    >
-                        {addButtonLabel}
-                    </Button>
-                </Box>
-            )}
         </DashboardBodyCard>
     )
 }
+

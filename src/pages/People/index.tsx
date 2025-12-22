@@ -92,7 +92,7 @@ const PeoplePage = () => {
   }
 
   useEffect(() => {
-    if (hasPermission('comercial:pessoas:listar')) {
+    if (hasPermission('cadastro:pessoas:listar')) {
       loadPeople()
     } else {
       setLoading(false)
@@ -103,7 +103,7 @@ const PeoplePage = () => {
   // Sync Dashboard state with URL Query Params
   useEffect(() => {
     const peopleIdParam = searchParams.get('peopleId')
-    const canView = hasPermission('comercial:pessoas:visualizar')
+    const canView = hasPermission('cadastro:pessoas:visualizar')
 
     if (peopleIdParam && canView) {
       if (dashboardPeopleId !== peopleIdParam || !dashboardOpen) {
@@ -182,7 +182,7 @@ const PeoplePage = () => {
       label: 'Ver',
       icon: <VisibilityOutlined fontSize="small" />,
       onClick: handleOpenDashboard,
-      disabled: !hasPermission('comercial:pessoas:visualizar'),
+      disabled: !hasPermission('cadastro:pessoas:visualizar'),
     },
   ], [hasPermission, handleOpenDashboard])
 
@@ -194,7 +194,7 @@ const PeoplePage = () => {
         const person = people.find((c) => c.id === ids[0])
         if (person) handleOpenDashboard(person)
       },
-      disabled: (ids) => ids.length !== 1 || !hasPermission('comercial:pessoas:visualizar'),
+      disabled: (ids) => ids.length !== 1 || !hasPermission('cadastro:pessoas:visualizar'),
     },
   ], [people, hasPermission, handleOpenDashboard])
 
@@ -204,7 +204,7 @@ const PeoplePage = () => {
     { key: 'createdAt', label: 'Cadastro', dataType: 'date' },
   ], [])
 
-  if (!loading && !hasPermission('comercial:pessoas:listar')) {
+  if (!loading && !hasPermission('cadastro:pessoas:listar')) {
     return (
       <Box className="people-page">
         <Typography variant="h6" align="center" sx={{ mt: 4 }}>
@@ -228,19 +228,19 @@ const PeoplePage = () => {
           title="Pessoas"
           columns={tableColumns}
           rows={people}
-          onAddClick={hasPermission('comercial:pessoas:criar') ? () => setCreateModalOpen(true) : undefined}
+          onAddClick={hasPermission('cadastro:pessoas:criar') ? () => setCreateModalOpen(true) : undefined}
           onDelete={handleDeletePeople}
-          onBulkDelete={hasPermission('comercial:pessoas:excluir') ? handleBulkDelete : undefined}
+          onBulkDelete={hasPermission('cadastro:pessoas:excluir') ? handleBulkDelete : undefined}
           rowActions={rowActions}
           bulkActions={bulkActions}
           onRowClick={(row) => {
-            if (hasPermission('comercial:pessoas:visualizar')) {
+            if (hasPermission('cadastro:pessoas:visualizar')) {
               handleOpenDashboard(row)
             }
           }}
-          disableDelete={!hasPermission('comercial:pessoas:excluir')}
-          disableEdit={!hasPermission('comercial:pessoas:editar')}
-          disableView={!hasPermission('comercial:pessoas:visualizar')}
+          disableDelete={!hasPermission('cadastro:pessoas:excluir')}
+          disableEdit={!hasPermission('cadastro:pessoas:editar')}
+          disableView={!hasPermission('cadastro:pessoas:visualizar')}
         />
       )}
 

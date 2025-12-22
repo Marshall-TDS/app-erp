@@ -53,6 +53,33 @@ export type PeopleDocument = {
     updatedAt: string
 }
 
+export type PeopleRelationshipType = {
+    id: string
+    connectorPrefix: string
+    relationshipSource: string
+    connectorSuffix: string
+    relationshipTarget: string
+    inverseTypeId: string
+    createdAt: string
+    updatedAt: string
+}
+
+export type PeopleRelationship = {
+    id: string
+    peopleRelationshipTypesId: string
+    peopleIdSource: string
+    peopleIdTarget: string
+    inverseTypeId: string
+    connectorPrefix: string
+    relationshipSource: string
+    connectorSuffix: string
+    relationshipTarget: string
+    targetName: string
+    targetCpfCnpj?: string
+    createdAt: string
+    updatedAt: string
+}
+
 export type PeopleDTO = {
     id: string
     seqId?: number
@@ -67,6 +94,7 @@ export type PeopleDTO = {
     contacts?: PeopleContact[]
     bankAccounts?: PeopleBankAccount[]
     documents?: PeopleDocument[]
+    relationships?: PeopleRelationship[]
     details?: PeopleDetail | null
 }
 
@@ -135,6 +163,33 @@ const adaptDocument = (data: any): PeopleDocument => ({
     updatedAt: data.updated_at,
 })
 
+const adaptRelationshipType = (data: any): PeopleRelationshipType => ({
+    id: data.id,
+    connectorPrefix: data.connector_prefix,
+    relationshipSource: data.relationship_source,
+    connectorSuffix: data.connector_suffix,
+    relationshipTarget: data.relationship_target,
+    inverseTypeId: data.inverse_type_id,
+    createdAt: data.created_at,
+    updatedAt: data.updated_at,
+})
+
+const adaptRelationship = (data: any): PeopleRelationship => ({
+    id: data.id,
+    peopleRelationshipTypesId: data.people_relationship_types_id,
+    peopleIdSource: data.people_id_source,
+    peopleIdTarget: data.people_id_target,
+    inverseTypeId: data.inverse_type_id,
+    connectorPrefix: data.connector_prefix,
+    relationshipSource: data.relationship_source,
+    connectorSuffix: data.connector_suffix,
+    relationshipTarget: data.relationship_target,
+    targetName: data.target_name,
+    targetCpfCnpj: data.target_cpf_cnpj,
+    createdAt: data.created_at,
+    updatedAt: data.updated_at,
+})
+
 const adaptPeople = (data: any): PeopleDTO => {
     return {
         id: data.id,
@@ -159,6 +214,7 @@ const adaptPeople = (data: any): PeopleDTO => {
         // AND the key `addresses` is camelCase because the repository explicitly set it so.
         // So `data.addresses` is correct. `data.bankAccounts` is correct.
         documents: data.documents?.map(adaptDocument),
+        relationships: data.relationships?.map(adaptRelationship),
         details: data.details ? adaptDetail(data.details) : null,
     }
 }
@@ -352,6 +408,46 @@ const updateDetail = async (peopleId: string, detailId: string, payload: UpdateD
 const removeDetail = (peopleId: string, detailId: string) =>
     api.delete<void>(`/peoples/${peopleId}/details/${detailId}`, { baseUrl: API_PESSOAS_URL })
 
+// Relationship Types
+const listRelationshipTypes = async () => {
+    const response = await api.get<any[]>('/peoples/relationship-types', { baseUrl: API_PESSOAS_URL })
+    return response.map(adaptRelationshipType)
+}
+
+const createRelationshipType = async (payload: any) => {
+    const response = await api.post<any>('/peoples/relationship-types', payload, { baseUrl: API_PESSOAS_URL })
+    return adaptRelationshipType(response)
+}
+
+const updateRelationshipType = async (id: string, payload: any) => {
+    const response = await api.put<any>(`/peoples/relationship-types/${id}`, payload, { baseUrl: API_PESSOAS_URL })
+    return adaptRelationshipType(response)
+}
+
+const removeRelationshipType = (id: string) =>
+    api.delete<void>(`/peoples/relationship-types/${id}`, { baseUrl: API_PESSOAS_URL })
+
+// Relationships
+export type CreateRelationshipPayload = {
+    peopleRelationshipTypesId: string
+    peopleIdSource: string
+    peopleIdTarget: string
+    inverseTypeId: string
+}
+
+const createRelationship = async (peopleId: string, payload: CreateRelationshipPayload) => {
+    const response = await api.post<any>(`/peoples/${peopleId}/relationships`, payload, { baseUrl: API_PESSOAS_URL })
+    return adaptRelationship(response)
+}
+
+const updateRelationship = async (peopleId: string, relationshipId: string, payload: any) => {
+    const response = await api.put<any>(`/peoples/${peopleId}/relationships/${relationshipId}`, payload, { baseUrl: API_PESSOAS_URL })
+    return adaptRelationship(response)
+}
+
+const removeRelationship = (peopleId: string, relationshipId: string) =>
+    api.delete<void>(`/peoples/${peopleId}/relationships/${relationshipId}`, { baseUrl: API_PESSOAS_URL })
+
 export const peopleService = {
     list,
     create,
@@ -378,4 +474,13 @@ export const peopleService = {
     createDetail,
     updateDetail,
     removeDetail,
+    // Relationship Types
+    listRelationshipTypes,
+    createRelationshipType,
+    updateRelationshipType,
+    removeRelationshipType,
+    // Relationships
+    createRelationship,
+    updateRelationship,
+    removeRelationship,
 }

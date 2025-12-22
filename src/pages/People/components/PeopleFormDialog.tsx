@@ -72,9 +72,14 @@ const PeopleFormDialog = ({
 
     return (
         <>
-            <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+            <Dialog
+                open={open}
+                onClose={onClose}
+                maxWidth="sm"
+                fullWidth
+            >
                 <DialogTitle>{title}</DialogTitle>
-                <DialogContent dividers>
+                <DialogContent dividers={false}>
                     <Grid container spacing={2}>
                         <Grid size={{ xs: 12 }}>
                             <CPFCNPJPicker
@@ -98,10 +103,18 @@ const PeopleFormDialog = ({
                     </Grid>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={onClose} color="inherit">
+                    <Button
+                        onClick={onClose}
+                        color="inherit"
+                        className="button-cancel"
+                    >
                         Cancelar
                     </Button>
-                    <Button onClick={handleSave} variant="contained" disabled={saving}>
+                    <Button
+                        onClick={handleSave}
+                        variant="contained"
+                        disabled={saving}
+                    >
                         {saving ? 'Salvando...' : 'Salvar'}
                     </Button>
                 </DialogActions>

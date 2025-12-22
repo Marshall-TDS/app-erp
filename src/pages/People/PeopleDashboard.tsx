@@ -16,7 +16,6 @@ import {
     Box,
     Button,
     Chip,
-    CircularProgress,
     Dialog,
     DialogActions,
     DialogContent,
@@ -40,6 +39,7 @@ import {
     Warning,
     Email,
     Edit,
+    Group,
 } from '@mui/icons-material'
 import { DashboardBodyCardList } from '../../components/Dashboard/DashboardBodyCardList'
 import {
@@ -49,15 +49,20 @@ import {
     type PeopleAddress,
     type PeopleBankAccount,
     type PeopleDocument,
-    type CreateDocumentPayload
+    type CreateDocumentPayload,
+    type PeopleRelationship,
+    type PeopleRelationshipType
 } from '../../services/people'
 import { getBankName } from '../../services/bankService'
 import { DashboardTopBar } from '../../components/Dashboard/DashboardTopBar'
 import { DashboardTopCard } from '../../components/Dashboard/DashboardTopCard'
 import { DashboardBodyCard } from '../../components/Dashboard/DashboardBodyCard'
+import { DashboardContent } from '../../components/Dashboard/DashboardContent'
 import PeopleFormDialog from './components/PeopleFormDialog'
 import React from 'react'
 import { MenuItem } from '@mui/material'
+import { toUTCDate, formatDateDisplay } from '../../utils/date'
+
 
 const MARITAL_STATUS_MAP: Record<string, string> = {
     'solteiro(a)': 'Solteiro(a)',
@@ -156,6 +161,18 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
         tradeName: ''
     })
     const [savingDetails, setSavingDetails] = useState(false)
+    const [allPeoples, setAllPeoples] = useState<PeopleDTO[]>([])
+
+    // Relationships State
+    const [relationshipDialogOpen, setRelationshipDialogOpen] = useState(false)
+    const [relationshipTypes, setRelationshipTypes] = useState<PeopleRelationshipType[]>([])
+    const [editingRelationship, setEditingRelationship] = useState<PeopleRelationship | null>(null)
+    const [relationshipForm, setRelationshipForm] = useState({
+        peopleRelationshipTypesId: '',
+        peopleIdTarget: '',
+        inverseTypeId: ''
+    })
+    const [savingRelationship, setSavingRelationship] = useState(false)
 
     const handleEditDetails = () => {
         if (!people) return
@@ -181,6 +198,7 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
             setSavingDetails(true)
             const payload = {
                 ...detailsForm,
+                birthDate: toUTCDate(detailsForm.birthDate),
                 sex: detailsForm.sex || null,
                 maritalStatus: detailsForm.maritalStatus || null,
                 firstName: detailsForm.firstName || null,
@@ -668,7 +686,7 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
             const payload: CreateDocumentPayload = {
                 documentType: documentForm.documentType,
                 file: documentForm.file,
-                expirationDate: documentForm.expirationDate || undefined,
+                expirationDate: toUTCDate(documentForm.expirationDate) || undefined,
                 fileName: documentForm.fileName,
                 fileSize: formatSize(documentForm.fileSize || 0) // Saving as formatted string per requirement
             }
@@ -687,7 +705,326 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
         }
     }
 
+    // Relationship Handlers
+    const handleAddRelationship = async () => {
+        setEditingRelationship(null)
+        setRelationshipForm({
+            peopleRelationshipTypesId: '',
+            peopleIdTarget: '',
+            inverseTypeId: ''
+        })
+        try {
+            const types = await peopleService.listRelationshipTypes()
+            setRelationshipTypes(types)
+            const peoples = await peopleService.list()
+            setAllPeoples(peoples.filter(p => p.id !== people?.id))
+            setRelationshipDialogOpen(true)
+        } catch (error) {
+            console.error('Erro ao carregar dados de relacionamento:', error)
+        }
+    }
+
+    const handleEditRelationship = async (rel: PeopleRelationship) => {
+        setEditingRelationship(rel)
+        setRelationshipForm({
+            peopleRelationshipTypesId: rel.peopleRelationshipTypesId,
+            peopleIdTarget: rel.peopleIdTarget,
+            inverseTypeId: rel.inverseTypeId
+        })
+        try {
+            const types = await peopleService.listRelationshipTypes()
+            setRelationshipTypes(types)
+            const peoples = await peopleService.list()
+            setAllPeoples(peoples.filter(p => p.id !== people?.id))
+            setRelationshipDialogOpen(true)
+        } catch (error) {
+            console.error('Erro ao carregar dados de relacionamento:', error)
+        }
+    }
+
+    const handleDeleteRelationship = async (rel: PeopleRelationship) => {
+        if (!people) return
+        try {
+            await peopleService.removeRelationship(people.id, rel.id)
+            await loadPeopleData(people.id)
+        } catch (error) {
+            console.error('Erro ao excluir relacionamento:', error)
+        }
+    }
+
+    const handleSaveRelationship = async () => {
+        if (!people) return
+
+        if (!relationshipForm.peopleRelationshipTypesId || !relationshipForm.peopleIdTarget) {
+            setSnackbar({
+                open: true,
+                message: 'Preencha todos os campos obrigatórios',
+                severity: 'warning'
+            })
+            return
+        }
+
+        try {
+            setSavingRelationship(true)
+            const payload = {
+                ...relationshipForm,
+                peopleIdSource: people.id
+            }
+
+            if (editingRelationship) {
+                await peopleService.updateRelationship(people.id, editingRelationship.id, payload)
+            } else {
+                await peopleService.createRelationship(people.id, payload)
+            }
+            await loadPeopleData(people.id)
+            setRelationshipDialogOpen(false)
+        } catch (error) {
+            console.error('Erro ao salvar relacionamento:', error)
+        } finally {
+            setSavingRelationship(false)
+        }
+    }
+
     if (!open) return null
+
+    const detailsCard = people && permissions.includes('cadastro:pessoas:detalhes:visualizar') && (
+        <DashboardBodyCard
+            title="Detalhes"
+            action={
+                permissions.includes('cadastro:pessoas:detalhes:editar') && (
+                    <Button
+                        variant="outlined"
+                        size="small"
+                        onClick={handleEditDetails}
+                        sx={{
+                            color: 'text.primary',
+                            borderColor: 'divider',
+                            '&:hover': {
+                                borderColor: 'text.primary',
+                                backgroundColor: 'action.hover',
+                            },
+                            minWidth: { xs: 36, md: 64 },
+                            p: { xs: 0.5, md: '4px 10px' },
+                            borderRadius: '10px',
+                            textTransform: 'none'
+                        }}
+                    >
+                        <Edit fontSize="small" sx={{ mr: { xs: 0, md: 1 } }} />
+                        <Box component="span" sx={{ display: { xs: 'none', md: 'block' } }}>
+                            Editar
+                        </Box>
+                    </Button>
+                )
+            }
+        >
+            <Stack spacing={2}>
+                {people.cpfCnpj?.replace(/\D/g, '').length === 11 ? (
+                    <>
+                        <Grid container spacing={2}>
+                            <Grid size={{ xs: 6 }}>
+                                <Typography variant="caption" className="dashboard-label">Nome</Typography>
+                                <Typography variant="body1">{people.details?.firstName || '-'}</Typography>
+                            </Grid>
+                            <Grid size={{ xs: 6 }}>
+                                <Typography variant="caption" className="dashboard-label">Sobrenome</Typography>
+                                <Typography variant="body1">{people.details?.surname || '-'}</Typography>
+                            </Grid>
+                        </Grid>
+                        <Box>
+                            <Typography variant="caption" className="dashboard-label">Data de Nascimento</Typography>
+                            <Typography variant="body1">
+                                {formatDateDisplay(people.details?.birthDate)}
+                            </Typography>
+                        </Box>
+                        <Grid container spacing={2}>
+                            <Grid size={{ xs: 6 }}>
+                                <Typography variant="caption" className="dashboard-label">Sexo</Typography>
+                                <Typography variant="body2">{people.details?.sex || '-'}</Typography>
+                            </Grid>
+                            <Grid size={{ xs: 6 }}>
+                                <Typography variant="caption" className="dashboard-label">Estado Civil</Typography>
+                                <Typography variant="body2">
+                                    {people.details?.maritalStatus ? (MARITAL_STATUS_MAP[people.details.maritalStatus] || people.details.maritalStatus) : '-'}
+                                </Typography>
+                            </Grid>
+                            <Grid size={{ xs: 6 }}>
+                                <Typography variant="caption" className="dashboard-label">Nacionalidade</Typography>
+                                <Typography variant="body2">{people.details?.nationality || '-'}</Typography>
+                            </Grid>
+                            <Grid size={{ xs: 6 }}>
+                                <Typography variant="caption" className="dashboard-label">Profissão</Typography>
+                                <Typography variant="body2">{people.details?.occupation || '-'}</Typography>
+                            </Grid>
+                        </Grid>
+                    </>
+                ) : (
+                    <Grid container spacing={2}>
+                        <Grid size={{ xs: 12 }}>
+                            <Typography variant="caption" className="dashboard-label">Razão Social</Typography>
+                            <Typography variant="body1">{people.details?.legalName || '-'}</Typography>
+                        </Grid>
+                        <Grid size={{ xs: 12 }}>
+                            <Typography variant="caption" className="dashboard-label">Nome Fantasia</Typography>
+                            <Typography variant="body1">{people.details?.tradeName || '-'}</Typography>
+                        </Grid>
+                    </Grid>
+                )}
+            </Stack>
+        </DashboardBodyCard>
+    )
+
+    const bankAccountCard = people && permissions.includes('cadastro:pessoas:dados-bancarios:listar') && (
+        <DashboardBodyCardList<PeopleBankAccount>
+            title="Dados Bancários"
+            items={people.bankAccounts || []}
+            keyExtractor={(item) => item.id}
+            renderIcon={() => <AccountBalance />}
+            renderText={(item) => (
+                <Stack direction="row" alignItems="center" spacing={1}>
+                    <Typography variant="subtitle2" fontWeight="bold">
+                        {item.bankCode}
+                    </Typography>
+                    <BankNameDisplay code={item.bankCode} />
+                    {item.isDefaultReceipt && <Chip label="Principal" size="small" color="success" sx={{ height: 20, fontSize: '0.625rem' }} />}
+                </Stack>
+            )}
+            renderSecondaryText={(item) => (
+                <Box>
+                    <Typography variant="body2" className="dashboard-text-primary">
+                        {item.accountType} • Ag: {item.branchCode} • CC: {item.accountNumber}
+                    </Typography>
+                    {item.pixKey && (
+                        <Typography variant="caption" className="dashboard-text-secondary" display="block">
+                            PIX: {item.pixKey}
+                        </Typography>
+                    )}
+                </Box>
+            )}
+            onAdd={permissions.includes('cadastro:pessoas:dados-bancarios:criar') ? handleAddAccount : undefined}
+            onEdit={permissions.includes('cadastro:pessoas:dados-bancarios:editar') || permissions.includes('cadastro:pessoas:dados-bancarios:visualizar') ? (item) => handleEditAccount(item as PeopleBankAccount) : undefined}
+            onDelete={permissions.includes('cadastro:pessoas:dados-bancarios:excluir') ? (item) => handleDeleteAccount(item as PeopleBankAccount) : undefined}
+            emptyText="Nenhuma conta bancária registrada."
+        />
+    )
+
+    const systemInfoCard = people && permissions.includes('cadastro:pessoas:auditoria') && (
+        <DashboardBodyCard title="Informações do Sistema">
+            <Grid container spacing={2}>
+                <Grid size={{ xs: 12 }}>
+                    <Typography variant="subtitle2" className="dashboard-label">ID do Sistema</Typography>
+                    <Typography variant="body2" className="dashboard-value" sx={{ fontFamily: 'monospace' }}>{people.id}</Typography>
+                </Grid>
+                <Grid size={{ xs: 12 }}>
+                    <Typography variant="subtitle2" className="dashboard-label">Criado por</Typography>
+                    <Typography variant="body2" className="dashboard-value">{people.createdBy} em {new Date(people.createdAt).toLocaleString()}</Typography>
+                </Grid>
+                <Grid size={{ xs: 12 }}>
+                    <Typography variant="subtitle2" className="dashboard-label">Atualizado por</Typography>
+                    <Typography variant="body2" className="dashboard-value">{people.updatedBy} em {new Date(people.updatedAt).toLocaleString()}</Typography>
+                </Grid>
+            </Grid>
+        </DashboardBodyCard>
+    )
+
+    const addressesCard = people && permissions.includes('cadastro:pessoas:enderecos:listar') && (
+        <DashboardBodyCardList<PeopleAddress>
+            title="Endereços"
+            items={people.addresses || []}
+            keyExtractor={(item) => item.id}
+            renderIcon={() => <LocationOn />}
+            renderText={(item) => (
+                <>
+                    {item.street}, {item.number} {item.complement ? `- ${item.complement}` : ''}
+                </>
+            )}
+            renderSecondaryText={(item) => (
+                <Box component="span" sx={{ display: 'flex', flexDirection: 'column' }}>
+                    <Typography variant="body2" component="span" color="inherit">
+                        {item.neighborhood}, {item.city} - {item.state}
+                    </Typography>
+                    <Typography variant="caption" component="span" color="inherit">
+                        {item.postalCode} • {item.addressType}
+                    </Typography>
+                </Box>
+            )}
+            onAdd={permissions.includes('cadastro:pessoas:enderecos:criar') ? handleAddAddress : undefined}
+            onEdit={permissions.includes('cadastro:pessoas:enderecos:editar') || permissions.includes('cadastro:pessoas:enderecos:visualizar') ? handleEditAddress : undefined}
+            onDelete={permissions.includes('cadastro:pessoas:enderecos:excluir') ? handleDeleteAddress : undefined}
+            emptyText="Nenhum endereço registrado."
+        />
+    )
+
+    const documentsCard = people && permissions.includes('cadastro:pessoas:documentos:listar') && (
+        <DashboardBodyCardList<PeopleDocument>
+            title="Documentos"
+            items={people.documents || []}
+            keyExtractor={(item) => item.id}
+            renderIcon={() => <Description />}
+            renderText={(item) => item.documentType}
+            renderSecondaryText={(item) => (
+                <React.Fragment>
+                    <Typography component="span" variant="caption" display="block" className="dashboard-text-secondary">
+                        Enviado: {new Date(item.createdAt).toLocaleDateString()}
+                    </Typography>
+                    <Stack direction="row" spacing={1} mt={0.5} alignItems="center">
+                        {item.verificationStatus === 'verified' && <Typography variant="caption" color="success.main" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}><CheckCircle fontSize="inherit" /> Verificado</Typography>}
+                        {item.verificationStatus === 'rejected' && <Typography variant="caption" color="error.main" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}><Error fontSize="inherit" /> Rejeitado</Typography>}
+                        {item.verificationStatus === 'pending' && <Typography variant="caption" color="warning.main" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}><Warning fontSize="inherit" /> Pendente</Typography>}
+                    </Stack>
+                </React.Fragment>
+            )}
+            onAdd={permissions.includes('cadastro:pessoas:documentos:criar') ? handleAddDocument : undefined}
+            onEdit={permissions.includes('cadastro:pessoas:documentos:editar') || permissions.includes('cadastro:pessoas:documentos:visualizar') ? (item) => handleEditDocument(item as PeopleDocument) : undefined}
+            onDelete={permissions.includes('cadastro:pessoas:documentos:excluir') ? (item) => handleDeleteDocument(item as PeopleDocument) : undefined}
+            emptyText="Nenhum documento registrado."
+        />
+    )
+
+    const contactsCard = people && permissions.includes('cadastro:pessoas:contatos:listar') && (
+        <DashboardBodyCardList<PeopleContact>
+            title="Contatos"
+            items={people.contacts || []}
+            keyExtractor={(item) => item.id}
+            renderIcon={(item) => item.contactType === 'Email' ? <Email /> : <Phone />}
+            renderText={(item) => {
+                if (['Telefone', 'Whatsapp', 'Celular'].includes(item.contactType)) {
+                    const parsed = parsePhoneNumber(item.contactValue)
+                    return formatPhoneNumber(parsed.number, parsed.country)
+                }
+                return item.contactValue
+            }}
+            renderSecondaryText={(item) => `${item.contactType}${item.label ? ' • ' + item.label : ''}`}
+            onAdd={permissions.includes('cadastro:pessoas:contatos:criar') ? handleAddContact : undefined}
+            onEdit={permissions.includes('cadastro:pessoas:contatos:editar') || permissions.includes('cadastro:pessoas:contatos:visualizar') ? handleEditContact : undefined}
+            onDelete={permissions.includes('cadastro:pessoas:contatos:excluir') ? handleDeleteContact : undefined}
+            emptyText="Nenhum contato registrado."
+        />
+    )
+
+    const relationshipsCard = people && permissions.includes('cadastro:pessoas:relacionamentos:listar') && (
+        <DashboardBodyCardList<PeopleRelationship>
+            title="Relacionamentos"
+            items={people.relationships || []}
+            keyExtractor={(item) => item.id}
+            renderIcon={() => <Group />}
+            renderText={(item) => (
+                <Box component="span" sx={{ fontSize: '0.85rem' }}>
+                    {item.connectorPrefix} <strong>{item.relationshipSource}</strong> {item.connectorSuffix}:
+                </Box>
+            )}
+            renderSecondaryText={(item) => (
+                <Box component="span" sx={{ fontWeight: 600, fontSize: '1rem' }}>
+                    {item.targetName} {item.targetCpfCnpj ? `(${item.targetCpfCnpj.length === 11 ? item.targetCpfCnpj.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4') : item.targetCpfCnpj.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5')})` : ''}
+                </Box>
+            )}
+            primaryClassName="dashboard-text-secondary"
+            secondaryClassName="dashboard-text-primary"
+            onAdd={permissions.includes('cadastro:pessoas:relacionamentos:criar') ? handleAddRelationship : undefined}
+            onEdit={permissions.includes('cadastro:pessoas:relacionamentos:editar') || permissions.includes('cadastro:pessoas:relacionamentos:visualizar') ? handleEditRelationship : undefined}
+            onDelete={permissions.includes('cadastro:pessoas:relacionamentos:excluir') ? handleDeleteRelationship : undefined}
+            emptyText="Nenhum relacionamento registrado."
+        />
+    )
 
     return (
         <>
@@ -707,284 +1044,80 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
             >
                 <DashboardTopBar title="Pessoa" onClose={onClose} />
 
-                {loading ? (
-                    <DialogContent sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-                        <CircularProgress />
-                    </DialogContent>
-                ) : people ? (
-                    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'auto', p: 3 }}>
+                <DashboardContent loading={loading} hasData={!!people}>
+                    {people && (
+                        <>
+                            {/* Header Area */}
+                            <DashboardTopCard
+                                title={`${people.name}`}
+                                action={
+                                    permissions.includes('cadastro:pessoas:editar') && (
+                                        <Button
+                                            variant="outlined"
+                                            onClick={handleStartEdit}
+                                            sx={{
+                                                color: 'text.primary',
+                                                borderColor: 'divider',
+                                                minWidth: { xs: 40, md: 64 },
+                                                p: { xs: 1, md: '5px 15px' },
+                                                borderRadius: '10px',
+                                                textTransform: 'none',
+                                            }}
+                                        >
+                                            <Edit sx={{ mr: { xs: 0, md: 1 } }} />
+                                            <Box component="span" sx={{ display: { xs: 'none', md: 'block' } }}>
+                                                Editar
+                                            </Box>
+                                        </Button>
+                                    )
+                                }
+                            >
+                                {people.cpfCnpj && (
+                                    <Typography variant="subtitle1" className="people-dashboard-subtitle">
+                                        CPF/CNPJ: {people.cpfCnpj}
+                                    </Typography>
+                                )}
+                            </DashboardTopCard>
 
-                        {/* Header Area */}
-                        <DashboardTopCard
-                            title={`${people.name}`}
-                            action={
-                                permissions.includes('comercial:pessoas:editar') && (
-                                    <Button
-                                        variant="outlined"
-                                        onClick={handleStartEdit}
-                                        sx={{
-                                            color: 'text.primary',
-                                            borderColor: 'divider',
-                                            minWidth: { xs: 40, md: 64 },
-                                            p: { xs: 1, md: '5px 15px' }
-                                        }}
-                                    >
-                                        <Edit sx={{ mr: { xs: 0, md: 1 } }} />
-                                        <Box component="span" sx={{ display: { xs: 'none', md: 'block' } }}>
-                                            Editar
-                                        </Box>
-                                    </Button>
-                                )
-                            }
-                        >
-                            {people.cpfCnpj && (
-                                <Typography variant="subtitle1" className="people-dashboard-subtitle">
-                                    CPF/CNPJ: {people.cpfCnpj}
-                                </Typography>
-                            )}
-
-                        </DashboardTopCard>
-
-                        {/* Google Contacts Style Grid */}
-                        {/* Main Grid: All items in one column flow or adjusted grid */}
-                        {/* Main Grid: All items in one responsive grid */}
-                        <Grid container spacing={3}>
-
-                            {/* 1. Detalhes */}
-                            {permissions.includes('comercial:pessoas:detalhes:visualizar') && (
-                                <Grid size={{ xs: 12, md: 4 }} sx={{ order: { xs: 1, md: 1 } }}>
-                                    <DashboardBodyCard
-                                        title="Detalhes"
-                                        action={
-                                            permissions.includes('comercial:pessoas:detalhes:editar') && (
-                                                <Button
-                                                    variant="outlined"
-                                                    size="small"
-                                                    onClick={handleEditDetails}
-                                                    sx={{
-                                                        color: '#2196f3', // Blue color
-                                                        borderColor: '#2196f3', // Blue border
-                                                        '&:hover': {
-                                                            borderColor: '#1976d2',
-                                                            backgroundColor: 'rgba(33, 150, 243, 0.04)',
-                                                        },
-                                                        minWidth: { xs: 36, md: 64 },
-                                                        p: { xs: 0.5, md: '4px 10px' },
-                                                        textTransform: 'uppercase'
-                                                    }}
-                                                >
-                                                    <Edit fontSize="small" sx={{ mr: { xs: 0, md: 1 } }} />
-                                                    <Box component="span" sx={{ display: { xs: 'none', md: 'block' } }}>
-                                                        Editar
-                                                    </Box>
-                                                </Button>
-                                            )
-                                        }
-                                    >
-                                        <Stack spacing={2}>
-                                            {people.cpfCnpj?.replace(/\D/g, '').length === 11 ? (
-                                                <>
-                                                    <Grid container spacing={2}>
-                                                        <Grid size={{ xs: 6 }}>
-                                                            <Typography variant="caption" className="people-dashboard-label">Nome</Typography>
-                                                            <Typography variant="body1">{people.details?.firstName || '-'}</Typography>
-                                                        </Grid>
-                                                        <Grid size={{ xs: 6 }}>
-                                                            <Typography variant="caption" className="people-dashboard-label">Sobrenome</Typography>
-                                                            <Typography variant="body1">{people.details?.surname || '-'}</Typography>
-                                                        </Grid>
-                                                    </Grid>
-                                                    <Box>
-                                                        <Typography variant="caption" className="people-dashboard-label">Data de Nascimento</Typography>
-                                                        <Typography variant="body1">
-                                                            {people.details?.birthDate ? new Date(people.details.birthDate).toLocaleDateString() : '-'}
-                                                        </Typography>
-                                                    </Box>
-                                                    <Grid container spacing={2}>
-                                                        <Grid size={{ xs: 6 }}>
-                                                            <Typography variant="caption" className="people-dashboard-label">Sexo</Typography>
-                                                            <Typography variant="body2">{people.details?.sex || '-'}</Typography>
-                                                        </Grid>
-                                                        <Grid size={{ xs: 6 }}>
-                                                            <Typography variant="caption" className="people-dashboard-label">Estado Civil</Typography>
-                                                            <Typography variant="body2">
-                                                                {people.details?.maritalStatus ? (MARITAL_STATUS_MAP[people.details.maritalStatus] || people.details.maritalStatus) : '-'}
-                                                            </Typography>
-                                                        </Grid>
-                                                        <Grid size={{ xs: 6 }}>
-                                                            <Typography variant="caption" className="people-dashboard-label">Nacionalidade</Typography>
-                                                            <Typography variant="body2">{people.details?.nationality || '-'}</Typography>
-                                                        </Grid>
-                                                        <Grid size={{ xs: 6 }}>
-                                                            <Typography variant="caption" className="people-dashboard-label">Profissão</Typography>
-                                                            <Typography variant="body2">{people.details?.occupation || '-'}</Typography>
-                                                        </Grid>
-                                                    </Grid>
-                                                </>
-                                            ) : (
-                                                <Grid container spacing={2}>
-                                                    <Grid size={{ xs: 12 }}>
-                                                        <Typography variant="caption" className="people-dashboard-label">Razão Social</Typography>
-                                                        <Typography variant="body1">{people.details?.legalName || '-'}</Typography>
-                                                    </Grid>
-                                                    <Grid size={{ xs: 12 }}>
-                                                        <Typography variant="caption" className="people-dashboard-label">Nome Fantasia</Typography>
-                                                        <Typography variant="body1">{people.details?.tradeName || '-'}</Typography>
-                                                    </Grid>
-                                                </Grid>
-                                            )}
+                            {/* Main Content Grid */}
+                            {/* Desktop Layout */}
+                            <Box sx={{ display: { xs: 'none', md: 'block' } }}>
+                                <Grid container spacing={3} alignItems="flex-start">
+                                    <Grid size={{ md: 4 }}>
+                                        <Stack spacing={3}>
+                                            {detailsCard}
+                                            {bankAccountCard}
+                                            {systemInfoCard}
                                         </Stack>
-                                    </DashboardBodyCard>
+                                    </Grid>
+                                    <Grid size={{ md: 4 }}>
+                                        <Stack spacing={3}>
+                                            {addressesCard}
+                                            {documentsCard}
+                                        </Stack>
+                                    </Grid>
+                                    <Grid size={{ md: 4 }}>
+                                        <Stack spacing={3}>
+                                            {contactsCard}
+                                            {relationshipsCard}
+                                        </Stack>
+                                    </Grid>
                                 </Grid>
-                            )}
+                            </Box>
 
-                            {/* 2. Endereços (Desktop: 2, Mobile: 3) */}
-                            {permissions.includes('comercial:pessoas:enderecos:listar') && (
-                                <Grid size={{ xs: 12, md: 4 }} sx={{ order: { xs: 3, md: 2 } }}>
-                                    <DashboardBodyCardList<PeopleAddress>
-                                        title="Endereços"
-                                        items={people.addresses || []}
-                                        keyExtractor={(item) => item.id}
-                                        renderIcon={() => <LocationOn />}
-                                        renderText={(item) => (
-                                            <>
-                                                {item.street}, {item.number} {item.complement ? `- ${item.complement}` : ''}
-                                            </>
-                                        )}
-                                        renderSecondaryText={(item) => (
-                                            <Box component="span" sx={{ display: 'flex', flexDirection: 'column' }}>
-                                                <Typography variant="body2" component="span" color="inherit">
-                                                    {item.neighborhood}, {item.city} - {item.state}
-                                                </Typography>
-                                                <Typography variant="caption" component="span" color="inherit">
-                                                    {item.postalCode} • {item.addressType}
-                                                </Typography>
-                                            </Box>
-                                        )}
-                                        onAdd={permissions.includes('comercial:pessoas:enderecos:criar') ? handleAddAddress : undefined}
-                                        addButtonLabel="Adicionar endereço"
-                                        onEdit={permissions.includes('comercial:pessoas:enderecos:editar') || permissions.includes('comercial:pessoas:enderecos:visualizar') ? handleEditAddress : undefined}
-                                        onDelete={permissions.includes('comercial:pessoas:enderecos:excluir') ? handleDeleteAddress : undefined}
-                                        emptyText="Nenhum endereço registrado."
-                                    />
-                                </Grid>
-                            )}
-
-                            {/* 3. Contatos (Desktop: 3, Mobile: 2) */}
-                            {permissions.includes('comercial:pessoas:contatos:listar') && (
-                                <Grid size={{ xs: 12, md: 4 }} sx={{ order: { xs: 2, md: 3 } }}>
-                                    <DashboardBodyCardList<PeopleContact>
-                                        title="Contatos"
-                                        items={people.contacts || []}
-                                        keyExtractor={(item) => item.id}
-                                        renderIcon={(item) => item.contactType === 'Email' ? <Email /> : <Phone />}
-                                        renderText={(item) => {
-                                            if (['Telefone', 'Whatsapp', 'Celular'].includes(item.contactType)) {
-                                                const parsed = parsePhoneNumber(item.contactValue)
-                                                return formatPhoneNumber(parsed.number, parsed.country)
-                                            }
-                                            return item.contactValue
-                                        }}
-                                        renderSecondaryText={(item) => `${item.contactType}${item.label ? ' • ' + item.label : ''}`}
-                                        onAdd={permissions.includes('comercial:pessoas:contatos:criar') ? handleAddContact : undefined}
-                                        addButtonLabel="Adicionar contato"
-                                        onEdit={permissions.includes('comercial:pessoas:contatos:editar') || permissions.includes('comercial:pessoas:contatos:visualizar') ? handleEditContact : undefined}
-                                        onDelete={permissions.includes('comercial:pessoas:contatos:excluir') ? handleDeleteContact : undefined}
-                                        emptyText="Nenhum contato registrado."
-                                    />
-                                </Grid>
-                            )}
-
-                            {/* 4. Dados Bancários (Desktop: 4, Mobile: 4) */}
-                            {permissions.includes('comercial:pessoas:dados-bancarios:listar') && (
-                                <Grid size={{ xs: 12, md: 4 }} sx={{ order: { xs: 4, md: 4 } }}>
-                                    <DashboardBodyCardList<PeopleBankAccount>
-                                        title="Dados Bancários"
-                                        items={people.bankAccounts || []}
-                                        keyExtractor={(item) => item.id}
-                                        renderIcon={() => <AccountBalance />}
-                                        renderText={(item) => (
-                                            <Stack direction="row" alignItems="center" spacing={1}>
-                                                <Typography variant="subtitle2" fontWeight="bold">
-                                                    {item.bankCode}
-                                                </Typography>
-                                                <BankNameDisplay code={item.bankCode} />
-                                                {item.isDefaultReceipt && <Chip label="Principal" size="small" color="success" sx={{ height: 20, fontSize: '0.625rem' }} />}
-                                            </Stack>
-                                        )}
-                                        renderSecondaryText={(item) => (
-                                            <Box>
-                                                <Typography variant="body2" className="people-dashboard-text-primary">
-                                                    {item.accountType} • Ag: {item.branchCode} • CC: {item.accountNumber}
-                                                </Typography>
-                                                {item.pixKey && (
-                                                    <Typography variant="caption" className="people-dashboard-text-secondary" display="block">
-                                                        PIX: {item.pixKey}
-                                                    </Typography>
-                                                )}
-                                            </Box>
-                                        )}
-                                        onAdd={permissions.includes('comercial:pessoas:dados-bancarios:criar') ? handleAddAccount : undefined}
-                                        onEdit={permissions.includes('comercial:pessoas:dados-bancarios:editar') || permissions.includes('comercial:pessoas:dados-bancarios:visualizar') ? (item) => handleEditAccount(item as PeopleBankAccount) : undefined}
-                                        onDelete={permissions.includes('comercial:pessoas:dados-bancarios:excluir') ? (item) => handleDeleteAccount(item as PeopleBankAccount) : undefined}
-                                        emptyText="Nenhuma conta bancária registrada."
-                                    />
-                                </Grid>
-                            )}
-
-                            {/* 5. Documentos (Desktop: 5, Mobile: 5) */}
-                            {permissions.includes('comercial:pessoas:documentos:listar') && (
-                                <Grid size={{ xs: 12, md: 4 }} sx={{ order: { xs: 5, md: 5 } }}>
-                                    <DashboardBodyCardList<PeopleDocument>
-                                        title="Documentos"
-                                        items={people.documents || []}
-                                        keyExtractor={(item) => item.id}
-                                        renderIcon={() => <Description />}
-                                        renderText={(item) => item.documentType}
-                                        renderSecondaryText={(item) => (
-                                            <React.Fragment>
-                                                <Typography component="span" variant="caption" display="block" className="people-dashboard-text-secondary">
-                                                    Enviado: {new Date(item.createdAt).toLocaleDateString()}
-                                                </Typography>
-                                                <Stack direction="row" spacing={1} mt={0.5} alignItems="center">
-                                                    {item.verificationStatus === 'verified' && <Typography variant="caption" color="success.main" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}><CheckCircle fontSize="inherit" /> Verificado</Typography>}
-                                                    {item.verificationStatus === 'rejected' && <Typography variant="caption" color="error.main" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}><Error fontSize="inherit" /> Rejeitado</Typography>}
-                                                    {item.verificationStatus === 'pending' && <Typography variant="caption" color="warning.main" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}><Warning fontSize="inherit" /> Pendente</Typography>}
-                                                </Stack>
-                                            </React.Fragment>
-                                        )}
-                                        onAdd={permissions.includes('comercial:pessoas:documentos:criar') ? handleAddDocument : undefined}
-                                        onEdit={permissions.includes('comercial:pessoas:documentos:editar') || permissions.includes('comercial:pessoas:documentos:visualizar') ? (item) => handleEditDocument(item as PeopleDocument) : undefined}
-                                        onDelete={permissions.includes('comercial:pessoas:documentos:excluir') ? (item) => handleDeleteDocument(item as PeopleDocument) : undefined}
-                                        emptyText="Nenhum documento registrado."
-                                    />
-                                </Grid>
-                            )}
-
-                            {/* 6. System Info (Desktop: 6, Mobile: 6) */}
-                            {permissions.includes('comercial:pessoas:auditoria') && (
-                                <Grid size={{ xs: 12, md: 4 }} sx={{ order: { xs: 6, md: 6 } }}>
-                                    <DashboardBodyCard title="Informações do Sistema">
-                                        <Grid container spacing={2}>
-                                            <Grid size={{ xs: 12 }}>
-                                                <Typography variant="subtitle2" className="people-dashboard-label">ID do Sistema</Typography>
-                                                <Typography variant="body2" className="people-dashboard-value" sx={{ fontFamily: 'monospace' }}>{people.id}</Typography>
-                                            </Grid>
-                                            <Grid size={{ xs: 12 }}>
-                                                <Typography variant="subtitle2" className="people-dashboard-label">Criado por</Typography>
-                                                <Typography variant="body2" className="people-dashboard-value">{people.createdBy} em {new Date(people.createdAt).toLocaleString()}</Typography>
-                                            </Grid>
-                                            <Grid size={{ xs: 12 }}>
-                                                <Typography variant="subtitle2" className="people-dashboard-label">Atualizado por</Typography>
-                                                <Typography variant="body2" className="people-dashboard-value">{people.updatedBy} em {new Date(people.updatedAt).toLocaleString()}</Typography>
-                                            </Grid>
-                                        </Grid>
-                                    </DashboardBodyCard>
-                                </Grid>
-                            )}
-                        </Grid>
-                    </Box>
-                ) : null}
+                            {/* Mobile/Tablet Layout (Sorted) */}
+                            <Stack spacing={3} sx={{ display: { xs: 'flex', md: 'none' } }}>
+                                {detailsCard}
+                                {contactsCard}
+                                {bankAccountCard}
+                                {addressesCard}
+                                {documentsCard}
+                                {relationshipsCard}
+                                {systemInfoCard}
+                            </Stack>
+                        </>
+                    )}
+                </DashboardContent>
             </Dialog>
 
             {/* Reusing PeopleFormDialog for editing */}
@@ -1006,9 +1139,16 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                 saving={saving}
             />
 
-            <Dialog open={contactDialogOpen} onClose={handleCloseContactDialog} maxWidth="sm" fullWidth>
-                <DialogTitle>{editingContact ? 'Editar Contato' : 'Adicionar Contato'}</DialogTitle>
-                <DialogContent dividers>
+            <Dialog
+                open={contactDialogOpen}
+                onClose={handleCloseContactDialog}
+                maxWidth="sm"
+                fullWidth
+            >
+                <DialogTitle>
+                    {editingContact ? 'Editar Contato' : 'Adicionar Contato'}
+                </DialogTitle>
+                <DialogContent dividers={false}>
                     <Grid container spacing={2}>
                         <Grid size={{ xs: 12, sm: 4 }}>
                             <TextField
@@ -1022,7 +1162,7 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                                 fullWidth
                                 select
                                 required
-                                disabled={!permissions.includes('comercial:pessoas:contatos:editar')}
+                                disabled={!permissions.includes('cadastro:pessoas:contatos:editar')}
                             >
                                 <MenuItem value="Telefone">Telefone</MenuItem>
                                 <MenuItem value="Email">Email</MenuItem>
@@ -1037,7 +1177,7 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                                     onChange={(val) => setContactForm(prev => ({ ...prev, contactValue: val }))}
                                     fullWidth
                                     required
-                                    disabled={!permissions.includes('comercial:pessoas:contatos:editar')}
+                                    disabled={!permissions.includes('cadastro:pessoas:contatos:editar')}
                                 />
                             ) : ['Telefone', 'Whatsapp'].includes(contactForm.contactType) ? (
                                 <PhonePicker
@@ -1046,7 +1186,7 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                                     onChange={(val) => setContactForm(prev => ({ ...prev, contactValue: val }))}
                                     fullWidth
                                     required
-                                    disabled={!permissions.includes('comercial:pessoas:contatos:editar')}
+                                    disabled={!permissions.includes('cadastro:pessoas:contatos:editar')}
                                 />
                             ) : (
                                 <TextPicker
@@ -1056,7 +1196,7 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                                     fullWidth
                                     required
                                     placeholder={'(00) 00000-0000'}
-                                    disabled={!permissions.includes('comercial:pessoas:contatos:editar')}
+                                    disabled={!permissions.includes('cadastro:pessoas:contatos:editar')}
                                 />
                             )}
                         </Grid>
@@ -1067,24 +1207,39 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                                 onChange={(val) => setContactForm(prev => ({ ...prev, label: val }))}
                                 fullWidth
                                 placeholder="Ex: Casa, Trabalho, Comercial"
-                                disabled={!permissions.includes('comercial:pessoas:contatos:editar')}
+                                disabled={!permissions.includes('cadastro:pessoas:contatos:editar')}
                             />
                         </Grid>
                     </Grid>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={handleCloseContactDialog} color="inherit">
+                    <Button
+                        onClick={handleCloseContactDialog}
+                        color="inherit"
+                        className="button-cancel"
+                    >
                         Cancelar
                     </Button>
-                    <Button onClick={handleSaveContact} variant="contained" disabled={savingContact || !permissions.includes('comercial:pessoas:contatos:editar')}>
+                    <Button
+                        onClick={handleSaveContact}
+                        variant="contained"
+                        disabled={savingContact || !permissions.includes('cadastro:pessoas:contatos:editar')}
+                    >
                         {savingContact ? 'Salvando...' : 'Salvar'}
                     </Button>
                 </DialogActions>
             </Dialog>
 
-            <Dialog open={addressDialogOpen} onClose={handleCloseAddressDialog} maxWidth="md" fullWidth>
-                <DialogTitle>{editingAddress ? 'Editar Endereço' : 'Adicionar Endereço'}</DialogTitle>
-                <DialogContent dividers>
+            <Dialog
+                open={addressDialogOpen}
+                onClose={handleCloseAddressDialog}
+                maxWidth="md"
+                fullWidth
+            >
+                <DialogTitle>
+                    {editingAddress ? 'Editar Endereço' : 'Adicionar Endereço'}
+                </DialogTitle>
+                <DialogContent dividers={false}>
                     <Grid container spacing={2}>
                         <Grid size={{ xs: 12, sm: 4 }}>
                             <TextField
@@ -1094,7 +1249,7 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                                 fullWidth
                                 select
                                 required
-                                disabled={!permissions.includes('comercial:pessoas:enderecos:editar')}
+                                disabled={!permissions.includes('cadastro:pessoas:enderecos:editar')}
                             >
                                 <MenuItem value="Residencial">Residencial</MenuItem>
                                 <MenuItem value="Comercial">Comercial</MenuItem>
@@ -1119,7 +1274,7 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                                 }}
                                 fullWidth
                                 required
-                                disabled={!permissions.includes('comercial:pessoas:enderecos:editar')}
+                                disabled={!permissions.includes('cadastro:pessoas:enderecos:editar')}
                             />
                         </Grid>
                         <Grid size={{ xs: 12, sm: 4 }}>
@@ -1130,7 +1285,7 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                                 fullWidth
                                 required
                                 maxLength={2}
-                                disabled={!permissions.includes('comercial:pessoas:enderecos:editar')}
+                                disabled={!permissions.includes('cadastro:pessoas:enderecos:editar')}
                             />
                         </Grid>
                         <Grid size={{ xs: 12, sm: 9 }}>
@@ -1140,7 +1295,7 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                                 onChange={(val) => setAddressForm(prev => ({ ...prev, street: val }))}
                                 fullWidth
                                 required
-                                disabled={!permissions.includes('comercial:pessoas:enderecos:editar')}
+                                disabled={!permissions.includes('cadastro:pessoas:enderecos:editar')}
                             />
                         </Grid>
                         <Grid size={{ xs: 12, sm: 3 }}>
@@ -1150,7 +1305,7 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                                 onChange={(val) => setAddressForm(prev => ({ ...prev, number: val }))}
                                 fullWidth
                                 required
-                                disabled={!permissions.includes('comercial:pessoas:enderecos:editar')}
+                                disabled={!permissions.includes('cadastro:pessoas:enderecos:editar')}
                             />
                         </Grid>
                         <Grid size={{ xs: 12, sm: 6 }}>
@@ -1160,7 +1315,7 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                                 onChange={(val) => setAddressForm(prev => ({ ...prev, neighborhood: val }))}
                                 fullWidth
                                 required
-                                disabled={!permissions.includes('comercial:pessoas:enderecos:editar')}
+                                disabled={!permissions.includes('cadastro:pessoas:enderecos:editar')}
                             />
                         </Grid>
                         <Grid size={{ xs: 12, sm: 6 }}>
@@ -1170,7 +1325,7 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                                 onChange={(val) => setAddressForm(prev => ({ ...prev, city: val }))}
                                 fullWidth
                                 required
-                                disabled={!permissions.includes('comercial:pessoas:enderecos:editar')}
+                                disabled={!permissions.includes('cadastro:pessoas:enderecos:editar')}
                             />
                         </Grid>
                         <Grid size={{ xs: 12 }}>
@@ -1179,24 +1334,39 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                                 value={addressForm.complement}
                                 onChange={(val) => setAddressForm(prev => ({ ...prev, complement: val }))}
                                 fullWidth
-                                disabled={!permissions.includes('comercial:pessoas:enderecos:editar')}
+                                disabled={!permissions.includes('cadastro:pessoas:enderecos:editar')}
                             />
                         </Grid>
                     </Grid>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={handleCloseAddressDialog} color="inherit">
+                    <Button
+                        onClick={handleCloseAddressDialog}
+                        color="inherit"
+                        className="button-cancel"
+                    >
                         Cancelar
                     </Button>
-                    <Button onClick={handleSaveAddress} variant="contained" disabled={savingAddress || !permissions.includes('comercial:pessoas:enderecos:editar')}>
+                    <Button
+                        onClick={handleSaveAddress}
+                        variant="contained"
+                        disabled={savingAddress || !permissions.includes('cadastro:pessoas:enderecos:editar')}
+                    >
                         {savingAddress ? 'Salvando...' : 'Salvar'}
                     </Button>
                 </DialogActions>
             </Dialog>
 
-            <Dialog open={bankDialogOpen} onClose={handleCloseBankDialog} maxWidth="sm" fullWidth>
-                <DialogTitle>{editingAccount ? 'Editar Conta Bancária' : 'Adicionar Conta Bancária'}</DialogTitle>
-                <DialogContent dividers>
+            <Dialog
+                open={bankDialogOpen}
+                onClose={handleCloseBankDialog}
+                maxWidth="sm"
+                fullWidth
+            >
+                <DialogTitle>
+                    {editingAccount ? 'Editar Conta Bancária' : 'Adicionar Conta Bancária'}
+                </DialogTitle>
+                <DialogContent dividers={false}>
                     <Grid container spacing={2}>
                         <Grid size={{ xs: 12, sm: 4 }}>
                             <TextField
@@ -1206,7 +1376,7 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                                 fullWidth
                                 select
                                 required
-                                disabled={!permissions.includes('comercial:pessoas:dados-bancarios:editar')}
+                                disabled={!permissions.includes('cadastro:pessoas:dados-bancarios:editar')}
                             >
                                 <MenuItem value="Pagamento">Pagamento</MenuItem>
                                 <MenuItem value="Poupança">Poupança</MenuItem>
@@ -1219,7 +1389,7 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                                 onChange={(val) => setBankForm(prev => ({ ...prev, bankCode: val }))}
                                 fullWidth
                                 required
-                                disabled={!permissions.includes('comercial:pessoas:dados-bancarios:editar')}
+                                disabled={!permissions.includes('cadastro:pessoas:dados-bancarios:editar')}
                             />
                         </Grid>
                         <Grid size={{ xs: 12, sm: 4 }}>
@@ -1229,7 +1399,7 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                                 onChange={(val) => setBankForm(prev => ({ ...prev, branchCode: val.replace(/\D/g, '') }))}
                                 fullWidth
                                 required
-                                disabled={!permissions.includes('comercial:pessoas:dados-bancarios:editar')}
+                                disabled={!permissions.includes('cadastro:pessoas:dados-bancarios:editar')}
                             />
                         </Grid>
                         <Grid size={{ xs: 12, sm: 8 }}>
@@ -1239,7 +1409,7 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                                 onChange={(val) => setBankForm(prev => ({ ...prev, accountNumber: val.replace(/\D/g, '') }))}
                                 fullWidth
                                 required
-                                disabled={!permissions.includes('comercial:pessoas:dados-bancarios:editar')}
+                                disabled={!permissions.includes('cadastro:pessoas:dados-bancarios:editar')}
                             />
                         </Grid>
                         <Grid size={{ xs: 12 }}>
@@ -1249,7 +1419,7 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                                 onChange={(val) => setBankForm(prev => ({ ...prev, pixKey: val }))}
                                 fullWidth
                                 placeholder="CPF, Email, Telefone, Chave Aleatória"
-                                disabled={!permissions.includes('comercial:pessoas:dados-bancarios:editar')}
+                                disabled={!permissions.includes('cadastro:pessoas:dados-bancarios:editar')}
                             />
                         </Grid>
                         <Grid size={{ xs: 12 }}>
@@ -1258,7 +1428,7 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                                     <Checkbox
                                         checked={bankForm.isDefaultReceipt}
                                         onChange={(e) => setBankForm(prev => ({ ...prev, isDefaultReceipt: e.target.checked }))}
-                                        disabled={!permissions.includes('comercial:pessoas:dados-bancarios:editar')}
+                                        disabled={!permissions.includes('cadastro:pessoas:dados-bancarios:editar')}
                                     />
                                 }
                                 label="Marcar como Conta Principal para Recebimento"
@@ -1267,18 +1437,33 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                     </Grid>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={handleCloseBankDialog} color="inherit">
+                    <Button
+                        onClick={handleCloseBankDialog}
+                        color="inherit"
+                        className="button-cancel"
+                    >
                         Cancelar
                     </Button>
-                    <Button onClick={handleSaveAccount} variant="contained" disabled={savingAccount || !permissions.includes('comercial:pessoas:dados-bancarios:editar')}>
+                    <Button
+                        onClick={handleSaveAccount}
+                        variant="contained"
+                        disabled={savingAccount || !permissions.includes('cadastro:pessoas:dados-bancarios:editar')}
+                    >
                         {savingAccount ? 'Salvando...' : 'Salvar'}
                     </Button>
                 </DialogActions>
             </Dialog>
 
-            <Dialog open={documentDialogOpen} onClose={handleCloseDocumentDialog} maxWidth="sm" fullWidth>
-                <DialogTitle>{editingDocument ? 'Editar Documento' : 'Adicionar Documento'}</DialogTitle>
-                <DialogContent dividers>
+            <Dialog
+                open={documentDialogOpen}
+                onClose={handleCloseDocumentDialog}
+                maxWidth="sm"
+                fullWidth
+            >
+                <DialogTitle>
+                    {editingDocument ? 'Editar Documento' : 'Adicionar Documento'}
+                </DialogTitle>
+                <DialogContent dividers={false}>
                     <Grid container spacing={2}>
                         <Grid size={{ xs: 12 }}>
                             <TextField
@@ -1288,7 +1473,7 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                                 fullWidth
                                 select
                                 required
-                                disabled={!permissions.includes('comercial:pessoas:documentos:editar')}
+                                disabled={!permissions.includes('cadastro:pessoas:documentos:editar')}
                             >
                                 <MenuItem value="RG - Digital">RG - Digital</MenuItem>
                                 <MenuItem value="RG - Frente">RG - Frente</MenuItem>
@@ -1320,27 +1505,42 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                                 }))}
                                 fullWidth
                                 required
-                                showPreview={permissions.includes('comercial:pessoas:documentos:preview')}
-                                showDownload={permissions.includes('comercial:pessoas:documentos:download')}
-                                disabled={!permissions.includes('comercial:pessoas:documentos:editar')}
+                                showPreview={permissions.includes('cadastro:pessoas:documentos:preview')}
+                                showDownload={permissions.includes('cadastro:pessoas:documentos:download')}
+                                disabled={!permissions.includes('cadastro:pessoas:documentos:editar')}
                             />
                         </Grid>
 
                     </Grid>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={handleCloseDocumentDialog} color="inherit">
+                    <Button
+                        onClick={handleCloseDocumentDialog}
+                        color="inherit"
+                        className="button-cancel"
+                    >
                         Cancelar
                     </Button>
-                    <Button onClick={handleSaveDocument} variant="contained" disabled={savingDocument || !permissions.includes('comercial:pessoas:documentos:editar')}>
+                    <Button
+                        onClick={handleSaveDocument}
+                        variant="contained"
+                        disabled={savingDocument || !permissions.includes('cadastro:pessoas:documentos:editar')}
+                    >
                         {savingDocument ? 'Salvando...' : 'Salvar'}
                     </Button>
                 </DialogActions>
             </Dialog>
 
-            <Dialog open={detailsDialogOpen} onClose={() => setDetailsDialogOpen(false)} maxWidth="sm" fullWidth>
-                <DialogTitle>Editar Detalhes</DialogTitle>
-                <DialogContent dividers>
+            <Dialog
+                open={detailsDialogOpen}
+                onClose={() => setDetailsDialogOpen(false)}
+                maxWidth="sm"
+                fullWidth
+            >
+                <DialogTitle>
+                    Editar Detalhes
+                </DialogTitle>
+                <DialogContent dividers={false}>
                     <Grid container spacing={2}>
                         {people?.cpfCnpj?.replace(/\D/g, '').length === 11 ? (
                             <>
@@ -1434,11 +1634,85 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                     </Grid>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={() => setDetailsDialogOpen(false)} color="inherit">
+                    <Button
+                        onClick={() => setDetailsDialogOpen(false)}
+                        color="inherit"
+                        className="button-cancel"
+                    >
                         Cancelar
                     </Button>
-                    <Button onClick={handleSaveDetails} variant="contained" disabled={savingDetails}>
+                    <Button
+                        onClick={handleSaveDetails}
+                        variant="contained"
+                        disabled={savingDetails}
+                    >
                         {savingDetails ? 'Salvando...' : 'Salvar'}
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            <Dialog
+                open={relationshipDialogOpen}
+                onClose={() => setRelationshipDialogOpen(false)}
+                maxWidth="sm"
+                fullWidth
+            >
+                <DialogTitle>
+                    {editingRelationship ? 'Editar Relacionamento' : 'Adicionar Relacionamento'}
+                </DialogTitle>
+                <DialogContent dividers={false}>
+                    <Grid container spacing={2}>
+                        <Grid size={{ xs: 12 }}>
+                            <SelectPicker
+                                label="Tipo de Relacionamento"
+                                value={relationshipForm.peopleRelationshipTypesId}
+                                onChange={(val) => {
+                                    const selectedType = relationshipTypes.find(t => t.id === val)
+                                    setRelationshipForm(prev => ({
+                                        ...prev,
+                                        peopleRelationshipTypesId: val as string,
+                                        inverseTypeId: selectedType?.inverseTypeId || ''
+                                    }))
+                                }}
+                                options={relationshipTypes.map(t => ({
+                                    value: t.id,
+                                    label: `${t.connectorPrefix} ${t.relationshipSource} ${t.connectorSuffix}`.trim()
+                                }))}
+                                fullWidth
+                                placeholder="Selecione o tipo"
+                                disabled={!permissions.includes('cadastro:pessoas:relacionamentos:editar')}
+                            />
+                        </Grid>
+                        <Grid size={{ xs: 12 }}>
+                            <SelectPicker
+                                label="Pessoa Relacionada"
+                                value={relationshipForm.peopleIdTarget}
+                                onChange={(val) => setRelationshipForm(prev => ({ ...prev, peopleIdTarget: val as string }))}
+                                options={allPeoples.map(p => ({
+                                    value: p.id,
+                                    label: `${p.name} (${p.cpfCnpj})`
+                                }))}
+                                fullWidth
+                                placeholder="Selecione a pessoa"
+                                disabled={!permissions.includes('cadastro:pessoas:relacionamentos:editar')}
+                            />
+                        </Grid>
+                    </Grid>
+                </DialogContent>
+                <DialogActions>
+                    <Button
+                        onClick={() => setRelationshipDialogOpen(false)}
+                        color="inherit"
+                        className="button-cancel"
+                    >
+                        Cancelar
+                    </Button>
+                    <Button
+                        onClick={handleSaveRelationship}
+                        variant="contained"
+                        disabled={savingRelationship || !permissions.includes('cadastro:pessoas:relacionamentos:editar')}
+                    >
+                        {savingRelationship ? 'Salvando...' : 'Salvar'}
                     </Button>
                 </DialogActions>
             </Dialog>

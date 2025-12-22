@@ -296,30 +296,55 @@ body {
   opacity: 0.9;
 }
 
-.people-dashboard-card {
+/* 
+ * Dashboard Component Styles
+ * Reusable styles for Dashboard cards and lists
+ */
+
+.dashboard-card {
   background-color: var(--color-surface);
   border: 1px solid var(--color-border);
-  height: 100%;
+  border-radius: 10px !important;
+  padding: 1rem !important;
 }
 
-.theme-dark .people-dashboard-card {
+.dashboard-card .MuiCardContent-root {
+  padding: 0 !important;
+}
+
+.dashboard-card .MuiCardContent-root:last-child {
+  padding-bottom: 0 !important;
+}
+
+.dashboard-card .MuiListItemButton-root {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+.dashboard-card .MuiListItemIcon-root {
+  min-width: 36px !important;
+}
+
+.theme-dark .dashboard-card {
   border-color: var(--color-border-lighter);
 }
 
-.people-dashboard-section-title {
+.dashboard-section-title {
   color: var(--color-text) !important;
   font-weight: 600;
+  margin-bottom: 8px !important;
+  min-height: 32px;
 }
 
-.people-dashboard-text-primary {
+.dashboard-text-primary {
   color: var(--color-text) !important;
 }
 
-.people-dashboard-text-secondary {
+.dashboard-text-secondary {
   color: var(--color-on-secondary) !important;
 }
 
-.people-dashboard-label {
+.dashboard-label {
   color: var(--color-on-secondary) !important;
   font-size: 0.75rem;
   font-weight: 500;
@@ -328,18 +353,18 @@ body {
   margin-bottom: 4px;
 }
 
-.people-dashboard-value {
+.dashboard-value {
   color: var(--color-text) !important;
   font-size: 0.95rem;
 }
 
-.people-dashboard-empty-text {
+.dashboard-empty-text {
   color: var(--color-on-secondary) !important;
   font-style: italic;
   font-size: 0.875rem;
 }
 
-.theme-dark .people-dashboard-empty-text {
+.theme-dark .dashboard-empty-text {
   color: var(--color-on-secondary) !important;
   opacity: 0.8;
 }
@@ -358,10 +383,73 @@ body {
   border-bottom-color: var(--color-border-lighter);
 }
 
-.people-dashboard-list-item-border {
+.dashboard-list-item-border {
   border-color: rgba(50, 50, 50, 1) !important;
 }
+
 /* File Upload Styles */
 .theme-dark .file-upload-size-text {
   color: #ffffff !important;
+}
+
+/* 
+ * Global Modal Styles (Inheritance)
+ * Standardizes styling across all application modals
+ */
+
+/* Backdrop Blur */
+.MuiBackdrop-root {
+  backdrop-filter: blur(8px);
+  background-color: rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Dialog Paper (Rounded Corners & Shadow) */
+.MuiDialog-paper:not(.MuiDialog-paperFullScreen) {
+  border-radius: 20px !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12) !important;
+  overflow: hidden;
+}
+
+/* Dialog Title */
+.MuiDialogTitle-root {
+  padding: 24px 24px 16px 24px !important;
+  font-size: 20px !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.01em !important;
+  border-bottom: none !important;
+}
+
+/* Dialog Content */
+.MuiDialogContent-root {
+  padding: 24px 24px 24px 24px !important;
+  padding-top: 24px !important;
+}
+
+.MuiDialogContent-root>*:first-child {
+  margin-top: 0 !important;
+}
+
+/* Dialog Actions */
+.MuiDialogActions-root {
+  padding: 16px 24px 24px 24px !important;
+  gap: 8px !important;
+  border-top: none !important;
+}
+
+/* Buttons inside DialogActions */
+.MuiDialogActions-root .MuiButton-root {
+  border-radius: 10px !important;
+  text-transform: none !important;
+  font-size: 15px !important;
+  box-shadow: none !important;
+}
+
+.MuiDialogActions-root .MuiButton-contained {
+  font-weight: 600 !important;
+  padding: 8px 20px !important;
+}
+
+.MuiDialogActions-root .MuiButton-text {
+  font-weight: 500 !important;
+  padding: 8px 16px !important;
 }
