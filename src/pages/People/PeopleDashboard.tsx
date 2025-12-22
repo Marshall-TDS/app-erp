@@ -12,6 +12,7 @@ import { parsePhoneNumber, formatPhoneNumber } from '../../components/PhonePicke
 import MailPicker from '../../components/MailPicker'
 
 import SelectPicker from '../../components/SelectPicker'
+import SwitchPicker from '../../components/SwitchPicker'
 import {
     Box,
     Button,
@@ -24,8 +25,6 @@ import {
     Stack,
     TextField,
     Typography,
-    FormControlLabel,
-    Checkbox,
     Snackbar,
     Alert
 } from '@mui/material'
@@ -1430,15 +1429,11 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                             />
                         </Grid>
                         <Grid size={{ xs: 12 }}>
-                            <FormControlLabel
-                                control={
-                                    <Checkbox
-                                        checked={bankForm.isDefaultReceipt}
-                                        onChange={(e) => setBankForm(prev => ({ ...prev, isDefaultReceipt: e.target.checked }))}
-                                        disabled={!permissions.includes('cadastro:pessoas:dados-bancarios:editar')}
-                                    />
-                                }
+                            <SwitchPicker
                                 label="Marcar como Conta Principal para Recebimento"
+                                checked={bankForm.isDefaultReceipt}
+                                onChange={(val) => setBankForm(prev => ({ ...prev, isDefaultReceipt: val }))}
+                                disabled={!permissions.includes('cadastro:pessoas:dados-bancarios:editar')}
                             />
                         </Grid>
                     </Grid>
