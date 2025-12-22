@@ -8,7 +8,7 @@ type DashboardTopBarProps = {
 
 export const DashboardTopBar = ({ title, onClose }: DashboardTopBarProps) => {
     return (
-        <DialogTitle className="customer-dashboard-header">
+        <DialogTitle className="people-dashboard-header">
             <Stack direction="row" alignItems="center" spacing={2}>
                 <Typography variant="h6" component="div">
                     {title}

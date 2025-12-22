@@ -16,15 +16,14 @@ import TableCard, {
 import { useSearch } from '../../context/SearchContext'
 import { useAuth } from '../../context/AuthContext'
 
-import { customerService, type CustomerDTO } from '../../services/customers'
-import CustomerDashboard from './CustomerDashboard'
-import CustomerFormDialog from './components/CustomerFormDialog'
+import { peopleService, type PeopleDTO } from '../../services/people'
+import PeopleDashboard from './PeopleDashboard'
+import PeopleFormDialog from './components/PeopleFormDialog'
 import './style.css'
 
-type CustomerRow = TableCardRow & {
+type PeopleRow = TableCardRow & {
   id: string
   name: string
-  lastName: string
   cpfCnpj: string
   birthDate?: string | null
   createdAt: string
@@ -35,11 +34,11 @@ type CustomerRow = TableCardRow & {
 
 const DEFAULT_USER = 'admin'
 
-const CustomersPage = () => {
-  const [customers, setCustomers] = useState<CustomerRow[]>([])
+const PeoplePage = () => {
+  const [people, setPeople] = useState<PeopleRow[]>([])
   const [loading, setLoading] = useState(true)
   const [dashboardOpen, setDashboardOpen] = useState(false)
-  const [dashboardCustomerId, setDashboardCustomerId] = useState<string | null>(null)
+  const [dashboardPeopleId, setDashboardPeopleId] = useState<string | null>(null)
   const [createModalOpen, setCreateModalOpen] = useState(false)
   const [creating, setCreating] = useState(false)
 
@@ -61,8 +60,8 @@ const CustomersPage = () => {
   useEffect(() => {
     setPlaceholder('')
     const filters = [
-      { id: 'name', label: 'Nome', field: 'name', type: 'text' as const, page: 'customers' },
-      { id: 'cpfCnpj', label: 'CPF/CNPJ', field: 'cpfCnpj', type: 'text' as const, page: 'customers' },
+      { id: 'name', label: 'Nome', field: 'name', type: 'text' as const, page: 'people' },
+      { id: 'cpfCnpj', label: 'CPF/CNPJ', field: 'cpfCnpj', type: 'text' as const, page: 'people' },
     ]
     setFilters(filters, 'name')
     return () => {
@@ -72,29 +71,29 @@ const CustomersPage = () => {
     }
   }, [setFilters, setPlaceholder, setQuery])
 
-  const mapCustomerToRow = useCallback(
-    (customer: CustomerDTO): CustomerRow => ({
-      ...customer,
+  const mapPeopleToRow = useCallback(
+    (people: PeopleDTO): PeopleRow => ({
+      ...people,
     }),
     [],
   )
 
-  const loadCustomers = async () => {
+  const loadPeople = async () => {
     try {
       setLoading(true)
-      const data = await customerService.list()
-      setCustomers(data.map(mapCustomerToRow))
+      const data = await peopleService.list()
+      setPeople(data.map(mapPeopleToRow))
     } catch (err) {
       console.error(err)
-      setError('Não foi possível carregar clientes')
+      setError('Não foi possível carregar pessoas')
     } finally {
       setLoading(false)
     }
   }
 
   useEffect(() => {
-    if (hasPermission('comercial:clientes:listar')) {
-      loadCustomers()
+    if (hasPermission('comercial:pessoas:listar')) {
+      loadPeople()
     } else {
       setLoading(false)
     }
@@ -103,70 +102,69 @@ const CustomersPage = () => {
 
   // Sync Dashboard state with URL Query Params
   useEffect(() => {
-    const customerIdParam = searchParams.get('customerId')
-    const canView = hasPermission('comercial:clientes:visualizar')
+    const peopleIdParam = searchParams.get('peopleId')
+    const canView = hasPermission('comercial:pessoas:visualizar')
 
-    if (customerIdParam && canView) {
-      if (dashboardCustomerId !== customerIdParam || !dashboardOpen) {
-        setDashboardCustomerId(customerIdParam)
+    if (peopleIdParam && canView) {
+      if (dashboardPeopleId !== peopleIdParam || !dashboardOpen) {
+        setDashboardPeopleId(peopleIdParam)
         setDashboardOpen(true)
       }
     } else {
       if (dashboardOpen) {
         setDashboardOpen(false)
-        setDashboardCustomerId(null)
+        setDashboardPeopleId(null)
       }
     }
-  }, [searchParams, hasPermission, dashboardCustomerId, dashboardOpen])
+  }, [searchParams, hasPermission, dashboardPeopleId, dashboardOpen])
 
-  const handleAddCustomer = async (data: { name: string; lastName: string; cpfCnpj: string }) => {
+  const handleAddPeople = async (data: { name: string; cpfCnpj: string }) => {
     try {
       setCreating(true)
       const payload = {
         name: data.name,
-        lastName: data.lastName,
         cpfCnpj: data.cpfCnpj,
         birthDate: null,
         createdBy: currentUser?.login ?? DEFAULT_USER,
       }
-      await customerService.create(payload)
-      await loadCustomers()
-      setToast({ open: true, message: 'Cliente criado com sucesso' })
+      await peopleService.create(payload)
+      await loadPeople()
+      setToast({ open: true, message: 'Pessoa criada com sucesso' })
       setCreateModalOpen(false)
     } catch (err) {
       console.error(err)
-      setToast({ open: true, message: err instanceof Error ? err.message : 'Erro ao criar cliente' })
+      setToast({ open: true, message: err instanceof Error ? err.message : 'Erro ao criar pessoa' })
     } finally {
       setCreating(false)
     }
   }
 
-  const handleDeleteCustomer = async (id: CustomerRow['id']) => {
+  const handleDeletePeople = async (id: PeopleRow['id']) => {
     try {
-      await customerService.remove(id as string)
-      setCustomers((prev) => prev.filter((customer) => customer.id !== id))
-      setToast({ open: true, message: 'Cliente removido' })
+      await peopleService.remove(id as string)
+      setPeople((prev) => prev.filter((people) => people.id !== id))
+      setToast({ open: true, message: 'Pessoa removida' })
     } catch (err) {
       console.error(err)
       setToast({ open: true, message: err instanceof Error ? err.message : 'Erro ao remover' })
     }
   }
 
-  const handleBulkDelete = async (ids: CustomerRow['id'][]) => {
+  const handleBulkDelete = async (ids: PeopleRow['id'][]) => {
     try {
-      await Promise.all(ids.map((id) => customerService.remove(id as string)))
-      setCustomers((prev) => prev.filter((customer) => !ids.includes(customer.id)))
-      setToast({ open: true, message: 'Clientes removidos' })
+      await Promise.all(ids.map((id) => peopleService.remove(id as string)))
+      setPeople((prev) => prev.filter((people) => !ids.includes(people.id)))
+      setToast({ open: true, message: 'Pessoas removidas' })
     } catch (err) {
       console.error(err)
       setToast({ open: true, message: err instanceof Error ? err.message : 'Erro ao remover' })
     }
   }
 
-  const handleOpenDashboard = (customer: CustomerRow) => {
+  const handleOpenDashboard = (people: PeopleRow) => {
     setSearchParams((prev) => {
       const newParams = new URLSearchParams(prev)
-      newParams.set('customerId', customer.id as string)
+      newParams.set('peopleId', people.id as string)
       return newParams
     })
   }
@@ -174,93 +172,92 @@ const CustomersPage = () => {
   const handleCloseDashboard = () => {
     setSearchParams((prev) => {
       const newParams = new URLSearchParams(prev)
-      newParams.delete('customerId')
+      newParams.delete('peopleId')
       return newParams
     })
   }
 
-  const rowActions: TableCardRowAction<CustomerRow>[] = useMemo(() => [
+  const rowActions: TableCardRowAction<PeopleRow>[] = useMemo(() => [
     {
       label: 'Ver',
       icon: <VisibilityOutlined fontSize="small" />,
       onClick: handleOpenDashboard,
-      disabled: !hasPermission('comercial:clientes:visualizar'),
+      disabled: !hasPermission('comercial:pessoas:visualizar'),
     },
-  ], [hasPermission])
+  ], [hasPermission, handleOpenDashboard])
 
-  const bulkActions: TableCardBulkAction<CustomerRow>[] = useMemo(() => [
+  const bulkActions: TableCardBulkAction<PeopleRow>[] = useMemo(() => [
     {
       label: 'Ver',
       icon: <VisibilityOutlined />,
       onClick: (ids) => {
-        const customer = customers.find((c) => c.id === ids[0])
-        if (customer) handleOpenDashboard(customer)
+        const person = people.find((c) => c.id === ids[0])
+        if (person) handleOpenDashboard(person)
       },
-      disabled: (ids) => ids.length !== 1 || !hasPermission('comercial:clientes:visualizar'),
+      disabled: (ids) => ids.length !== 1 || !hasPermission('comercial:pessoas:visualizar'),
     },
-  ], [customers, hasPermission])
+  ], [people, hasPermission, handleOpenDashboard])
 
-  const tableColumns = useMemo<TableCardColumn<CustomerRow>[]>(() => [
+  const tableColumns = useMemo<TableCardColumn<PeopleRow>[]>(() => [
     { key: 'name', label: 'Nome' },
-    { key: 'lastName', label: 'Sobrenome' },
     { key: 'cpfCnpj', label: 'CPF/CNPJ' },
     { key: 'createdAt', label: 'Cadastro', dataType: 'date' },
   ], [])
 
-  if (!loading && !hasPermission('comercial:clientes:listar')) {
+  if (!loading && !hasPermission('comercial:pessoas:listar')) {
     return (
-      <Box className="customers-page">
+      <Box className="people-page">
         <Typography variant="h6" align="center" sx={{ mt: 4 }}>
-          Você não tem permissão para listar clientes
+          Você não tem permissão para listar pessoas
         </Typography>
       </Box>
     )
   }
 
   return (
-    <Box className="customers-page">
+    <Box className="people-page">
       {loading ? (
-        <Box className="customers-page__loading">
+        <Box className="people-page__loading">
           <CircularProgress size={32} />
           <Typography variant="body2" color="text.secondary">
-            Carregando clientes...
+            Carreganda pessoas...
           </Typography>
         </Box>
       ) : (
         <TableCard
-          title="Clientes"
+          title="Pessoas"
           columns={tableColumns}
-          rows={customers}
-          onAddClick={hasPermission('comercial:clientes:criar') ? () => setCreateModalOpen(true) : undefined}
-          onDelete={handleDeleteCustomer}
-          onBulkDelete={hasPermission('comercial:clientes:excluir') ? handleBulkDelete : undefined}
+          rows={people}
+          onAddClick={hasPermission('comercial:pessoas:criar') ? () => setCreateModalOpen(true) : undefined}
+          onDelete={handleDeletePeople}
+          onBulkDelete={hasPermission('comercial:pessoas:excluir') ? handleBulkDelete : undefined}
           rowActions={rowActions}
           bulkActions={bulkActions}
           onRowClick={(row) => {
-            if (hasPermission('comercial:clientes:visualizar')) {
+            if (hasPermission('comercial:pessoas:visualizar')) {
               handleOpenDashboard(row)
             }
           }}
-          disableDelete={!hasPermission('comercial:clientes:excluir')}
-          disableEdit={!hasPermission('comercial:clientes:editar')}
-          disableView={!hasPermission('comercial:clientes:visualizar')}
+          disableDelete={!hasPermission('comercial:pessoas:excluir')}
+          disableEdit={!hasPermission('comercial:pessoas:editar')}
+          disableView={!hasPermission('comercial:pessoas:visualizar')}
         />
       )}
 
-      {/* Add Customer Modal */}
-      <CustomerFormDialog
+      {/* Add People Modal */}
+      <PeopleFormDialog
         open={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
-        onSave={handleAddCustomer}
-        title="Adicionar Cliente"
+        onSave={handleAddPeople}
+        title="Adicionar Pessoa"
         saving={creating}
       />
 
-      <CustomerDashboard
-        customerId={dashboardCustomerId}
+      <PeopleDashboard
+        peopleId={dashboardPeopleId}
         open={dashboardOpen}
         onClose={handleCloseDashboard}
-        onUpdate={loadCustomers}
+        onUpdate={loadPeople}
       />
 
       <Snackbar
@@ -276,4 +273,4 @@ const CustomersPage = () => {
   )
 }
 
-export default CustomersPage
+export default PeoplePage

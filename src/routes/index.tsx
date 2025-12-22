@@ -3,7 +3,7 @@ import LoginPage from '../pages/Login'
 import ForgotPasswordPage from '../pages/ForgotPassword'
 import DashboardPage from '../pages/Dashboard'
 import InventoryPage from '../pages/Inventory'
-import CustomersPage from '../pages/Customers'
+import PeoplePage from '../pages/People'
 import TeamPage from '../pages/Team'
 import UsersPage from '../pages/Users'
 import SettingsPage from '../pages/Settings'
@@ -34,7 +34,7 @@ const AppRoutes = () => (
       >
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/inventory" element={<InventoryPage />} />
-        <Route path="/customers" element={<CustomersPage />} />
+        <Route path="/peoples" element={<PeoplePage />} />
         <Route path="/team" element={<TeamPage />} />
         <Route path="/users" element={<UsersPage />} />
         <Route path="/access/access-groups" element={<AccessGroupsPage />} />

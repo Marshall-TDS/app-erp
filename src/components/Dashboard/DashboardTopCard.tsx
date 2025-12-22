@@ -11,7 +11,7 @@ export const DashboardTopCard = ({ title, children, action }: DashboardTopCardPr
     return (
         <Box sx={{ mb: 4 }}>
             <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2} sx={{ mb: 1 }}>
-                <Typography variant="h4" className="customer-dashboard-title">
+                <Typography variant="h4" className="people-dashboard-title">
                     {title}
                 </Typography>
                 {action && <Box>{action}</Box>}

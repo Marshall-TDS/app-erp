@@ -12,26 +12,25 @@ import TextPicker from '../../../components/TextPicker'
 import CPFCNPJPicker, { cleanString, validateCPF, validateCNPJ } from '../../../components/CPFCNPJPicker'
 import { useState, useEffect } from 'react'
 
-type CustomerFormDialogProps = {
+type PeopleFormDialogProps = {
     open: boolean
     onClose: () => void
-    onSave: (data: { name: string; lastName: string; cpfCnpj: string }) => void
-    initialValues?: { name: string; lastName: string; cpfCnpj: string }
+    onSave: (data: { name: string; cpfCnpj: string }) => void
+    initialValues?: { name: string; cpfCnpj: string }
     title?: string
     saving?: boolean
 }
 
-const CustomerFormDialog = ({
+const PeopleFormDialog = ({
     open,
     onClose,
     onSave,
     initialValues,
-    title = 'Adicionar Cliente',
+    title = 'Adicionar Pessoa',
     saving = false
-}: CustomerFormDialogProps) => {
+}: PeopleFormDialogProps) => {
     const [form, setForm] = useState({
         name: '',
-        lastName: '',
         cpfCnpj: ''
     })
 
@@ -39,7 +38,7 @@ const CustomerFormDialog = ({
 
     useEffect(() => {
         if (open) {
-            setForm(initialValues || { name: '', lastName: '', cpfCnpj: '' })
+            setForm(initialValues || { name: '', cpfCnpj: '' })
             setError(null)
         }
     }, [open, initialValues])
@@ -48,7 +47,6 @@ const CustomerFormDialog = ({
         const requiredFields = []
         if (!form.cpfCnpj) requiredFields.push('CPF/CNPJ')
         if (!form.name) requiredFields.push('Nome')
-        if (!form.lastName) requiredFields.push('Sobrenome')
 
         if (requiredFields.length > 0) {
             setError(`Preencha os campos obrigatórios: ${requiredFields.join(', ')}`)
@@ -94,17 +92,7 @@ const CustomerFormDialog = ({
                                 onChange={(val) => setForm(prev => ({ ...prev, name: val }))}
                                 fullWidth
                                 required
-                                placeholder="Nome do cliente"
-                            />
-                        </Grid>
-                        <Grid size={{ xs: 12 }}>
-                            <TextPicker
-                                label="Sobrenome"
-                                value={form.lastName}
-                                onChange={(val) => setForm(prev => ({ ...prev, lastName: val }))}
-                                fullWidth
-                                required
-                                placeholder="Sobrenome do cliente"
+                                placeholder="Nome da pessoa"
                             />
                         </Grid>
                     </Grid>
@@ -128,4 +116,4 @@ const CustomerFormDialog = ({
     )
 }
 
-export default CustomerFormDialog
+export default PeopleFormDialog

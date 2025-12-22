@@ -43,19 +43,19 @@ import {
 } from '@mui/icons-material'
 import { DashboardBodyCardList } from '../../components/Dashboard/DashboardBodyCardList'
 import {
-    customerService,
-    type CustomerDTO,
-    type CustomerContact,
-    type CustomerAddress,
-    type CustomerBankAccount,
-    type CustomerDocument,
+    peopleService,
+    type PeopleDTO,
+    type PeopleContact,
+    type PeopleAddress,
+    type PeopleBankAccount,
+    type PeopleDocument,
     type CreateDocumentPayload
-} from '../../services/customers'
+} from '../../services/people'
 import { getBankName } from '../../services/bankService'
 import { DashboardTopBar } from '../../components/Dashboard/DashboardTopBar'
 import { DashboardTopCard } from '../../components/Dashboard/DashboardTopCard'
 import { DashboardBodyCard } from '../../components/Dashboard/DashboardBodyCard'
-import CustomerFormDialog from './components/CustomerFormDialog'
+import PeopleFormDialog from './components/PeopleFormDialog'
 import React from 'react'
 import { MenuItem } from '@mui/material'
 
@@ -67,29 +67,28 @@ const MARITAL_STATUS_MAP: Record<string, string> = {
     'viúvo(a)': 'Viúvo(a)'
 }
 
-type CustomerDashboardProps = {
-    customerId: string | null
+type PeopleDashboardProps = {
+    peopleId: string | null
     open: boolean
     onClose: () => void
     onUpdate?: () => void
 }
 
-const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDashboardProps) => {
-    const [customer, setCustomer] = useState<CustomerDTO | null>(null)
+const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardProps) => {
+    const [people, setPeople] = useState<PeopleDTO | null>(null)
     const [loading, setLoading] = useState(false)
     const { permissions, user } = useAuth()
 
-    // Edit Customer State
+    // Edit People State
     const [editOpen, setEditOpen] = useState(false)
     const [editForm, setEditForm] = useState({
         name: '',
-        lastName: '',
         cpfCnpj: '',
     })
 
     // Contact Management State
     const [contactDialogOpen, setContactDialogOpen] = useState(false)
-    const [editingContact, setEditingContact] = useState<CustomerContact | null>(null)
+    const [editingContact, setEditingContact] = useState<PeopleContact | null>(null)
     const [contactForm, setContactForm] = useState({
         contactType: 'Telefone',
         contactValue: '',
@@ -99,7 +98,7 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
 
     // Address Management State
     const [addressDialogOpen, setAddressDialogOpen] = useState(false)
-    const [editingAddress, setEditingAddress] = useState<CustomerAddress | null>(null)
+    const [editingAddress, setEditingAddress] = useState<PeopleAddress | null>(null)
     const [addressForm, setAddressForm] = useState({
         addressType: 'Residencial',
         postalCode: '',
@@ -114,7 +113,7 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
 
     // Bank Accounts state
     const [bankDialogOpen, setBankDialogOpen] = useState(false)
-    const [editingAccount, setEditingAccount] = useState<CustomerBankAccount | null>(null)
+    const [editingAccount, setEditingAccount] = useState<PeopleBankAccount | null>(null)
     const [bankForm, setBankForm] = useState({
         bankCode: '',
         branchCode: '',
@@ -127,7 +126,7 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
 
     // Documents state
     const [documentDialogOpen, setDocumentDialogOpen] = useState(false)
-    const [editingDocument, setEditingDocument] = useState<CustomerDocument | null>(null)
+    const [editingDocument, setEditingDocument] = useState<PeopleDocument | null>(null)
     const [documentForm, setDocumentForm] = useState<{
         documentType: string
         file: string
@@ -150,42 +149,52 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
         maritalStatus: '',
         nationality: 'Brasileiro',
         occupation: '',
-        birthDate: null as string | null
+        birthDate: null as string | null,
+        firstName: '',
+        surname: '',
+        legalName: '',
+        tradeName: ''
     })
     const [savingDetails, setSavingDetails] = useState(false)
 
     const handleEditDetails = () => {
-        if (!customer) return
-        const details = customer.details
+        if (!people) return
+        const details = people.details
         setDetailsForm({
             sex: details?.sex || '',
             maritalStatus: details?.maritalStatus || '',
             nationality: details?.nationality || 'Brasileiro',
             occupation: details?.occupation || '',
-            birthDate: details?.birthDate || null
+            birthDate: details?.birthDate || null,
+            firstName: details?.firstName || '',
+            surname: details?.surname || '',
+            legalName: details?.legalName || '',
+            tradeName: details?.tradeName || ''
         })
         setDetailsDialogOpen(true)
     }
 
     const handleSaveDetails = async () => {
-        if (!customer) return
+        if (!people) return
 
         try {
             setSavingDetails(true)
             const payload = {
                 ...detailsForm,
-                // Ensure empty strings are treated as needed or just passed.
-                // The API schema handles optional/nullable.
                 sex: detailsForm.sex || null,
                 maritalStatus: detailsForm.maritalStatus || null,
+                firstName: detailsForm.firstName || null,
+                surname: detailsForm.surname || null,
+                legalName: detailsForm.legalName || null,
+                tradeName: detailsForm.tradeName || null,
             }
 
-            if (customer.details?.id) {
-                await customerService.updateDetail(customer.id, customer.details.id, payload)
+            if (people.details?.id) {
+                await peopleService.updateDetail(people.id, people.details.id, payload)
             } else {
-                await customerService.createDetail(customer.id, payload)
+                await peopleService.createDetail(people.id, payload)
             }
-            await loadCustomerData(customer.id)
+            await loadPeopleData(people.id)
             setDetailsDialogOpen(false)
             setSnackbar({
                 open: true,
@@ -216,20 +225,20 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
     }
 
     useEffect(() => {
-        if (customerId && open) {
-            loadCustomerData(customerId)
+        if (peopleId && open) {
+            loadPeopleData(peopleId)
         } else {
-            setCustomer(null)
+            setPeople(null)
         }
-    }, [customerId, open])
+    }, [peopleId, open])
 
-    const loadCustomerData = async (id: string) => {
+    const loadPeopleData = async (id: string) => {
         try {
             setLoading(true)
-            const data = await customerService.getById(id)
-            setCustomer(data)
+            const data = await peopleService.getById(id)
+            setPeople(data)
         } catch (error) {
-            console.error('Erro ao carregar dados do cliente:', error)
+            console.error('Erro ao carregar dados da pessoa:', error)
         } finally {
             setLoading(false)
         }
@@ -246,25 +255,23 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
     }
 
     const handleStartEdit = () => {
-        if (!customer) return
+        if (!people) return
         setEditForm({
-            name: customer.name,
-            lastName: customer.lastName,
-            cpfCnpj: customer.cpfCnpj,
+            name: people.name,
+            cpfCnpj: people.cpfCnpj,
         })
         setEditOpen(true)
     }
 
-    const handleSaveEdit = async (data?: { name: string; lastName: string; cpfCnpj: string }) => {
-        if (!customer) return
+    const handleSaveEdit = async (data?: { name: string; cpfCnpj: string }) => {
+        if (!people) return
 
-        // Use data if provided (from CustomerFormDialog), otherwise fallback to editForm state
+        // Use data if provided (from PeopleFormDialog), otherwise fallback to editForm state
         const formData = data || editForm
 
         const requiredFields = []
         if (!formData.cpfCnpj) requiredFields.push('CPF/CNPJ')
         if (!formData.name) requiredFields.push('Nome')
-        if (!formData.lastName) requiredFields.push('Sobrenome')
 
         if (requiredFields.length > 0) {
             setSnackbar({
@@ -287,28 +294,27 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
 
         try {
             setSaving(true)
-            await customerService.update(customer.id, {
-                ...customer,
+            await peopleService.update(people.id, {
+                ...people,
                 name: formData.name,
-                lastName: formData.lastName,
                 cpfCnpj: formData.cpfCnpj,
                 updatedBy: user?.login || 'system'
             })
-            await loadCustomerData(customer.id)
+            await loadPeopleData(people.id)
             if (onUpdate) {
                 onUpdate()
             }
             setEditOpen(false)
             setSnackbar({
                 open: true,
-                message: 'Cliente atualizado com sucesso!',
+                message: 'Pessoa atualizada com sucesso!',
                 severity: 'success'
             })
         } catch (error) {
             console.error('Erro ao salvar edição:', error)
             setSnackbar({
                 open: true,
-                message: 'Erro ao atualizar cliente',
+                message: 'Erro ao atualizar pessoa',
                 severity: 'error'
             })
         } finally {
@@ -328,7 +334,7 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
         setContactDialogOpen(true)
     }
 
-    const handleEditContact = (contact: CustomerContact) => {
+    const handleEditContact = (contact: PeopleContact) => {
         setEditingContact(contact)
         setContactForm({
             contactType: contact.contactType,
@@ -338,18 +344,18 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
         setContactDialogOpen(true)
     }
 
-    const handleDeleteContact = async (contact: CustomerContact) => {
-        if (!customer) return
+    const handleDeleteContact = async (contact: PeopleContact) => {
+        if (!people) return
         try {
-            await customerService.removeContact(customer.id, contact.id)
-            await loadCustomerData(customer.id)
+            await peopleService.removeContact(people.id, contact.id)
+            await loadPeopleData(people.id)
         } catch (error) {
             console.error('Erro ao excluir contato:', error)
         }
     }
 
     const handleSaveContact = async () => {
-        if (!customer) return
+        if (!people) return
 
         const requiredFields = []
         if (!contactForm.contactType) requiredFields.push('Tipo')
@@ -387,11 +393,11 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
         try {
             setSavingContact(true)
             if (editingContact) {
-                await customerService.updateContact(customer.id, editingContact.id, contactForm)
+                await peopleService.updateContact(people.id, editingContact.id, contactForm)
             } else {
-                await customerService.createContact(customer.id, contactForm)
+                await peopleService.createContact(people.id, contactForm)
             }
-            await loadCustomerData(customer.id)
+            await loadPeopleData(people.id)
             handleCloseContactDialog()
         } catch (error) {
             console.error('Erro ao salvar contato:', error)
@@ -430,7 +436,7 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
         setAddressDialogOpen(true)
     }
 
-    const handleEditAddress = (address: CustomerAddress) => {
+    const handleEditAddress = (address: PeopleAddress) => {
         setEditingAddress(address)
         setAddressForm({
             addressType: address.addressType,
@@ -445,18 +451,18 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
         setAddressDialogOpen(true)
     }
 
-    const handleDeleteAddress = async (address: CustomerAddress) => {
-        if (!customer) return
+    const handleDeleteAddress = async (address: PeopleAddress) => {
+        if (!people) return
         try {
-            await customerService.removeAddress(customer.id, address.id)
-            await loadCustomerData(customer.id)
+            await peopleService.removeAddress(people.id, address.id)
+            await loadPeopleData(people.id)
         } catch (error) {
             console.error('Erro ao excluir endereço:', error)
         }
     }
 
     const handleSaveAddress = async () => {
-        if (!customer) return
+        if (!people) return
 
         const requiredFields = []
         if (!addressForm.addressType) requiredFields.push('Tipo')
@@ -492,11 +498,11 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
         try {
             setSavingAddress(true)
             if (editingAddress) {
-                await customerService.updateAddress(customer.id, editingAddress.id, addressForm)
+                await peopleService.updateAddress(people.id, editingAddress.id, addressForm)
             } else {
-                await customerService.createAddress(customer.id, addressForm)
+                await peopleService.createAddress(people.id, addressForm)
             }
-            await loadCustomerData(customer.id)
+            await loadPeopleData(people.id)
             handleCloseAddressDialog()
         } catch (error) {
             console.error('Erro ao salvar endereço:', error)
@@ -532,7 +538,7 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
         setBankDialogOpen(true)
     }
 
-    const handleEditAccount = (acc: CustomerBankAccount) => {
+    const handleEditAccount = (acc: PeopleBankAccount) => {
         setEditingAccount(acc)
         setBankForm({
             bankCode: acc.bankCode,
@@ -545,18 +551,18 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
         setBankDialogOpen(true)
     }
 
-    const handleDeleteAccount = async (acc: CustomerBankAccount) => {
-        if (!customer) return
+    const handleDeleteAccount = async (acc: PeopleBankAccount) => {
+        if (!people) return
         try {
-            await customerService.removeBankAccount(customer.id, acc.id)
-            await loadCustomerData(customer.id)
+            await peopleService.removeBankAccount(people.id, acc.id)
+            await loadPeopleData(people.id)
         } catch (error) {
             console.error('Failed to delete bank account', error)
         }
     }
 
     const handleSaveAccount = async () => {
-        if (!customer) return
+        if (!people) return
 
         const requiredFields = []
         if (!bankForm.accountType) requiredFields.push('Tipo de Conta')
@@ -581,11 +587,11 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
             }
 
             if (editingAccount) {
-                await customerService.updateBankAccount(customer.id, editingAccount.id, payload)
+                await peopleService.updateBankAccount(people.id, editingAccount.id, payload)
             } else {
-                await customerService.createBankAccount(customer.id, payload)
+                await peopleService.createBankAccount(people.id, payload)
             }
-            await loadCustomerData(customer.id)
+            await loadPeopleData(people.id)
             handleCloseBankDialog()
         } catch (error) {
             console.error('Failed to save bank account', error)
@@ -617,7 +623,7 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
         setDocumentDialogOpen(true)
     }
 
-    const handleEditDocument = (doc: CustomerDocument) => {
+    const handleEditDocument = (doc: PeopleDocument) => {
         setEditingDocument(doc)
         setDocumentForm({
             documentType: doc.documentType,
@@ -629,12 +635,12 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
         setDocumentDialogOpen(true)
     }
 
-    const handleDeleteDocument = async (doc: CustomerDocument) => {
-        if (!customer) return
+    const handleDeleteDocument = async (doc: PeopleDocument) => {
+        if (!people) return
         if (confirm('Tem certeza que deseja excluir este documento?')) {
             try {
-                await customerService.removeDocument(customer.id, doc.id)
-                await loadCustomerData(customer.id)
+                await peopleService.removeDocument(people.id, doc.id)
+                await loadPeopleData(people.id)
             } catch (error) {
                 console.error('Erro ao excluir documento:', error)
             }
@@ -642,7 +648,7 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
     }
 
     const handleSaveDocument = async () => {
-        if (!customer) return
+        if (!people) return
 
         const requiredFields = []
         if (!documentForm.documentType) requiredFields.push('Tipo de Documento')
@@ -668,11 +674,11 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
             }
 
             if (editingDocument) {
-                await customerService.updateDocument(customer.id, editingDocument.id, payload)
+                await peopleService.updateDocument(people.id, editingDocument.id, payload)
             } else {
-                await customerService.createDocument(customer.id, payload)
+                await peopleService.createDocument(people.id, payload)
             }
-            await loadCustomerData(customer.id)
+            await loadPeopleData(people.id)
             handleCloseDocumentDialog()
         } catch (error) {
             console.error('Erro ao salvar documento:', error)
@@ -699,20 +705,20 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
                     }
                 }}
             >
-                <DashboardTopBar title="Cliente" onClose={onClose} />
+                <DashboardTopBar title="Pessoa" onClose={onClose} />
 
                 {loading ? (
                     <DialogContent sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
                         <CircularProgress />
                     </DialogContent>
-                ) : customer ? (
+                ) : people ? (
                     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'auto', p: 3 }}>
 
                         {/* Header Area */}
                         <DashboardTopCard
-                            title={`${customer.name} ${customer.lastName}`}
+                            title={`${people.name}`}
                             action={
-                                permissions.includes('comercial:clientes:editar') && (
+                                permissions.includes('comercial:pessoas:editar') && (
                                     <Button
                                         variant="outlined"
                                         onClick={handleStartEdit}
@@ -731,9 +737,9 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
                                 )
                             }
                         >
-                            {customer.cpfCnpj && (
-                                <Typography variant="subtitle1" className="customer-dashboard-subtitle">
-                                    CPF/CNPJ: {customer.cpfCnpj}
+                            {people.cpfCnpj && (
+                                <Typography variant="subtitle1" className="people-dashboard-subtitle">
+                                    CPF/CNPJ: {people.cpfCnpj}
                                 </Typography>
                             )}
 
@@ -745,12 +751,12 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
                         <Grid container spacing={3}>
 
                             {/* 1. Detalhes */}
-                            {permissions.includes('comercial:clientes:detalhes:visualizar') && (
+                            {permissions.includes('comercial:pessoas:detalhes:visualizar') && (
                                 <Grid size={{ xs: 12, md: 4 }} sx={{ order: { xs: 1, md: 1 } }}>
                                     <DashboardBodyCard
                                         title="Detalhes"
                                         action={
-                                            permissions.includes('comercial:clientes:detalhes:editar') && (
+                                            permissions.includes('comercial:pessoas:detalhes:editar') && (
                                                 <Button
                                                     variant="outlined"
                                                     size="small"
@@ -776,43 +782,68 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
                                         }
                                     >
                                         <Stack spacing={2}>
-                                            <Box>
-                                                <Typography variant="caption" className="customer-dashboard-label">Data de Nascimento</Typography>
-                                                <Typography variant="body1">
-                                                    {customer.details?.birthDate ? new Date(customer.details.birthDate).toLocaleDateString() : '-'}
-                                                </Typography>
-                                            </Box>
-                                            <Grid container spacing={2}>
-                                                <Grid size={{ xs: 6 }}>
-                                                    <Typography variant="caption" className="customer-dashboard-label">Sexo</Typography>
-                                                    <Typography variant="body2">{customer.details?.sex || '-'}</Typography>
+                                            {people.cpfCnpj?.replace(/\D/g, '').length === 11 ? (
+                                                <>
+                                                    <Grid container spacing={2}>
+                                                        <Grid size={{ xs: 6 }}>
+                                                            <Typography variant="caption" className="people-dashboard-label">Nome</Typography>
+                                                            <Typography variant="body1">{people.details?.firstName || '-'}</Typography>
+                                                        </Grid>
+                                                        <Grid size={{ xs: 6 }}>
+                                                            <Typography variant="caption" className="people-dashboard-label">Sobrenome</Typography>
+                                                            <Typography variant="body1">{people.details?.surname || '-'}</Typography>
+                                                        </Grid>
+                                                    </Grid>
+                                                    <Box>
+                                                        <Typography variant="caption" className="people-dashboard-label">Data de Nascimento</Typography>
+                                                        <Typography variant="body1">
+                                                            {people.details?.birthDate ? new Date(people.details.birthDate).toLocaleDateString() : '-'}
+                                                        </Typography>
+                                                    </Box>
+                                                    <Grid container spacing={2}>
+                                                        <Grid size={{ xs: 6 }}>
+                                                            <Typography variant="caption" className="people-dashboard-label">Sexo</Typography>
+                                                            <Typography variant="body2">{people.details?.sex || '-'}</Typography>
+                                                        </Grid>
+                                                        <Grid size={{ xs: 6 }}>
+                                                            <Typography variant="caption" className="people-dashboard-label">Estado Civil</Typography>
+                                                            <Typography variant="body2">
+                                                                {people.details?.maritalStatus ? (MARITAL_STATUS_MAP[people.details.maritalStatus] || people.details.maritalStatus) : '-'}
+                                                            </Typography>
+                                                        </Grid>
+                                                        <Grid size={{ xs: 6 }}>
+                                                            <Typography variant="caption" className="people-dashboard-label">Nacionalidade</Typography>
+                                                            <Typography variant="body2">{people.details?.nationality || '-'}</Typography>
+                                                        </Grid>
+                                                        <Grid size={{ xs: 6 }}>
+                                                            <Typography variant="caption" className="people-dashboard-label">Profissão</Typography>
+                                                            <Typography variant="body2">{people.details?.occupation || '-'}</Typography>
+                                                        </Grid>
+                                                    </Grid>
+                                                </>
+                                            ) : (
+                                                <Grid container spacing={2}>
+                                                    <Grid size={{ xs: 12 }}>
+                                                        <Typography variant="caption" className="people-dashboard-label">Razão Social</Typography>
+                                                        <Typography variant="body1">{people.details?.legalName || '-'}</Typography>
+                                                    </Grid>
+                                                    <Grid size={{ xs: 12 }}>
+                                                        <Typography variant="caption" className="people-dashboard-label">Nome Fantasia</Typography>
+                                                        <Typography variant="body1">{people.details?.tradeName || '-'}</Typography>
+                                                    </Grid>
                                                 </Grid>
-                                                <Grid size={{ xs: 6 }}>
-                                                    <Typography variant="caption" className="customer-dashboard-label">Estado Civil</Typography>
-                                                    <Typography variant="body2">
-                                                        {customer.details?.maritalStatus ? (MARITAL_STATUS_MAP[customer.details.maritalStatus] || customer.details.maritalStatus) : '-'}
-                                                    </Typography>
-                                                </Grid>
-                                                <Grid size={{ xs: 6 }}>
-                                                    <Typography variant="caption" className="customer-dashboard-label">Nacionalidade</Typography>
-                                                    <Typography variant="body2">{customer.details?.nationality || '-'}</Typography>
-                                                </Grid>
-                                                <Grid size={{ xs: 6 }}>
-                                                    <Typography variant="caption" className="customer-dashboard-label">Profissão</Typography>
-                                                    <Typography variant="body2">{customer.details?.occupation || '-'}</Typography>
-                                                </Grid>
-                                            </Grid>
+                                            )}
                                         </Stack>
                                     </DashboardBodyCard>
                                 </Grid>
                             )}
 
                             {/* 2. Endereços (Desktop: 2, Mobile: 3) */}
-                            {permissions.includes('comercial:clientes:enderecos:listar') && (
+                            {permissions.includes('comercial:pessoas:enderecos:listar') && (
                                 <Grid size={{ xs: 12, md: 4 }} sx={{ order: { xs: 3, md: 2 } }}>
-                                    <DashboardBodyCardList<CustomerAddress>
+                                    <DashboardBodyCardList<PeopleAddress>
                                         title="Endereços"
-                                        items={customer.addresses || []}
+                                        items={people.addresses || []}
                                         keyExtractor={(item) => item.id}
                                         renderIcon={() => <LocationOn />}
                                         renderText={(item) => (
@@ -830,21 +861,21 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
                                                 </Typography>
                                             </Box>
                                         )}
-                                        onAdd={permissions.includes('comercial:clientes:enderecos:criar') ? handleAddAddress : undefined}
+                                        onAdd={permissions.includes('comercial:pessoas:enderecos:criar') ? handleAddAddress : undefined}
                                         addButtonLabel="Adicionar endereço"
-                                        onEdit={permissions.includes('comercial:clientes:enderecos:editar') || permissions.includes('comercial:clientes:enderecos:visualizar') ? handleEditAddress : undefined}
-                                        onDelete={permissions.includes('comercial:clientes:enderecos:excluir') ? handleDeleteAddress : undefined}
+                                        onEdit={permissions.includes('comercial:pessoas:enderecos:editar') || permissions.includes('comercial:pessoas:enderecos:visualizar') ? handleEditAddress : undefined}
+                                        onDelete={permissions.includes('comercial:pessoas:enderecos:excluir') ? handleDeleteAddress : undefined}
                                         emptyText="Nenhum endereço registrado."
                                     />
                                 </Grid>
                             )}
 
                             {/* 3. Contatos (Desktop: 3, Mobile: 2) */}
-                            {permissions.includes('comercial:clientes:contatos:listar') && (
+                            {permissions.includes('comercial:pessoas:contatos:listar') && (
                                 <Grid size={{ xs: 12, md: 4 }} sx={{ order: { xs: 2, md: 3 } }}>
-                                    <DashboardBodyCardList<CustomerContact>
+                                    <DashboardBodyCardList<PeopleContact>
                                         title="Contatos"
-                                        items={customer.contacts || []}
+                                        items={people.contacts || []}
                                         keyExtractor={(item) => item.id}
                                         renderIcon={(item) => item.contactType === 'Email' ? <Email /> : <Phone />}
                                         renderText={(item) => {
@@ -855,21 +886,21 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
                                             return item.contactValue
                                         }}
                                         renderSecondaryText={(item) => `${item.contactType}${item.label ? ' • ' + item.label : ''}`}
-                                        onAdd={permissions.includes('comercial:clientes:contatos:criar') ? handleAddContact : undefined}
+                                        onAdd={permissions.includes('comercial:pessoas:contatos:criar') ? handleAddContact : undefined}
                                         addButtonLabel="Adicionar contato"
-                                        onEdit={permissions.includes('comercial:clientes:contatos:editar') || permissions.includes('comercial:clientes:contatos:visualizar') ? handleEditContact : undefined}
-                                        onDelete={permissions.includes('comercial:clientes:contatos:excluir') ? handleDeleteContact : undefined}
+                                        onEdit={permissions.includes('comercial:pessoas:contatos:editar') || permissions.includes('comercial:pessoas:contatos:visualizar') ? handleEditContact : undefined}
+                                        onDelete={permissions.includes('comercial:pessoas:contatos:excluir') ? handleDeleteContact : undefined}
                                         emptyText="Nenhum contato registrado."
                                     />
                                 </Grid>
                             )}
 
                             {/* 4. Dados Bancários (Desktop: 4, Mobile: 4) */}
-                            {permissions.includes('comercial:clientes:dados-bancarios:listar') && (
+                            {permissions.includes('comercial:pessoas:dados-bancarios:listar') && (
                                 <Grid size={{ xs: 12, md: 4 }} sx={{ order: { xs: 4, md: 4 } }}>
-                                    <DashboardBodyCardList<CustomerBankAccount>
+                                    <DashboardBodyCardList<PeopleBankAccount>
                                         title="Dados Bancários"
-                                        items={customer.bankAccounts || []}
+                                        items={people.bankAccounts || []}
                                         keyExtractor={(item) => item.id}
                                         renderIcon={() => <AccountBalance />}
                                         renderText={(item) => (
@@ -883,36 +914,36 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
                                         )}
                                         renderSecondaryText={(item) => (
                                             <Box>
-                                                <Typography variant="body2" className="customer-dashboard-text-primary">
+                                                <Typography variant="body2" className="people-dashboard-text-primary">
                                                     {item.accountType} • Ag: {item.branchCode} • CC: {item.accountNumber}
                                                 </Typography>
                                                 {item.pixKey && (
-                                                    <Typography variant="caption" className="customer-dashboard-text-secondary" display="block">
+                                                    <Typography variant="caption" className="people-dashboard-text-secondary" display="block">
                                                         PIX: {item.pixKey}
                                                     </Typography>
                                                 )}
                                             </Box>
                                         )}
-                                        onAdd={permissions.includes('comercial:clientes:dados-bancarios:criar') ? handleAddAccount : undefined}
-                                        onEdit={permissions.includes('comercial:clientes:dados-bancarios:editar') || permissions.includes('comercial:clientes:dados-bancarios:visualizar') ? (item) => handleEditAccount(item as CustomerBankAccount) : undefined}
-                                        onDelete={permissions.includes('comercial:clientes:dados-bancarios:excluir') ? (item) => handleDeleteAccount(item as CustomerBankAccount) : undefined}
+                                        onAdd={permissions.includes('comercial:pessoas:dados-bancarios:criar') ? handleAddAccount : undefined}
+                                        onEdit={permissions.includes('comercial:pessoas:dados-bancarios:editar') || permissions.includes('comercial:pessoas:dados-bancarios:visualizar') ? (item) => handleEditAccount(item as PeopleBankAccount) : undefined}
+                                        onDelete={permissions.includes('comercial:pessoas:dados-bancarios:excluir') ? (item) => handleDeleteAccount(item as PeopleBankAccount) : undefined}
                                         emptyText="Nenhuma conta bancária registrada."
                                     />
                                 </Grid>
                             )}
 
                             {/* 5. Documentos (Desktop: 5, Mobile: 5) */}
-                            {permissions.includes('comercial:clientes:documentos:listar') && (
+                            {permissions.includes('comercial:pessoas:documentos:listar') && (
                                 <Grid size={{ xs: 12, md: 4 }} sx={{ order: { xs: 5, md: 5 } }}>
-                                    <DashboardBodyCardList<CustomerDocument>
+                                    <DashboardBodyCardList<PeopleDocument>
                                         title="Documentos"
-                                        items={customer.documents || []}
+                                        items={people.documents || []}
                                         keyExtractor={(item) => item.id}
                                         renderIcon={() => <Description />}
                                         renderText={(item) => item.documentType}
                                         renderSecondaryText={(item) => (
                                             <React.Fragment>
-                                                <Typography component="span" variant="caption" display="block" className="customer-dashboard-text-secondary">
+                                                <Typography component="span" variant="caption" display="block" className="people-dashboard-text-secondary">
                                                     Enviado: {new Date(item.createdAt).toLocaleDateString()}
                                                 </Typography>
                                                 <Stack direction="row" spacing={1} mt={0.5} alignItems="center">
@@ -922,30 +953,30 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
                                                 </Stack>
                                             </React.Fragment>
                                         )}
-                                        onAdd={permissions.includes('comercial:clientes:documentos:criar') ? handleAddDocument : undefined}
-                                        onEdit={permissions.includes('comercial:clientes:documentos:editar') || permissions.includes('comercial:clientes:documentos:visualizar') ? (item) => handleEditDocument(item as CustomerDocument) : undefined}
-                                        onDelete={permissions.includes('comercial:clientes:documentos:excluir') ? (item) => handleDeleteDocument(item as CustomerDocument) : undefined}
+                                        onAdd={permissions.includes('comercial:pessoas:documentos:criar') ? handleAddDocument : undefined}
+                                        onEdit={permissions.includes('comercial:pessoas:documentos:editar') || permissions.includes('comercial:pessoas:documentos:visualizar') ? (item) => handleEditDocument(item as PeopleDocument) : undefined}
+                                        onDelete={permissions.includes('comercial:pessoas:documentos:excluir') ? (item) => handleDeleteDocument(item as PeopleDocument) : undefined}
                                         emptyText="Nenhum documento registrado."
                                     />
                                 </Grid>
                             )}
 
                             {/* 6. System Info (Desktop: 6, Mobile: 6) */}
-                            {permissions.includes('comercial:clientes:auditoria') && (
+                            {permissions.includes('comercial:pessoas:auditoria') && (
                                 <Grid size={{ xs: 12, md: 4 }} sx={{ order: { xs: 6, md: 6 } }}>
                                     <DashboardBodyCard title="Informações do Sistema">
                                         <Grid container spacing={2}>
                                             <Grid size={{ xs: 12 }}>
-                                                <Typography variant="subtitle2" className="customer-dashboard-label">ID do Sistema</Typography>
-                                                <Typography variant="body2" className="customer-dashboard-value" sx={{ fontFamily: 'monospace' }}>{customer.id}</Typography>
+                                                <Typography variant="subtitle2" className="people-dashboard-label">ID do Sistema</Typography>
+                                                <Typography variant="body2" className="people-dashboard-value" sx={{ fontFamily: 'monospace' }}>{people.id}</Typography>
                                             </Grid>
                                             <Grid size={{ xs: 12 }}>
-                                                <Typography variant="subtitle2" className="customer-dashboard-label">Criado por</Typography>
-                                                <Typography variant="body2" className="customer-dashboard-value">{customer.createdBy} em {new Date(customer.createdAt).toLocaleString()}</Typography>
+                                                <Typography variant="subtitle2" className="people-dashboard-label">Criado por</Typography>
+                                                <Typography variant="body2" className="people-dashboard-value">{people.createdBy} em {new Date(people.createdAt).toLocaleString()}</Typography>
                                             </Grid>
                                             <Grid size={{ xs: 12 }}>
-                                                <Typography variant="subtitle2" className="customer-dashboard-label">Atualizado por</Typography>
-                                                <Typography variant="body2" className="customer-dashboard-value">{customer.updatedBy} em {new Date(customer.updatedAt).toLocaleString()}</Typography>
+                                                <Typography variant="subtitle2" className="people-dashboard-label">Atualizado por</Typography>
+                                                <Typography variant="body2" className="people-dashboard-value">{people.updatedBy} em {new Date(people.updatedAt).toLocaleString()}</Typography>
                                             </Grid>
                                         </Grid>
                                     </DashboardBodyCard>
@@ -956,8 +987,8 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
                 ) : null}
             </Dialog>
 
-            {/* Reusing CustomerFormDialog for editing */}
-            <CustomerFormDialog
+            {/* Reusing PeopleFormDialog for editing */}
+            <PeopleFormDialog
                 open={editOpen}
                 onClose={() => setEditOpen(false)}
                 onSave={(data) => {
@@ -971,7 +1002,7 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
                     handleSaveEdit(data)
                 }}
                 initialValues={editForm}
-                title="Editar Cliente"
+                title="Editar Pessoa"
                 saving={saving}
             />
 
@@ -991,7 +1022,7 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
                                 fullWidth
                                 select
                                 required
-                                disabled={!permissions.includes('comercial:clientes:contatos:editar')}
+                                disabled={!permissions.includes('comercial:pessoas:contatos:editar')}
                             >
                                 <MenuItem value="Telefone">Telefone</MenuItem>
                                 <MenuItem value="Email">Email</MenuItem>
@@ -1006,7 +1037,7 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
                                     onChange={(val) => setContactForm(prev => ({ ...prev, contactValue: val }))}
                                     fullWidth
                                     required
-                                    disabled={!permissions.includes('comercial:clientes:contatos:editar')}
+                                    disabled={!permissions.includes('comercial:pessoas:contatos:editar')}
                                 />
                             ) : ['Telefone', 'Whatsapp'].includes(contactForm.contactType) ? (
                                 <PhonePicker
@@ -1015,7 +1046,7 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
                                     onChange={(val) => setContactForm(prev => ({ ...prev, contactValue: val }))}
                                     fullWidth
                                     required
-                                    disabled={!permissions.includes('comercial:clientes:contatos:editar')}
+                                    disabled={!permissions.includes('comercial:pessoas:contatos:editar')}
                                 />
                             ) : (
                                 <TextPicker
@@ -1025,7 +1056,7 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
                                     fullWidth
                                     required
                                     placeholder={'(00) 00000-0000'}
-                                    disabled={!permissions.includes('comercial:clientes:contatos:editar')}
+                                    disabled={!permissions.includes('comercial:pessoas:contatos:editar')}
                                 />
                             )}
                         </Grid>
@@ -1036,7 +1067,7 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
                                 onChange={(val) => setContactForm(prev => ({ ...prev, label: val }))}
                                 fullWidth
                                 placeholder="Ex: Casa, Trabalho, Comercial"
-                                disabled={!permissions.includes('comercial:clientes:contatos:editar')}
+                                disabled={!permissions.includes('comercial:pessoas:contatos:editar')}
                             />
                         </Grid>
                     </Grid>
@@ -1045,7 +1076,7 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
                     <Button onClick={handleCloseContactDialog} color="inherit">
                         Cancelar
                     </Button>
-                    <Button onClick={handleSaveContact} variant="contained" disabled={savingContact || !permissions.includes('comercial:clientes:contatos:editar')}>
+                    <Button onClick={handleSaveContact} variant="contained" disabled={savingContact || !permissions.includes('comercial:pessoas:contatos:editar')}>
                         {savingContact ? 'Salvando...' : 'Salvar'}
                     </Button>
                 </DialogActions>
@@ -1063,7 +1094,7 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
                                 fullWidth
                                 select
                                 required
-                                disabled={!permissions.includes('comercial:clientes:enderecos:editar')}
+                                disabled={!permissions.includes('comercial:pessoas:enderecos:editar')}
                             >
                                 <MenuItem value="Residencial">Residencial</MenuItem>
                                 <MenuItem value="Comercial">Comercial</MenuItem>
@@ -1088,7 +1119,7 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
                                 }}
                                 fullWidth
                                 required
-                                disabled={!permissions.includes('comercial:clientes:enderecos:editar')}
+                                disabled={!permissions.includes('comercial:pessoas:enderecos:editar')}
                             />
                         </Grid>
                         <Grid size={{ xs: 12, sm: 4 }}>
@@ -1099,7 +1130,7 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
                                 fullWidth
                                 required
                                 maxLength={2}
-                                disabled={!permissions.includes('comercial:clientes:enderecos:editar')}
+                                disabled={!permissions.includes('comercial:pessoas:enderecos:editar')}
                             />
                         </Grid>
                         <Grid size={{ xs: 12, sm: 9 }}>
@@ -1109,7 +1140,7 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
                                 onChange={(val) => setAddressForm(prev => ({ ...prev, street: val }))}
                                 fullWidth
                                 required
-                                disabled={!permissions.includes('comercial:clientes:enderecos:editar')}
+                                disabled={!permissions.includes('comercial:pessoas:enderecos:editar')}
                             />
                         </Grid>
                         <Grid size={{ xs: 12, sm: 3 }}>
@@ -1119,7 +1150,7 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
                                 onChange={(val) => setAddressForm(prev => ({ ...prev, number: val }))}
                                 fullWidth
                                 required
-                                disabled={!permissions.includes('comercial:clientes:enderecos:editar')}
+                                disabled={!permissions.includes('comercial:pessoas:enderecos:editar')}
                             />
                         </Grid>
                         <Grid size={{ xs: 12, sm: 6 }}>
@@ -1129,7 +1160,7 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
                                 onChange={(val) => setAddressForm(prev => ({ ...prev, neighborhood: val }))}
                                 fullWidth
                                 required
-                                disabled={!permissions.includes('comercial:clientes:enderecos:editar')}
+                                disabled={!permissions.includes('comercial:pessoas:enderecos:editar')}
                             />
                         </Grid>
                         <Grid size={{ xs: 12, sm: 6 }}>
@@ -1139,7 +1170,7 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
                                 onChange={(val) => setAddressForm(prev => ({ ...prev, city: val }))}
                                 fullWidth
                                 required
-                                disabled={!permissions.includes('comercial:clientes:enderecos:editar')}
+                                disabled={!permissions.includes('comercial:pessoas:enderecos:editar')}
                             />
                         </Grid>
                         <Grid size={{ xs: 12 }}>
@@ -1148,7 +1179,7 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
                                 value={addressForm.complement}
                                 onChange={(val) => setAddressForm(prev => ({ ...prev, complement: val }))}
                                 fullWidth
-                                disabled={!permissions.includes('comercial:clientes:enderecos:editar')}
+                                disabled={!permissions.includes('comercial:pessoas:enderecos:editar')}
                             />
                         </Grid>
                     </Grid>
@@ -1157,7 +1188,7 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
                     <Button onClick={handleCloseAddressDialog} color="inherit">
                         Cancelar
                     </Button>
-                    <Button onClick={handleSaveAddress} variant="contained" disabled={savingAddress || !permissions.includes('comercial:clientes:enderecos:editar')}>
+                    <Button onClick={handleSaveAddress} variant="contained" disabled={savingAddress || !permissions.includes('comercial:pessoas:enderecos:editar')}>
                         {savingAddress ? 'Salvando...' : 'Salvar'}
                     </Button>
                 </DialogActions>
@@ -1175,7 +1206,7 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
                                 fullWidth
                                 select
                                 required
-                                disabled={!permissions.includes('comercial:clientes:dados-bancarios:editar')}
+                                disabled={!permissions.includes('comercial:pessoas:dados-bancarios:editar')}
                             >
                                 <MenuItem value="Pagamento">Pagamento</MenuItem>
                                 <MenuItem value="Poupança">Poupança</MenuItem>
@@ -1188,7 +1219,7 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
                                 onChange={(val) => setBankForm(prev => ({ ...prev, bankCode: val }))}
                                 fullWidth
                                 required
-                                disabled={!permissions.includes('comercial:clientes:dados-bancarios:editar')}
+                                disabled={!permissions.includes('comercial:pessoas:dados-bancarios:editar')}
                             />
                         </Grid>
                         <Grid size={{ xs: 12, sm: 4 }}>
@@ -1198,7 +1229,7 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
                                 onChange={(val) => setBankForm(prev => ({ ...prev, branchCode: val.replace(/\D/g, '') }))}
                                 fullWidth
                                 required
-                                disabled={!permissions.includes('comercial:clientes:dados-bancarios:editar')}
+                                disabled={!permissions.includes('comercial:pessoas:dados-bancarios:editar')}
                             />
                         </Grid>
                         <Grid size={{ xs: 12, sm: 8 }}>
@@ -1208,7 +1239,7 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
                                 onChange={(val) => setBankForm(prev => ({ ...prev, accountNumber: val.replace(/\D/g, '') }))}
                                 fullWidth
                                 required
-                                disabled={!permissions.includes('comercial:clientes:dados-bancarios:editar')}
+                                disabled={!permissions.includes('comercial:pessoas:dados-bancarios:editar')}
                             />
                         </Grid>
                         <Grid size={{ xs: 12 }}>
@@ -1218,7 +1249,7 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
                                 onChange={(val) => setBankForm(prev => ({ ...prev, pixKey: val }))}
                                 fullWidth
                                 placeholder="CPF, Email, Telefone, Chave Aleatória"
-                                disabled={!permissions.includes('comercial:clientes:dados-bancarios:editar')}
+                                disabled={!permissions.includes('comercial:pessoas:dados-bancarios:editar')}
                             />
                         </Grid>
                         <Grid size={{ xs: 12 }}>
@@ -1227,7 +1258,7 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
                                     <Checkbox
                                         checked={bankForm.isDefaultReceipt}
                                         onChange={(e) => setBankForm(prev => ({ ...prev, isDefaultReceipt: e.target.checked }))}
-                                        disabled={!permissions.includes('comercial:clientes:dados-bancarios:editar')}
+                                        disabled={!permissions.includes('comercial:pessoas:dados-bancarios:editar')}
                                     />
                                 }
                                 label="Marcar como Conta Principal para Recebimento"
@@ -1239,7 +1270,7 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
                     <Button onClick={handleCloseBankDialog} color="inherit">
                         Cancelar
                     </Button>
-                    <Button onClick={handleSaveAccount} variant="contained" disabled={savingAccount || !permissions.includes('comercial:clientes:dados-bancarios:editar')}>
+                    <Button onClick={handleSaveAccount} variant="contained" disabled={savingAccount || !permissions.includes('comercial:pessoas:dados-bancarios:editar')}>
                         {savingAccount ? 'Salvando...' : 'Salvar'}
                     </Button>
                 </DialogActions>
@@ -1257,7 +1288,7 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
                                 fullWidth
                                 select
                                 required
-                                disabled={!permissions.includes('comercial:clientes:documentos:editar')}
+                                disabled={!permissions.includes('comercial:pessoas:documentos:editar')}
                             >
                                 <MenuItem value="RG - Digital">RG - Digital</MenuItem>
                                 <MenuItem value="RG - Frente">RG - Frente</MenuItem>
@@ -1289,9 +1320,9 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
                                 }))}
                                 fullWidth
                                 required
-                                showPreview={permissions.includes('comercial:clientes:documentos:preview')}
-                                showDownload={permissions.includes('comercial:clientes:documentos:download')}
-                                disabled={!permissions.includes('comercial:clientes:documentos:editar')}
+                                showPreview={permissions.includes('comercial:pessoas:documentos:preview')}
+                                showDownload={permissions.includes('comercial:pessoas:documentos:download')}
+                                disabled={!permissions.includes('comercial:pessoas:documentos:editar')}
                             />
                         </Grid>
 
@@ -1301,7 +1332,7 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
                     <Button onClick={handleCloseDocumentDialog} color="inherit">
                         Cancelar
                     </Button>
-                    <Button onClick={handleSaveDocument} variant="contained" disabled={savingDocument || !permissions.includes('comercial:clientes:documentos:editar')}>
+                    <Button onClick={handleSaveDocument} variant="contained" disabled={savingDocument || !permissions.includes('comercial:pessoas:documentos:editar')}>
                         {savingDocument ? 'Salvando...' : 'Salvar'}
                     </Button>
                 </DialogActions>
@@ -1311,56 +1342,95 @@ const CustomerDashboard = ({ customerId, open, onClose, onUpdate }: CustomerDash
                 <DialogTitle>Editar Detalhes</DialogTitle>
                 <DialogContent dividers>
                     <Grid container spacing={2}>
-                        <Grid size={{ xs: 12 }}>
-                            <DatePicker
-                                label="Data de Nascimento"
-                                value={detailsForm.birthDate ?? ''}
-                                onChange={(val) => setDetailsForm(prev => ({ ...prev, birthDate: val }))}
-                                fullWidth
-                            />
-                        </Grid>
-                        <Grid size={{ xs: 12, sm: 6 }}>
-                            <SelectPicker
-                                label="Sexo"
-                                value={detailsForm.sex}
-                                onChange={(val) => setDetailsForm(prev => ({ ...prev, sex: val as string }))}
-                                options={[
-                                    { value: 'Homem', label: 'Homem' },
-                                    { value: 'Mulher', label: 'Mulher' }
-                                ]}
-                                fullWidth
-                                placeholder="Selecione"
-                            />
-                        </Grid>
-                        <Grid size={{ xs: 12, sm: 6 }}>
-                            <SelectPicker
-                                label="Estado Civil"
-                                value={detailsForm.maritalStatus}
-                                onChange={(val) => setDetailsForm(prev => ({ ...prev, maritalStatus: val as string }))}
-                                options={Object.entries(MARITAL_STATUS_MAP).map(([value, label]) => ({
-                                    value,
-                                    label
-                                }))}
-                                fullWidth
-                                placeholder="Selecione"
-                            />
-                        </Grid>
-                        <Grid size={{ xs: 12 }}>
-                            <TextPicker
-                                label="Nacionalidade"
-                                value={detailsForm.nationality}
-                                onChange={(val) => setDetailsForm(prev => ({ ...prev, nationality: val }))}
-                                fullWidth
-                            />
-                        </Grid>
-                        <Grid size={{ xs: 12 }}>
-                            <TextPicker
-                                label="Profissão"
-                                value={detailsForm.occupation}
-                                onChange={(val) => setDetailsForm(prev => ({ ...prev, occupation: val }))}
-                                fullWidth
-                            />
-                        </Grid>
+                        {people?.cpfCnpj?.replace(/\D/g, '').length === 11 ? (
+                            <>
+                                <Grid size={{ xs: 12, sm: 6 }}>
+                                    <TextPicker
+                                        label="Nome"
+                                        value={detailsForm.firstName}
+                                        onChange={(val) => setDetailsForm(prev => ({ ...prev, firstName: val }))}
+                                        fullWidth
+                                    />
+                                </Grid>
+                                <Grid size={{ xs: 12, sm: 6 }}>
+                                    <TextPicker
+                                        label="Sobrenome"
+                                        value={detailsForm.surname}
+                                        onChange={(val) => setDetailsForm(prev => ({ ...prev, surname: val }))}
+                                        fullWidth
+                                    />
+                                </Grid>
+                                <Grid size={{ xs: 12 }}>
+                                    <DatePicker
+                                        label="Data de Nascimento"
+                                        value={detailsForm.birthDate ?? ''}
+                                        onChange={(val) => setDetailsForm(prev => ({ ...prev, birthDate: val }))}
+                                        fullWidth
+                                    />
+                                </Grid>
+                                <Grid size={{ xs: 12, sm: 6 }}>
+                                    <SelectPicker
+                                        label="Sexo"
+                                        value={detailsForm.sex}
+                                        onChange={(val) => setDetailsForm(prev => ({ ...prev, sex: val as string }))}
+                                        options={[
+                                            { value: 'Homem', label: 'Homem' },
+                                            { value: 'Mulher', label: 'Mulher' }
+                                        ]}
+                                        fullWidth
+                                        placeholder="Selecione"
+                                    />
+                                </Grid>
+                                <Grid size={{ xs: 12, sm: 6 }}>
+                                    <SelectPicker
+                                        label="Estado Civil"
+                                        value={detailsForm.maritalStatus}
+                                        onChange={(val) => setDetailsForm(prev => ({ ...prev, maritalStatus: val as string }))}
+                                        options={Object.entries(MARITAL_STATUS_MAP).map(([value, label]) => ({
+                                            value,
+                                            label
+                                        }))}
+                                        fullWidth
+                                        placeholder="Selecione"
+                                    />
+                                </Grid>
+                                <Grid size={{ xs: 12 }}>
+                                    <TextPicker
+                                        label="Nacionalidade"
+                                        value={detailsForm.nationality}
+                                        onChange={(val) => setDetailsForm(prev => ({ ...prev, nationality: val }))}
+                                        fullWidth
+                                    />
+                                </Grid>
+                                <Grid size={{ xs: 12 }}>
+                                    <TextPicker
+                                        label="Profissão"
+                                        value={detailsForm.occupation}
+                                        onChange={(val) => setDetailsForm(prev => ({ ...prev, occupation: val }))}
+                                        fullWidth
+                                    />
+                                </Grid>
+                            </>
+                        ) : (
+                            <>
+                                <Grid size={{ xs: 12 }}>
+                                    <TextPicker
+                                        label="Razão Social"
+                                        value={detailsForm.legalName}
+                                        onChange={(val) => setDetailsForm(prev => ({ ...prev, legalName: val }))}
+                                        fullWidth
+                                    />
+                                </Grid>
+                                <Grid size={{ xs: 12 }}>
+                                    <TextPicker
+                                        label="Nome Fantasia"
+                                        value={detailsForm.tradeName}
+                                        onChange={(val) => setDetailsForm(prev => ({ ...prev, tradeName: val }))}
+                                        fullWidth
+                                    />
+                                </Grid>
+                            </>
+                        )}
                     </Grid>
                 </DialogContent>
                 <DialogActions>
@@ -1398,4 +1468,4 @@ const BankNameDisplay = ({ code }: { code: string }) => {
     )
 }
 
-export default CustomerDashboard
+export default PeopleDashboard

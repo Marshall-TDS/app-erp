@@ -86,7 +86,7 @@ export function DashboardBodyCardList<T>({
                                 )
                             }
                             sx={{ borderBottom: '1px solid' }}
-                            className="customer-dashboard-list-item-border"
+                            className="people-dashboard-list-item-border"
                         >
                             {onEdit ? (
                                 <ListItemButton onClick={() => onEdit(item)}>
@@ -98,8 +98,8 @@ export function DashboardBodyCardList<T>({
                                     <ListItemText
                                         primary={renderText(item)}
                                         secondary={renderSecondaryText && renderSecondaryText(item)}
-                                        primaryTypographyProps={{ className: 'customer-dashboard-text-primary' }}
-                                        secondaryTypographyProps={{ className: 'customer-dashboard-text-secondary' }}
+                                        primaryTypographyProps={{ className: 'people-dashboard-text-primary' }}
+                                        secondaryTypographyProps={{ className: 'people-dashboard-text-secondary' }}
                                     />
                                 </ListItemButton>
                             ) : (
@@ -112,15 +112,15 @@ export function DashboardBodyCardList<T>({
                                     <ListItemText
                                         primary={renderText(item)}
                                         secondary={renderSecondaryText && renderSecondaryText(item)}
-                                        primaryTypographyProps={{ className: 'customer-dashboard-text-primary' }}
-                                        secondaryTypographyProps={{ className: 'customer-dashboard-text-secondary' }}
+                                        primaryTypographyProps={{ className: 'people-dashboard-text-primary' }}
+                                        secondaryTypographyProps={{ className: 'people-dashboard-text-secondary' }}
                                     />
                                 </Box>
                             )}
                         </ListItem>
                     ))
                 ) : (
-                    <Typography variant="body2" className="customer-dashboard-empty-text">
+                    <Typography variant="body2" className="people-dashboard-empty-text">
                         {emptyText}
                     </Typography>
                 )}

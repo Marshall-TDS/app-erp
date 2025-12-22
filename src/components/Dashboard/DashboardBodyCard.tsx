@@ -9,9 +9,9 @@ type DashboardBodyCardProps = {
 
 export const DashboardBodyCard = ({ title, action, children, sx }: DashboardBodyCardProps) => {
     return (
-        <Card variant="outlined" className="customer-dashboard-card" sx={{ borderRadius: 2, ...sx }}>
+        <Card variant="outlined" className="people-dashboard-card" sx={{ borderRadius: 2, ...sx }}>
             <CardContent>
-                <Stack direction="row" alignItems="center" justifyContent="space-between" mb={1} className="customer-dashboard-section-title">
+                <Stack direction="row" alignItems="center" justifyContent="space-between" mb={1} className="people-dashboard-section-title">
                     <Typography variant="h6" component="div">
                         {title}
                     </Typography>

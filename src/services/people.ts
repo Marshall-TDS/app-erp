@@ -1,9 +1,9 @@
 
 import { api } from './api'
 
-const API_CLIENTES_URL = import.meta.env.VITE_API_CLIENTES_BASE_URL ?? 'http://localhost:3335/api'
+const API_PESSOAS_URL = import.meta.env.VITE_API_PESSOAS_BASE_URL ?? 'http://localhost:3335/api'
 
-export type CustomerAddress = {
+export type PeopleAddress = {
     id: string
     addressType: string
     postalCode: string
@@ -17,7 +17,7 @@ export type CustomerAddress = {
     updatedAt: string
 }
 
-export type CustomerContact = {
+export type PeopleContact = {
     id: string
     contactType: string
     contactValue: string
@@ -27,7 +27,7 @@ export type CustomerContact = {
     updatedAt: string
 }
 
-export type CustomerBankAccount = {
+export type PeopleBankAccount = {
     id: string
     bankCode: string
     branchCode: string
@@ -39,7 +39,7 @@ export type CustomerBankAccount = {
     updatedAt: string
 }
 
-export type CustomerDocument = {
+export type PeopleDocument = {
     id: string
     documentType: string
     file: string
@@ -53,42 +53,39 @@ export type CustomerDocument = {
     updatedAt: string
 }
 
-export type CustomerDTO = {
+export type PeopleDTO = {
     id: string
     seqId?: number
     name: string
-    lastName: string
     cpfCnpj: string
     birthDate?: string | null
     createdAt: string
     createdBy: string
     updatedAt: string
     updatedBy: string
-    addresses?: CustomerAddress[]
-    contacts?: CustomerContact[]
-    bankAccounts?: CustomerBankAccount[]
-    documents?: CustomerDocument[]
-    details?: CustomerDetail | null
+    addresses?: PeopleAddress[]
+    contacts?: PeopleContact[]
+    bankAccounts?: PeopleBankAccount[]
+    documents?: PeopleDocument[]
+    details?: PeopleDetail | null
 }
 
-export type CreateCustomerPayload = {
+export type CreatePeoplePayload = {
     name: string
-    lastName: string
     cpfCnpj: string
     birthDate?: string | null
     createdBy: string
 }
 
-export type UpdateCustomerPayload = {
+export type UpdatePeoplePayload = {
     name?: string
-    lastName?: string
     cpfCnpj?: string
     birthDate?: string | null
     updatedBy: string
 }
 
 // Adapters
-const adaptAddress = (data: any): CustomerAddress => ({
+const adaptAddress = (data: any): PeopleAddress => ({
     id: data.id,
     addressType: data.address_type,
     postalCode: data.postal_code,
@@ -102,7 +99,7 @@ const adaptAddress = (data: any): CustomerAddress => ({
     updatedAt: data.updated_at,
 })
 
-const adaptContact = (data: any): CustomerContact => ({
+const adaptContact = (data: any): PeopleContact => ({
     id: data.id,
     contactType: data.contact_type,
     contactValue: data.contact_value,
@@ -112,7 +109,7 @@ const adaptContact = (data: any): CustomerContact => ({
     updatedAt: data.updated_at,
 })
 
-const adaptBankAccount = (data: any): CustomerBankAccount => ({
+const adaptBankAccount = (data: any): PeopleBankAccount => ({
     id: data.id,
     bankCode: data.bank_code,
     branchCode: data.branch_code,
@@ -124,7 +121,7 @@ const adaptBankAccount = (data: any): CustomerBankAccount => ({
     updatedAt: data.updated_at,
 })
 
-const adaptDocument = (data: any): CustomerDocument => ({
+const adaptDocument = (data: any): PeopleDocument => ({
     id: data.id,
     documentType: data.document_type,
     file: data.file,
@@ -138,12 +135,11 @@ const adaptDocument = (data: any): CustomerDocument => ({
     updatedAt: data.updated_at,
 })
 
-const adaptCustomer = (data: any): CustomerDTO => {
+const adaptPeople = (data: any): PeopleDTO => {
     return {
         id: data.id,
         seqId: data.seq_id,
         name: data.name,
-        lastName: data.last_name,
         cpfCnpj: data.cpf_cnpj,
         birthDate: data.birth_date,
         createdAt: data.created_at,
@@ -153,11 +149,11 @@ const adaptCustomer = (data: any): CustomerDTO => {
         addresses: data.addresses?.map(adaptAddress),
         contacts: data.contacts?.map(adaptContact),
         bankAccounts: data.bankAccounts?.map(adaptBankAccount), // API returns 'bankAccounts' in repo findById? No, usually snake_case in raw query but check repo again.
-        // Wait, PostgresCustomerRepository findById returns:
-        // { ...customer, addresses: ..., contacts: ..., bankAccounts: ..., documents: ... }
+        // Wait, PostgresPeopleRepository findById returns:
+        // { ...people, addresses: ..., contacts: ..., bankAccounts: ..., documents: ... }
         // The keys in the return object of findById are camelCase because the Repository manually constructs the object:
-        // return { ...customer, addresses: ..., bankAccounts: ... }
-        // However, the "customer" part comes from `customerRes.rows[0]` which is snake_case (Postgres default).
+        // return { ...people, addresses: ..., bankAccounts: ... }
+        // However, the "people" part comes from `peopleRes.rows[0]` which is snake_case (Postgres default).
         // The arrays come from `addressesRes.rows` which are also array of objects with snake_case keys (DB columns).
         // So `data.addresses` will be an array of snake_case objects.
         // AND the key `addresses` is camelCase because the repository explicitly set it so.
@@ -168,25 +164,25 @@ const adaptCustomer = (data: any): CustomerDTO => {
 }
 
 const list = async () => {
-    const response = await api.get<any[]>('/clientes', { baseUrl: API_CLIENTES_URL })
-    return response.map(adaptCustomer)
+    const response = await api.get<any[]>('/peoples', { baseUrl: API_PESSOAS_URL })
+    return response.map(adaptPeople)
 }
 
-const create = async (payload: CreateCustomerPayload) => {
-    const response = await api.post<any>('/clientes', payload, { baseUrl: API_CLIENTES_URL })
-    return adaptCustomer(response)
+const create = async (payload: CreatePeoplePayload) => {
+    const response = await api.post<any>('/peoples', payload, { baseUrl: API_PESSOAS_URL })
+    return adaptPeople(response)
 }
 
-const update = async (id: string, payload: UpdateCustomerPayload) => {
-    const response = await api.put<any>(`/clientes/${id}`, payload, { baseUrl: API_CLIENTES_URL })
-    return adaptCustomer(response)
+const update = async (id: string, payload: UpdatePeoplePayload) => {
+    const response = await api.put<any>(`/peoples/${id}`, payload, { baseUrl: API_PESSOAS_URL })
+    return adaptPeople(response)
 }
 
-const remove = (id: string) => api.delete<void>(`/clientes/${id}`, { baseUrl: API_CLIENTES_URL })
+const remove = (id: string) => api.delete<void>(`/peoples/${id}`, { baseUrl: API_PESSOAS_URL })
 
 const getById = async (id: string) => {
-    const response = await api.get<any>(`/clientes/${id}`, { baseUrl: API_CLIENTES_URL })
-    return adaptCustomer(response)
+    const response = await api.get<any>(`/peoples/${id}`, { baseUrl: API_PESSOAS_URL })
+    return adaptPeople(response)
 }
 
 export type CreateContactPayload = {
@@ -205,18 +201,18 @@ export type UpdateContactPayload = {
 
 // ... existing code ...
 
-const createContact = async (customerId: string, payload: CreateContactPayload) => {
-    const response = await api.post<any>(`/clientes/${customerId}/contatos`, payload, { baseUrl: API_CLIENTES_URL })
+const createContact = async (peopleId: string, payload: CreateContactPayload) => {
+    const response = await api.post<any>(`/peoples/${peopleId}/contacts`, payload, { baseUrl: API_PESSOAS_URL })
     return adaptContact(response)
 }
 
-const updateContact = async (customerId: string, contactId: string, payload: UpdateContactPayload) => {
-    const response = await api.put<any>(`/clientes/${customerId}/contatos/${contactId}`, payload, { baseUrl: API_CLIENTES_URL })
+const updateContact = async (peopleId: string, contactId: string, payload: UpdateContactPayload) => {
+    const response = await api.put<any>(`/peoples/${peopleId}/contacts/${contactId}`, payload, { baseUrl: API_PESSOAS_URL })
     return adaptContact(response)
 }
 
-const removeContact = (customerId: string, contactId: string) =>
-    api.delete<void>(`/clientes/${customerId}/contatos/${contactId}`, { baseUrl: API_CLIENTES_URL })
+const removeContact = (peopleId: string, contactId: string) =>
+    api.delete<void>(`/peoples/${peopleId}/contacts/${contactId}`, { baseUrl: API_PESSOAS_URL })
 
 // Addresses
 export type CreateAddressPayload = {
@@ -232,18 +228,18 @@ export type CreateAddressPayload = {
 
 export type UpdateAddressPayload = Partial<CreateAddressPayload>
 
-const createAddress = async (customerId: string, payload: CreateAddressPayload) => {
-    const response = await api.post<any>(`/clientes/${customerId}/enderecos`, payload, { baseUrl: API_CLIENTES_URL })
+const createAddress = async (peopleId: string, payload: CreateAddressPayload) => {
+    const response = await api.post<any>(`/peoples/${peopleId}/addresses`, payload, { baseUrl: API_PESSOAS_URL })
     return adaptAddress(response)
 }
 
-const updateAddress = async (customerId: string, addressId: string, payload: UpdateAddressPayload) => {
-    const response = await api.put<any>(`/clientes/${customerId}/enderecos/${addressId}`, payload, { baseUrl: API_CLIENTES_URL })
+const updateAddress = async (peopleId: string, addressId: string, payload: UpdateAddressPayload) => {
+    const response = await api.put<any>(`/peoples/${peopleId}/addresses/${addressId}`, payload, { baseUrl: API_PESSOAS_URL })
     return adaptAddress(response)
 }
 
-const removeAddress = (customerId: string, addressId: string) =>
-    api.delete<void>(`/clientes/${customerId}/enderecos/${addressId}`, { baseUrl: API_CLIENTES_URL })
+const removeAddress = (peopleId: string, addressId: string) =>
+    api.delete<void>(`/peoples/${peopleId}/addresses/${addressId}`, { baseUrl: API_PESSOAS_URL })
 
 // Bank Accounts
 export type CreateBankAccountPayload = {
@@ -257,18 +253,18 @@ export type CreateBankAccountPayload = {
 
 export type UpdateBankAccountPayload = Partial<CreateBankAccountPayload>
 
-const createBankAccount = async (customerId: string, payload: CreateBankAccountPayload) => {
-    const response = await api.post<any>(`/clientes/${customerId}/contas-bancarias`, payload, { baseUrl: API_CLIENTES_URL })
+const createBankAccount = async (peopleId: string, payload: CreateBankAccountPayload) => {
+    const response = await api.post<any>(`/peoples/${peopleId}/bank-accounts`, payload, { baseUrl: API_PESSOAS_URL })
     return adaptBankAccount(response)
 }
 
-const updateBankAccount = async (customerId: string, accountId: string, payload: UpdateBankAccountPayload) => {
-    const response = await api.put<any>(`/clientes/${customerId}/contas-bancarias/${accountId}`, payload, { baseUrl: API_CLIENTES_URL })
+const updateBankAccount = async (peopleId: string, accountId: string, payload: UpdateBankAccountPayload) => {
+    const response = await api.put<any>(`/peoples/${peopleId}/bank-accounts/${accountId}`, payload, { baseUrl: API_PESSOAS_URL })
     return adaptBankAccount(response)
 }
 
-const removeBankAccount = (customerId: string, accountId: string) =>
-    api.delete<void>(`/clientes/${customerId}/contas-bancarias/${accountId}`, { baseUrl: API_CLIENTES_URL })
+const removeBankAccount = (peopleId: string, accountId: string) =>
+    api.delete<void>(`/peoples/${peopleId}/bank-accounts/${accountId}`, { baseUrl: API_PESSOAS_URL })
 
 // Documents
 export type CreateDocumentPayload = {
@@ -285,27 +281,31 @@ export type UpdateDocumentPayload = Partial<CreateDocumentPayload> & {
     rejectionReason?: string
 }
 
-const createDocument = async (customerId: string, payload: CreateDocumentPayload) => {
-    const response = await api.post<any>(`/clientes/${customerId}/documentos`, payload, { baseUrl: API_CLIENTES_URL })
+const createDocument = async (peopleId: string, payload: CreateDocumentPayload) => {
+    const response = await api.post<any>(`/peoples/${peopleId}/documents`, payload, { baseUrl: API_PESSOAS_URL })
     return adaptDocument(response)
 }
 
-const updateDocument = async (customerId: string, documentId: string, payload: UpdateDocumentPayload) => {
-    const response = await api.put<any>(`/clientes/${customerId}/documentos/${documentId}`, payload, { baseUrl: API_CLIENTES_URL })
+const updateDocument = async (peopleId: string, documentId: string, payload: UpdateDocumentPayload) => {
+    const response = await api.put<any>(`/peoples/${peopleId}/documents/${documentId}`, payload, { baseUrl: API_PESSOAS_URL })
     return adaptDocument(response)
 }
 
-const removeDocument = (customerId: string, documentId: string) =>
-    api.delete<void>(`/clientes/${customerId}/documentos/${documentId}`, { baseUrl: API_CLIENTES_URL })
+const removeDocument = (peopleId: string, documentId: string) =>
+    api.delete<void>(`/peoples/${peopleId}/documents/${documentId}`, { baseUrl: API_PESSOAS_URL })
 
 // Details
-export type CustomerDetail = {
+export type PeopleDetail = {
     id: string
     sex?: string
     maritalStatus?: string
     nationality?: string
     occupation?: string
     birthDate?: string | null
+    firstName?: string
+    surname?: string
+    legalName?: string
+    tradeName?: string
     createdAt: string
     updatedAt: string
 }
@@ -316,35 +316,43 @@ export type CreateDetailPayload = {
     nationality?: string | null
     occupation?: string | null
     birthDate?: string | null
+    firstName?: string | null
+    surname?: string | null
+    legalName?: string | null
+    tradeName?: string | null
 }
 
 export type UpdateDetailPayload = Partial<CreateDetailPayload>
 
-const adaptDetail = (data: any): CustomerDetail => ({
+const adaptDetail = (data: any): PeopleDetail => ({
     id: data.id,
     sex: data.sex,
     maritalStatus: data.marital_status,
     nationality: data.nationality,
     occupation: data.occupation,
     birthDate: data.birth_date,
+    firstName: data.first_name,
+    surname: data.surname,
+    legalName: data.legal_name,
+    tradeName: data.trade_name,
     createdAt: data.created_at,
     updatedAt: data.updated_at,
 })
 
-const createDetail = async (customerId: string, payload: CreateDetailPayload) => {
-    const response = await api.post<any>(`/clientes/${customerId}/detalhes`, payload, { baseUrl: API_CLIENTES_URL })
+const createDetail = async (peopleId: string, payload: CreateDetailPayload) => {
+    const response = await api.post<any>(`/peoples/${peopleId}/details`, payload, { baseUrl: API_PESSOAS_URL })
     return adaptDetail(response)
 }
 
-const updateDetail = async (customerId: string, detailId: string, payload: UpdateDetailPayload) => {
-    const response = await api.put<any>(`/clientes/${customerId}/detalhes/${detailId}`, payload, { baseUrl: API_CLIENTES_URL })
+const updateDetail = async (peopleId: string, detailId: string, payload: UpdateDetailPayload) => {
+    const response = await api.put<any>(`/peoples/${peopleId}/details/${detailId}`, payload, { baseUrl: API_PESSOAS_URL })
     return adaptDetail(response)
 }
 
-const removeDetail = (customerId: string, detailId: string) =>
-    api.delete<void>(`/clientes/${customerId}/detalhes/${detailId}`, { baseUrl: API_CLIENTES_URL })
+const removeDetail = (peopleId: string, detailId: string) =>
+    api.delete<void>(`/peoples/${peopleId}/details/${detailId}`, { baseUrl: API_PESSOAS_URL })
 
-export const customerService = {
+export const peopleService = {
     list,
     create,
     update,
