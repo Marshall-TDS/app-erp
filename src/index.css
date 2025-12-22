@@ -17,8 +17,8 @@
   --color-border: rgba(0, 0, 0, 0.12);
   --color-border-light: rgba(0, 0, 0, 0.08);
   --color-border-lighter: rgba(0, 0, 0, 0.04);
-  --color-hover: rgba(0, 0, 0, 0.04);
-  --color-hover-strong: rgba(0, 0, 0, 0.08);
+  --color-hover: rgba(0, 0, 0, 0.08);
+  --color-hover-strong: rgba(0, 0, 0, 0.12);
   --color-shadow: rgba(0, 0, 0, 0.1);
   --color-shadow-strong: rgba(0, 0, 0, 0.2);
   --font-title: 'Poppins', sans-serif;
@@ -111,9 +111,9 @@ body {
   --color-border-light: rgba(255, 255, 255, 0.08);
   --color-border-lighter: rgba(255, 255, 255, 0.05);
 
-  /* Estados hover - ajustado para melhor contraste (estilo Gmail) */
+  /* Estados hover - ajustado para melhor contraste (MD3 State Layer) */
   --color-hover: rgba(255, 255, 255, 0.08);
-  --color-hover-strong: rgba(255, 255, 255, 0.16);
+  --color-hover-strong: rgba(255, 255, 255, 0.12);
 
   /* Sombras - ajustadas para modo escuro */
   --color-shadow: rgba(0, 0, 0, 0.4);
@@ -292,6 +292,7 @@ body {
   color: var(--color-text) !important;
   font-family: var(--font-title);
   font-weight: 700;
+  max-width: none !important;
 }
 
 .dashboard-subtitle {
@@ -299,24 +300,25 @@ body {
   opacity: 0.9;
 }
 
-/* Premium Card Styles */
+/* Premium Card Styles (MD3 Inspired) */
 .dashboard-card {
   background-color: var(--color-surface);
   border: 1px solid transparent;
-  /* Remove bordas rígidas */
   border-radius: 12px !important;
-  /* Bordas arredondadas premium */
-  box-shadow: 0 4px 20px var(--color-shadow);
-  /* Sombra suave */
-  transition: box-shadow 0.3s ease, transform 0.2s ease;
-  padding: 1rem !important;
+  /* Sombra multifacetada suave MD3 */
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08), 0 4px 24px rgba(0, 0, 0, 0.04);
+  transition: box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 1.5rem !important;
 }
 
 .dashboard-card:hover {
-  box-shadow: 0 8px 28px var(--color-shadow-strong);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), 0 4px 16px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
 }
 
 .theme-dark .dashboard-card {
+  background-image: linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05));
+  /* Tonal Surface Overlay */
   border: 1px solid var(--color-border-lighter);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
 }
@@ -360,14 +362,13 @@ body {
 
 .dashboard-label {
   color: var(--color-on-secondary) !important;
-  font-size: 0.7rem;
-  /* Visual técnico menor */
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  /* Espaçamento premium */
-  opacity: 0.8;
-  margin-bottom: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: none;
+  /* Sentence case MD3 */
+  letter-spacing: 0.01em;
+  opacity: 0.9;
+  margin-bottom: 6px;
 }
 
 .dashboard-value {
@@ -477,8 +478,9 @@ body {
 
 /* Dialog Paper (Rounded Corners & Shadow) */
 .MuiDialog-paper:not(.MuiDialog-paperFullScreen) {
-  border-radius: 20px !important;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12) !important;
+  border-radius: 28px !important;
+  /* MD3 XL Radius */
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.2) !important;
   overflow: hidden;
 }
 
