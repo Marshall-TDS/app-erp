@@ -10,7 +10,6 @@ import {
   ListItemText,
   Checkbox,
   Chip,
-  Paper,
 } from '@mui/material'
 import {
   ExpandMore,
@@ -247,7 +246,7 @@ const SelectPicker = ({
     }
   }, [open, searchable])
 
-  const shouldShowClearButton = clearable && !disabled && value !== null && value !== undefined && 
+  const shouldShowClearButton = clearable && !disabled && value !== null && value !== undefined &&
     ((Array.isArray(value) && value.length > 0) || (!Array.isArray(value)))
 
   const optionsToRender = groupedOptions
@@ -310,7 +309,7 @@ const SelectPicker = ({
         className="select-picker-popover"
         disableRestoreFocus
       >
-        <Paper className="select-picker__paper">
+        <Box className="select-picker__paper">
           {/* Campo de busca */}
           {searchable && (
             <Box className="select-picker__search-container">
@@ -353,9 +352,8 @@ const SelectPicker = ({
                         onClick={() => handleSelect(option.value)}
                         selected={selected}
                         disabled={option.disabled}
-                        className={`select-picker__option ${
-                          focusedIndex === globalIndex ? 'select-picker__option--focused' : ''
-                        } ${selected ? 'select-picker__option--selected' : ''}`}
+                        className={`select-picker__option ${focusedIndex === globalIndex ? 'select-picker__option--focused' : ''
+                          } ${selected ? 'select-picker__option--selected' : ''}`}
                       >
                         {showCheckbox && (
                           <Checkbox
@@ -382,9 +380,8 @@ const SelectPicker = ({
                     onClick={() => handleSelect(option.value)}
                     selected={selected}
                     disabled={option.disabled}
-                    className={`select-picker__option ${
-                      focusedIndex === index ? 'select-picker__option--focused' : ''
-                    } ${selected ? 'select-picker__option--selected' : ''}`}
+                    className={`select-picker__option ${focusedIndex === index ? 'select-picker__option--focused' : ''
+                      } ${selected ? 'select-picker__option--selected' : ''}`}
                   >
                     {showCheckbox && (
                       <Checkbox
@@ -433,7 +430,7 @@ const SelectPicker = ({
               )}
             </Box>
           )}
-        </Paper>
+        </Box>
       </Popover>
     </>
   )
