@@ -878,7 +878,7 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
             title="Dados Bancários"
             items={people.bankAccounts || []}
             keyExtractor={(item) => item.id}
-            renderIcon={() => <AccountBalance />}
+            renderIcon={() => <Box className="dashboard-icon-badge"><AccountBalance /></Box>}
             renderText={(item) => (
                 <Stack direction="row" alignItems="center" spacing={1}>
                     <Typography variant="subtitle2" fontWeight="bold">
@@ -900,6 +900,7 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                     )}
                 </Box>
             )}
+            listItemClassName="dashboard-list-item"
             onAdd={permissions.includes('cadastro:pessoas:dados-bancarios:criar') ? handleAddAccount : undefined}
             onEdit={permissions.includes('cadastro:pessoas:dados-bancarios:editar') || permissions.includes('cadastro:pessoas:dados-bancarios:visualizar') ? (item) => handleEditAccount(item as PeopleBankAccount) : undefined}
             onDelete={permissions.includes('cadastro:pessoas:dados-bancarios:excluir') ? (item) => handleDeleteAccount(item as PeopleBankAccount) : undefined}
@@ -931,7 +932,7 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
             title="Endereços"
             items={people.addresses || []}
             keyExtractor={(item) => item.id}
-            renderIcon={() => <LocationOn />}
+            renderIcon={() => <Box className="dashboard-icon-badge"><LocationOn /></Box>}
             renderText={(item) => (
                 <>
                     {item.street}, {item.number} {item.complement ? `- ${item.complement}` : ''}
@@ -947,6 +948,7 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                     </Typography>
                 </Box>
             )}
+            listItemClassName="dashboard-list-item"
             onAdd={permissions.includes('cadastro:pessoas:enderecos:criar') ? handleAddAddress : undefined}
             onEdit={permissions.includes('cadastro:pessoas:enderecos:editar') || permissions.includes('cadastro:pessoas:enderecos:visualizar') ? handleEditAddress : undefined}
             onDelete={permissions.includes('cadastro:pessoas:enderecos:excluir') ? handleDeleteAddress : undefined}
@@ -959,7 +961,7 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
             title="Documentos"
             items={people.documents || []}
             keyExtractor={(item) => item.id}
-            renderIcon={() => <Description />}
+            renderIcon={() => <Box className="dashboard-icon-badge"><Description /></Box>}
             renderText={(item) => item.documentType}
             renderSecondaryText={(item) => (
                 <React.Fragment>
@@ -974,6 +976,7 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                 </React.Fragment>
             )}
             onAdd={permissions.includes('cadastro:pessoas:documentos:criar') ? handleAddDocument : undefined}
+            listItemClassName="dashboard-list-item"
             onEdit={permissions.includes('cadastro:pessoas:documentos:editar') || permissions.includes('cadastro:pessoas:documentos:visualizar') ? (item) => handleEditDocument(item as PeopleDocument) : undefined}
             onDelete={permissions.includes('cadastro:pessoas:documentos:excluir') ? (item) => handleDeleteDocument(item as PeopleDocument) : undefined}
             emptyText="Nenhum documento registrado."
@@ -985,7 +988,11 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
             title="Contatos"
             items={people.contacts || []}
             keyExtractor={(item) => item.id}
-            renderIcon={(item) => item.contactType === 'Email' ? <Email /> : <Phone />}
+            renderIcon={(item) => (
+                <Box className="dashboard-icon-badge">
+                    {item.contactType === 'Email' ? <Email /> : <Phone />}
+                </Box>
+            )}
             renderText={(item) => {
                 if (['Telefone', 'Whatsapp', 'Celular'].includes(item.contactType)) {
                     const parsed = parsePhoneNumber(item.contactValue)
@@ -994,6 +1001,7 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                 return item.contactValue
             }}
             renderSecondaryText={(item) => `${item.contactType}${item.label ? ' • ' + item.label : ''}`}
+            listItemClassName="dashboard-list-item"
             onAdd={permissions.includes('cadastro:pessoas:contatos:criar') ? handleAddContact : undefined}
             onEdit={permissions.includes('cadastro:pessoas:contatos:editar') || permissions.includes('cadastro:pessoas:contatos:visualizar') ? handleEditContact : undefined}
             onDelete={permissions.includes('cadastro:pessoas:contatos:excluir') ? handleDeleteContact : undefined}
@@ -1006,7 +1014,7 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
             title="Relacionamentos"
             items={people.relationships || []}
             keyExtractor={(item) => item.id}
-            renderIcon={() => <Group />}
+            renderIcon={() => <Box className="dashboard-icon-badge"><Group /></Box>}
             renderText={(item) => (
                 <Box component="span" sx={{ fontSize: '0.85rem' }}>
                     {item.connectorPrefix} <strong>{item.relationshipSource}</strong> {item.connectorSuffix}:
@@ -1019,6 +1027,7 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
             )}
             primaryClassName="dashboard-text-secondary"
             secondaryClassName="dashboard-text-primary"
+            listItemClassName="dashboard-list-item"
             onAdd={permissions.includes('cadastro:pessoas:relacionamentos:criar') ? handleAddRelationship : undefined}
             onEdit={permissions.includes('cadastro:pessoas:relacionamentos:editar') || permissions.includes('cadastro:pessoas:relacionamentos:visualizar') ? handleEditRelationship : undefined}
             onDelete={permissions.includes('cadastro:pessoas:relacionamentos:excluir') ? handleDeleteRelationship : undefined}
@@ -1073,7 +1082,7 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                                 }
                             >
                                 {people.cpfCnpj && (
-                                    <Typography variant="subtitle1" className="people-dashboard-subtitle">
+                                    <Typography variant="subtitle1" className="dashboard-subtitle">
                                         CPF/CNPJ: {people.cpfCnpj}
                                     </Typography>
                                 )}

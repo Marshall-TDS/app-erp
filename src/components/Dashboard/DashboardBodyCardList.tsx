@@ -74,8 +74,9 @@ export function DashboardBodyCardList<T>({
     onDelete,
     emptyText = 'Nenhum item registrado.',
     primaryClassName = 'dashboard-text-primary',
-    secondaryClassName = 'dashboard-text-secondary'
-}: DashboardBodyCardListProps<T>) {
+    secondaryClassName = 'dashboard-text-secondary',
+    listItemClassName // New Prop
+}: DashboardBodyCardListProps<T> & { listItemClassName?: string }) { // Extended props type inline or update type definition above
     return (
         <DashboardBodyCard
             title={title}
@@ -115,11 +116,14 @@ export function DashboardBodyCardList<T>({
                                     <DeleteButton onDelete={() => onDelete(item)} />
                                 )
                             }
-                            sx={{ borderBottom: '1px solid' }}
-                            className="dashboard-list-item-border"
+                            sx={{ borderBottom: '1px solid transparent' }} // Override inline border
+                            className={`${listItemClassName || 'dashboard-list-item-border'}`} // Use custom class OR default border
                         >
                             {onEdit ? (
-                                <ListItemButton onClick={() => onEdit(item)}>
+                                <ListItemButton
+                                    onClick={() => onEdit(item)}
+                                    sx={{ borderRadius: 'inherit' }} // Inherit border radius from ListItem if set
+                                >
                                     {renderIcon && (
                                         <ListItemIcon>
                                             {renderIcon(item)}
@@ -150,9 +154,11 @@ export function DashboardBodyCardList<T>({
                         </ListItem>
                     ))
                 ) : (
-                    <Typography variant="body2" className="dashboard-empty-text">
-                        {emptyText}
-                    </Typography>
+                    <Box className="dashboard-empty-state">
+                        <Typography variant="body2" className="dashboard-empty-text">
+                            {emptyText}
+                        </Typography>
+                    </Box>
                 )}
             </List>
         </DashboardBodyCard>

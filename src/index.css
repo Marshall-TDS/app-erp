@@ -91,10 +91,12 @@ body {
   --color-text: #e8eaed;
   --color-accent: #f4d189;
 
-  /* Cores de fundo - padrão Google Material Design Dark Theme */
+  /* Cores de fundo - padrão Google Material Design Dark Theme Refinado */
   --color-background: #121212;
-  --color-surface: #1e1e1e;
-  --color-sidebar-bg: #1e1e1e;
+  /* Mantém base escura */
+  --color-surface: #1E1E1E;
+  /* Cinza escuro suave para cards */
+  --color-sidebar-bg: #1E1E1E;
 
   /* Cores on-primary - texto sobre elementos primários */
   --color-on-primary: #121212;
@@ -110,12 +112,12 @@ body {
   --color-border-lighter: rgba(255, 255, 255, 0.05);
 
   /* Estados hover - ajustado para melhor contraste (estilo Gmail) */
-  --color-hover: rgba(255, 255, 255, 0.1);
+  --color-hover: rgba(255, 255, 255, 0.08);
   --color-hover-strong: rgba(255, 255, 255, 0.16);
 
   /* Sombras - ajustadas para modo escuro */
-  --color-shadow: rgba(0, 0, 0, 0.3);
-  --color-shadow-strong: rgba(0, 0, 0, 0.5);
+  --color-shadow: rgba(0, 0, 0, 0.4);
+  --color-shadow-strong: rgba(0, 0, 0, 0.6);
 }
 
 /* Estilos globais para Material-UI no modo escuro */
@@ -281,33 +283,45 @@ body {
 }
 
 /* 
- * People Dashboard Styles
- * Centralized styles for People Dashboard to ensure consistent Light/Dark mode behavior
+ * Dashboard Component Styles
+ * Centralized and reusable premium styles for Dashboard cards, lists, and typography.
+ * Supports Light/Dark mode with soft shadows and refined surfaces.
  */
 
-.people-dashboard-title {
+.dashboard-title {
   color: var(--color-text) !important;
   font-family: var(--font-title);
   font-weight: 700;
 }
 
-.people-dashboard-subtitle {
+.dashboard-subtitle {
   color: var(--color-text) !important;
   opacity: 0.9;
 }
 
-/* 
- * Dashboard Component Styles
- * Reusable styles for Dashboard cards and lists
- */
-
+/* Premium Card Styles */
 .dashboard-card {
   background-color: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 10px !important;
+  border: 1px solid transparent;
+  /* Remove bordas rígidas */
+  border-radius: 12px !important;
+  /* Bordas arredondadas premium */
+  box-shadow: 0 4px 20px var(--color-shadow);
+  /* Sombra suave */
+  transition: box-shadow 0.3s ease, transform 0.2s ease;
   padding: 1rem !important;
 }
 
+.dashboard-card:hover {
+  box-shadow: 0 8px 28px var(--color-shadow-strong);
+}
+
+.theme-dark .dashboard-card {
+  border: 1px solid var(--color-border-lighter);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+/* Card Content Reset overrides for Material UI */
 .dashboard-card .MuiCardContent-root {
   padding: 0 !important;
 }
@@ -325,19 +339,19 @@ body {
   min-width: 36px !important;
 }
 
-.theme-dark .dashboard-card {
-  border-color: var(--color-border-lighter);
-}
-
+/* Typography & Labels */
 .dashboard-section-title {
   color: var(--color-text) !important;
   font-weight: 600;
+  font-size: 1.1rem;
+  letter-spacing: -0.01em;
   margin-bottom: 8px !important;
   min-height: 32px;
 }
 
 .dashboard-text-primary {
   color: var(--color-text) !important;
+  font-weight: 500;
 }
 
 .dashboard-text-secondary {
@@ -346,22 +360,43 @@ body {
 
 .dashboard-label {
   color: var(--color-on-secondary) !important;
-  font-size: 0.75rem;
-  font-weight: 500;
+  font-size: 0.7rem;
+  /* Visual técnico menor */
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.05em;
+  /* Espaçamento premium */
+  opacity: 0.8;
   margin-bottom: 4px;
 }
 
 .dashboard-value {
   color: var(--color-text) !important;
   font-size: 0.95rem;
+  font-weight: 500;
+}
+
+/* Empty States */
+.dashboard-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 16px;
+  text-align: center;
+  opacity: 0.7;
+}
+
+.dashboard-empty-icon {
+  font-size: 48px !important;
+  margin-bottom: 16px;
+  color: var(--color-border);
 }
 
 .dashboard-empty-text {
   color: var(--color-on-secondary) !important;
-  font-style: italic;
   font-size: 0.875rem;
+  font-style: italic;
 }
 
 .theme-dark .dashboard-empty-text {
@@ -369,22 +404,59 @@ body {
   opacity: 0.8;
 }
 
-.people-dashboard-header {
+/* Header & Layout */
+.dashboard-header {
   background-color: var(--color-background) !important;
   color: var(--color-text) !important;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border-lighter);
 }
 
-.theme-dark .people-dashboard-header {
-  background-color: #000000 !important;
+.theme-dark .dashboard-header {
+  background-color: var(--color-surface) !important;
   border-bottom-color: var(--color-border-lighter);
 }
 
+/* Icon Badges */
+.dashboard-icon-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: rgba(var(--color-primary-rgb), 0.12);
+  color: var(--color-primary);
+  margin-right: 12px;
+  flex-shrink: 0;
+}
+
+.dashboard-icon-badge .MuiSvgIcon-root {
+  font-size: 1.4rem;
+}
+
+.theme-dark .dashboard-icon-badge {
+  background-color: rgba(var(--color-primary-rgb), 0.2);
+}
+
+/* List Item Hover */
+.dashboard-list-item {
+  transition: background-color 0.2s ease;
+  border-radius: 8px;
+  margin-bottom: 4px;
+  padding: 4px 8px;
+  border-bottom: 1px solid transparent !important;
+  /* Ensure border doesn't conflict */
+}
+
 .dashboard-list-item-border {
-  border-color: rgba(50, 50, 50, 1) !important;
+  border-bottom: 1px solid var(--color-border-lighter) !important;
+}
+
+.dashboard-list-item:hover {
+  background-color: var(--color-hover);
 }
 
 /* File Upload Styles */
