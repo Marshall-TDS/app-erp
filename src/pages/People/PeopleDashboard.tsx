@@ -655,13 +655,11 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
 
     const handleDeleteDocument = async (doc: PeopleDocument) => {
         if (!people) return
-        if (confirm('Tem certeza que deseja excluir este documento?')) {
-            try {
-                await peopleService.removeDocument(people.id, doc.id)
-                await loadPeopleData(people.id)
-            } catch (error) {
-                console.error('Erro ao excluir documento:', error)
-            }
+        try {
+            await peopleService.removeDocument(people.id, doc.id)
+            await loadPeopleData(people.id)
+        } catch (error) {
+            console.error('Erro ao excluir documento:', error)
         }
     }
 

@@ -315,6 +315,7 @@ const SelectPicker = ({
             <Box className="select-picker__search-container">
               <TextField
                 inputRef={searchInputRef}
+                autoFocus
                 placeholder={searchPlaceholder}
                 value={searchQuery}
                 onChange={(e) => {
