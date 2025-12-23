@@ -33,7 +33,30 @@ jobs:
           
           ssh -i ~/.ssh/deploy_key ${VPS_USER}@${VPS_HOST} bash << ENDSSH
             set -e
+            
+            # Criar diretório se não existir
+            mkdir -p ${VPS_DEPLOY_PATH}
             cd ${VPS_DEPLOY_PATH}
+            
+            # Verificar se é um repositório git, se não for, clonar
+            if [ ! -d .git ]; then
+              echo "📥 Clonando repositório..."
+              # Se o diretório não está vazio e não é um git repo, fazer backup e limpar
+              if [ "$(ls -A ${VPS_DEPLOY_PATH} 2>/dev/null)" ]; then
+                echo "⚠️  Diretório não está vazio mas não é um repositório git. Fazendo backup..."
+                cd ..
+                mv ${VPS_DEPLOY_PATH} ${VPS_DEPLOY_PATH}.backup.$(date +%s)
+              fi
+              # Clonar repositório
+              if [ -d ${VPS_DEPLOY_PATH} ]; then
+                cd ..
+                rm -rf ${VPS_DEPLOY_PATH}
+              fi
+              git clone https://github.com/Marshall-TDS/app-erp.git ${VPS_DEPLOY_PATH}
+              cd ${VPS_DEPLOY_PATH}
+            else
+              echo "✅ Repositório git já existe"
+            fi
             
             # Exportar variáveis de ambiente ANTES de executar docker-compose
             export VITE_API_USUARIOS_BASE_URL_HOMOLOG="${VITE_API_USUARIOS_BASE_URL_HOMOLOG}"
@@ -44,7 +67,7 @@ jobs:
             
             # Fazer checkout da branch homolog
             git fetch origin
-            git checkout homolog
+            git checkout homolog || git checkout -b homolog origin/homolog
             git pull origin homolog
             
             # Parar e remover container antigo
