@@ -7,13 +7,12 @@ export const getAccessMode = (permissions: string[], basePermission: string): Ac
     // Collect all permissions that start with this base
     const relevant = permissions.filter(p => p.startsWith(basePermission))
 
-    const hasListar = permissions.includes(`${basePermission}:listar`)
+    const hasListar = permissions.includes(`${basePermission}:listar`) || permissions.includes(basePermission)
     const hasVisualizar = permissions.includes(`${basePermission}:visualizar`)
     const hasEditar = permissions.includes(`${basePermission}:editar`)
     const hasCriar = permissions.includes(`${basePermission}:criar`) || permissions.includes(`${basePermission}:adicionar`)
 
-    // Rule #3: Visibility is strictly controlled by :listar.
-    // If you don't have :listar, you don't see the card.
+    // Rule #3: Visibility is strictly controlled by :listar (or the base permission itself).
     const view = hasListar
 
     if (!view) return 'hidden'
