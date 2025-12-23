@@ -790,7 +790,7 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
         <DashboardBodyCard
             title="Detalhes"
             accessMode={getAccessMode(permissions, 'cadastro:pessoas:detalhes')}
-            action={
+            action={canEdit(getAccessMode(permissions, 'cadastro:pessoas:detalhes')) && (
                 <Button
                     variant="outlined"
                     size="small"
@@ -813,7 +813,7 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                         Editar
                     </Box>
                 </Button>
-            }
+            )}
         >
             <Stack spacing={2}>
                 {people.cpfCnpj?.replace(/\D/g, '').length === 11 ? (
@@ -1066,7 +1066,7 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                             <DashboardTopCard
                                 title={`${people.name}`}
                                 accessMode={getAccessMode(permissions, 'cadastro:pessoas')}
-                                action={
+                                action={canEdit(getAccessMode(permissions, 'cadastro:pessoas')) && (
                                     <Button
                                         variant="outlined"
                                         onClick={handleStartEdit}
@@ -1084,7 +1084,7 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                                             Editar
                                         </Box>
                                     </Button>
-                                }
+                                )}
                             >
 
                                 {people.cpfCnpj && (
