@@ -32,6 +32,10 @@ Configure as seguintes secrets no GitHub (Settings → Secrets and variables →
 | `VITE_API_CLIENTES_BASE_URL_MAIN` | URL da API de clientes para produção |
 | `VITE_API_COMUNICACOES_BASE_URL_HOMOLOG` | URL da API de comunicações para homologação |
 | `VITE_API_COMUNICACOES_BASE_URL_MAIN` | URL da API de comunicações para produção |
+| `VITE_API_CONTRATOS_BASE_URL_HOMOLOG` | URL da API de contratos para homologação |
+| `VITE_API_CONTRATOS_BASE_URL_MAIN` | URL da API de contratos para produção |
+| `VITE_API_PESSOAS_BASE_URL_HOMOLOG` | URL da API de pessoas para homologação |
+| `VITE_API_PESSOAS_BASE_URL_MAIN` | URL da API de pessoas para produção |
 
 **Nota**: As variáveis de ambiente são injetadas no build time do Vite. Cada ambiente terá suas próprias URLs configuradas.
 
