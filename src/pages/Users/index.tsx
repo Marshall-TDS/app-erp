@@ -3,7 +3,6 @@ import {
   Box,
   Button,
   Chip,
-  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -501,30 +500,22 @@ const UsersPage = () => {
 
   return (
     <Box className="users-page">
-      {loading ? (
-        <Box className="users-page__loading">
-          <CircularProgress size={32} />
-          <Typography variant="body2" color="text.secondary">
-            Carregando usuários...
-          </Typography>
-        </Box>
-      ) : (
-        <TableCard
-          title="Usuários"
-          columns={tableColumns}
-          rows={users}
-          onAdd={hasPermission('erp:usuarios:criar') ? handleAddUser : undefined}
-          onEdit={handleEditUser}
-          onDelete={handleDeleteUser}
-          onBulkDelete={hasPermission('erp:usuarios:excluir') ? handleBulkDelete : undefined}
-          formFields={userFormFields}
-          rowActions={rowActions}
-          bulkActions={bulkActions}
-          disableDelete={!hasPermission('erp:usuarios:excluir')}
-          disableEdit={!hasPermission('erp:usuarios:editar')}
-          disableView={!hasPermission('erp:usuarios:visualizar')}
-        />
-      )}
+      <TableCard
+        title="Usuários"
+        columns={tableColumns}
+        rows={users}
+        loading={loading}
+        onAdd={hasPermission('erp:usuarios:criar') ? handleAddUser : undefined}
+        onEdit={handleEditUser}
+        onDelete={handleDeleteUser}
+        onBulkDelete={hasPermission('erp:usuarios:excluir') ? handleBulkDelete : undefined}
+        formFields={userFormFields}
+        rowActions={rowActions}
+        bulkActions={bulkActions}
+        disableDelete={!hasPermission('erp:usuarios:excluir')}
+        disableEdit={!hasPermission('erp:usuarios:editar')}
+        disableView={!hasPermission('erp:usuarios:visualizar')}
+      />
 
       <Dialog open={Boolean(detailUser)} onClose={() => setDetailUser(null)} fullWidth maxWidth="sm">
         <DialogTitle>Detalhes do usuário</DialogTitle>
@@ -645,13 +636,14 @@ const UsersPage = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setManageGroupsDialog(prev => ({ ...prev, open: false }))} color="inherit" className="button-cancel">Cancelar</Button>
-          <Button
-            variant="contained"
-            onClick={handleSaveGroups}
-            disabled={!hasPermission('erp:usuarios:atribuir-grupos')}
-          >
-            Salvar
-          </Button>
+          {hasPermission('erp:usuarios:atribuir-grupos') && (
+            <Button
+              variant="contained"
+              onClick={handleSaveGroups}
+            >
+              Salvar
+            </Button>
+          )}
         </DialogActions>
       </Dialog>
 
@@ -700,13 +692,14 @@ const UsersPage = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setManageAccessDialog(prev => ({ ...prev, open: false }))} color="inherit" className="button-cancel">Cancelar</Button>
-          <Button
-            variant="contained"
-            onClick={handleSaveAccess}
-            disabled={!hasPermission('erp:usuarios:atribuir-permissoes-particulares')}
-          >
-            Salvar
-          </Button>
+          {hasPermission('erp:usuarios:atribuir-permissoes-particulares') && (
+            <Button
+              variant="contained"
+              onClick={handleSaveAccess}
+            >
+              Salvar
+            </Button>
+          )}
         </DialogActions>
       </Dialog>
 

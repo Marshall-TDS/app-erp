@@ -143,7 +143,7 @@ const TableCard = <T extends TableCardRow>({
   const theme = useTheme()
   const isDesktop = useMediaQuery(theme.breakpoints.up('md'))
   const [selectedIds, setSelectedIds] = useState<Array<T['id']>>([])
-  const [viewMode, setViewMode] = useState<'card' | 'table'>('card')
+  const [viewMode, setViewMode] = useState<'card' | 'table'>(isDesktop ? 'table' : 'card')
 
   useEffect(() => {
     setViewMode(isDesktop ? 'table' : 'card')
@@ -638,13 +638,13 @@ const TableCard = <T extends TableCardRow>({
                 sx={{
                   opacity: loading ? 0.7 : 1,
                   pointerEvents: loading ? 'none' : 'auto',
-                  transition: 'opacity 0.2s',
+                  transition: 'opacity 0.4s',
                 }}
               >
                 {viewMode === 'card' ? (
                   <Box className="table-card__list-container">
                     <Stack spacing={0.5} className="table-card__list">
-                      {filteredRows.map((row) => {
+                      {filteredRows.map((row, index) => {
                         const isSelected = selectedIds.includes(row.id)
 
                         return (
@@ -660,7 +660,10 @@ const TableCard = <T extends TableCardRow>({
                                 }
                               }
                             }}
-                            style={{ cursor: (!disableView && canVisualizeItem(accessMode)) ? 'pointer' : 'default' }}
+                            style={{
+                              cursor: (!disableView && canVisualizeItem(accessMode)) ? 'pointer' : 'default',
+                              '--index': index
+                            } as React.CSSProperties}
                           >
                             <Box className="table-card__gmail-card-content">
                               <Checkbox
@@ -746,7 +749,7 @@ const TableCard = <T extends TableCardRow>({
                           </TableRow>
                         </TableHead>
                         <TableBody>
-                          {filteredRows.map((row) => (
+                          {filteredRows.map((row, index) => (
                             <TableRow
                               key={row.id}
                               hover
@@ -760,7 +763,10 @@ const TableCard = <T extends TableCardRow>({
                                   }
                                 }
                               }}
-                              style={{ cursor: (!disableView && canVisualizeItem(accessMode)) ? 'pointer' : 'default' }}
+                              style={{
+                                cursor: (!disableView && canVisualizeItem(accessMode)) ? 'pointer' : 'default',
+                                '--index': index
+                              } as React.CSSProperties}
                             >
                               <TableCell padding="checkbox" onClick={(event) => event.stopPropagation()}>
                                 <Checkbox checked={selectedIds.includes(row.id)} onChange={() => handleToggleSelectRow(row.id)} />

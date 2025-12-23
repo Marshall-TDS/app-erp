@@ -1232,13 +1232,15 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                     >
                         Cancelar
                     </Button>
-                    <Button
-                        onClick={handleSaveContact}
-                        variant="contained"
-                        disabled={savingContact || !(editingContact ? canEdit : canCreate)(getAccessMode(permissions, 'cadastro:pessoas:contatos'))}
-                    >
-                        {savingContact ? 'Salvando...' : 'Salvar'}
-                    </Button>
+                    {(editingContact ? canEdit : canCreate)(getAccessMode(permissions, 'cadastro:pessoas:contatos')) && (
+                        <Button
+                            onClick={handleSaveContact}
+                            variant="contained"
+                            disabled={savingContact}
+                        >
+                            {savingContact ? 'Salvando...' : 'Salvar'}
+                        </Button>
+                    )}
                 </DialogActions>
             </Dialog>
 
@@ -1361,13 +1363,15 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                     >
                         Cancelar
                     </Button>
-                    <Button
-                        onClick={handleSaveAddress}
-                        variant="contained"
-                        disabled={savingAddress || !(editingAddress ? canEdit : canCreate)(getAccessMode(permissions, 'cadastro:pessoas:enderecos'))}
-                    >
-                        {savingAddress ? 'Salvando...' : 'Salvar'}
-                    </Button>
+                    {(editingAddress ? canEdit : canCreate)(getAccessMode(permissions, 'cadastro:pessoas:enderecos')) && (
+                        <Button
+                            onClick={handleSaveAddress}
+                            variant="contained"
+                            disabled={savingAddress}
+                        >
+                            {savingAddress ? 'Salvando...' : 'Salvar'}
+                        </Button>
+                    )}
                 </DialogActions>
             </Dialog>
 
@@ -1456,13 +1460,15 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                     >
                         Cancelar
                     </Button>
-                    <Button
-                        onClick={handleSaveAccount}
-                        variant="contained"
-                        disabled={savingAccount || !(editingAccount ? canEdit : canCreate)(getAccessMode(permissions, 'cadastro:pessoas:dados-bancarios'))}
-                    >
-                        {savingAccount ? 'Salvando...' : 'Salvar'}
-                    </Button>
+                    {(editingAccount ? canEdit : canCreate)(getAccessMode(permissions, 'cadastro:pessoas:dados-bancarios')) && (
+                        <Button
+                            onClick={handleSaveAccount}
+                            variant="contained"
+                            disabled={savingAccount}
+                        >
+                            {savingAccount ? 'Salvando...' : 'Salvar'}
+                        </Button>
+                    )}
                 </DialogActions>
             </Dialog>
 
@@ -1535,13 +1541,15 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                     >
                         Cancelar
                     </Button>
-                    <Button
-                        onClick={handleSaveDocument}
-                        variant="contained"
-                        disabled={savingDocument || !(editingDocument ? canEdit : canCreate)(getAccessMode(permissions, 'cadastro:pessoas:documentos'))}
-                    >
-                        {savingDocument ? 'Salvando...' : 'Salvar'}
-                    </Button>
+                    {(editingDocument ? canEdit : canCreate)(getAccessMode(permissions, 'cadastro:pessoas:documentos')) && (
+                        <Button
+                            onClick={handleSaveDocument}
+                            variant="contained"
+                            disabled={savingDocument}
+                        >
+                            {savingDocument ? 'Salvando...' : 'Salvar'}
+                        </Button>
+                    )}
                 </DialogActions>
             </Dialog>
 
@@ -1664,13 +1672,15 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                     >
                         Cancelar
                     </Button>
-                    <Button
-                        onClick={handleSaveDetails}
-                        variant="contained"
-                        disabled={savingDetails || !canEdit(getAccessMode(permissions, 'cadastro:pessoas:detalhes'))}
-                    >
-                        {savingDetails ? 'Salvando...' : 'Salvar'}
-                    </Button>
+                    {canEdit(getAccessMode(permissions, 'cadastro:pessoas:detalhes')) && (
+                        <Button
+                            onClick={handleSaveDetails}
+                            variant="contained"
+                            disabled={savingDetails}
+                        >
+                            {savingDetails ? 'Salvando...' : 'Salvar'}
+                        </Button>
+                    )}
                 </DialogActions>
             </Dialog>
 
@@ -1730,13 +1740,15 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                     >
                         Cancelar
                     </Button>
-                    <Button
-                        onClick={handleSaveRelationship}
-                        variant="contained"
-                        disabled={savingRelationship || !canEdit(getAccessMode(permissions, 'cadastro:pessoas:relacionamentos'))}
-                    >
-                        {savingRelationship ? 'Salvando...' : 'Salvar'}
-                    </Button>
+                    {canEdit(getAccessMode(permissions, 'cadastro:pessoas:relacionamentos')) && (
+                        <Button
+                            onClick={handleSaveRelationship}
+                            variant="contained"
+                            disabled={savingRelationship}
+                        >
+                            {savingRelationship ? 'Salvando...' : 'Salvar'}
+                        </Button>
+                    )}
                 </DialogActions>
             </Dialog>
 

@@ -117,13 +117,15 @@ const PeopleFormDialog = ({
                     >
                         Cancelar
                     </Button>
-                    <Button
-                        onClick={handleSave}
-                        variant="contained"
-                        disabled={saving || !isFull(accessMode)}
-                    >
-                        {saving ? 'Salvando...' : 'Salvar'}
-                    </Button>
+                    {isFull(accessMode) && (
+                        <Button
+                            onClick={handleSave}
+                            variant="contained"
+                            disabled={saving}
+                        >
+                            {saving ? 'Salvando...' : 'Salvar'}
+                        </Button>
+                    )}
                 </DialogActions>
             </Dialog>
             <Snackbar

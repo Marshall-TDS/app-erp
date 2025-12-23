@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Box, Chip, CircularProgress, Snackbar, Typography } from '@mui/material'
+import { Box, Chip, Snackbar, Typography } from '@mui/material'
 import TableCard, {
   type TableCardColumn,
   type TableCardFormField,
@@ -245,34 +245,21 @@ const AccessGroupsPage = () => {
 
   return (
     <Box className="access-groups-page">
-      {loading ? (
-        <Box className="access-groups-page__loading">
-          <CircularProgress size={32} />
-          <Typography variant="body2" color="text.secondary">
-            Carregando grupos...
-          </Typography>
-        </Box>
-      ) : !canList ? (
-        <Box display="flex" justifyContent="center" alignItems="center" height="100%" minHeight="400px">
-          <Typography variant="h6" color="text.secondary" className="access-denied-text">
-            Você não tem permissão para listar estes dados
-          </Typography>
-        </Box>
-      ) : (
-        <TableCard
-          title="Grupos de Acesso"
-          columns={tableColumns}
-          rows={groups}
-          onAdd={canCreate ? handleAddGroup : undefined}
-          onEdit={handleEditGroup}
-          onDelete={handleDeleteGroup}
-          disableDelete={!canDelete}
-          disableEdit={!canEdit}
-          disableView={!canView}
-          onBulkDelete={canDelete ? handleBulkDelete : undefined}
-          formFields={formFields}
-        />
-      )}
+      <TableCard
+        title="Grupos de Acesso"
+        columns={tableColumns}
+        rows={groups}
+        loading={loading}
+        onAdd={canCreate ? handleAddGroup : undefined}
+        onEdit={handleEditGroup}
+        onDelete={handleDeleteGroup}
+        disableDelete={!canDelete}
+        disableEdit={!canEdit}
+        disableView={!canView}
+        onBulkDelete={canDelete ? handleBulkDelete : undefined}
+        formFields={formFields}
+        accessMode={!canList ? 'hidden' : 'full'}
+      />
 
       <Snackbar
         open={toast.open || Boolean(error)}

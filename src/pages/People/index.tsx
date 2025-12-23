@@ -2,9 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import {
   Box,
-  CircularProgress,
   Snackbar,
-  Typography,
 } from '@mui/material'
 import { VisibilityOutlined } from '@mui/icons-material'
 import TableCard, {
@@ -203,27 +201,19 @@ const PeoplePage = () => {
 
   return (
     <Box className="people-page">
-      {loading ? (
-        <Box className="people-page__loading">
-          <CircularProgress size={32} />
-          <Typography variant="body2" color="text.secondary">
-            Carreganda pessoas...
-          </Typography>
-        </Box>
-      ) : (
-        <TableCard
-          title="Pessoas"
-          columns={tableColumns}
-          rows={people}
-          onAddClick={() => setCreateModalOpen(true)}
-          onDelete={handleDeletePeople}
-          onBulkDelete={handleBulkDelete}
-          rowActions={rowActions}
-          bulkActions={bulkActions}
-          onRowClick={handleOpenDashboard}
-          accessMode={peopleAccessMode}
-        />
-      )}
+      <TableCard
+        title="Pessoas"
+        columns={tableColumns}
+        rows={people}
+        loading={loading}
+        onAddClick={() => setCreateModalOpen(true)}
+        onDelete={handleDeletePeople}
+        onBulkDelete={handleBulkDelete}
+        rowActions={rowActions}
+        bulkActions={bulkActions}
+        onRowClick={handleOpenDashboard}
+        accessMode={peopleAccessMode}
+      />
 
       {/* Add People Modal */}
       <PeopleFormDialog
