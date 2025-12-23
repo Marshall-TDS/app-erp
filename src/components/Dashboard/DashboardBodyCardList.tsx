@@ -13,7 +13,13 @@ import {
     Tooltip
 } from '@mui/material'
 import { Add, Close, Delete } from '@mui/icons-material'
-import { DashboardBodyCard } from './DashboardBodyCard'
+import { DashboardBodyCard, type AccessMode } from './DashboardBodyCard'
+import {
+    canCreate as checkCanCreate,
+    canEdit as checkCanEdit,
+    canDelete as checkCanDelete,
+    canVisualizeItem as checkCanVisualizeItem
+} from '../../utils/accessControl'
 
 type DashboardBodyCardListProps<T> = {
     title: string
@@ -29,6 +35,8 @@ type DashboardBodyCardListProps<T> = {
     emptyText?: string
     primaryClassName?: string
     secondaryClassName?: string
+    listItemClassName?: string
+    accessMode?: AccessMode
 }
 
 const DeleteButton = ({ onDelete }: { onDelete: () => void }) => {
@@ -75,12 +83,19 @@ export function DashboardBodyCardList<T>({
     emptyText = 'Nenhum item registrado.',
     primaryClassName = 'dashboard-text-primary',
     secondaryClassName = 'dashboard-text-secondary',
-    listItemClassName // New Prop
-}: DashboardBodyCardListProps<T> & { listItemClassName?: string }) { // Extended props type inline or update type definition above
+    listItemClassName,
+    accessMode = 'full'
+}: DashboardBodyCardListProps<T>) {
+    const canCreate = checkCanCreate(accessMode)
+    const canEdit = checkCanEdit(accessMode)
+    const canDelete = checkCanDelete(accessMode)
+    const canVisualize = checkCanVisualizeItem(accessMode)
+
     return (
         <DashboardBodyCard
             title={title}
-            action={onAdd && (
+            accessMode={accessMode}
+            action={onAdd && canCreate && (
                 <Button
                     variant="outlined"
                     size="small"
@@ -112,14 +127,14 @@ export function DashboardBodyCardList<T>({
                             key={keyExtractor(item)}
                             disablePadding
                             secondaryAction={
-                                onDelete && (
+                                canDelete && onDelete && (
                                     <DeleteButton onDelete={() => onDelete(item)} />
                                 )
                             }
                             sx={{ borderBottom: '1px solid transparent' }} // Override inline border
                             className={`${listItemClassName || 'dashboard-list-item-border'}`} // Use custom class OR default border
                         >
-                            {onEdit ? (
+                            {onEdit && (canEdit || canVisualize) ? (
                                 <ListItemButton
                                     onClick={() => onEdit(item)}
                                     sx={{ borderRadius: 'inherit' }} // Inherit border radius from ListItem if set

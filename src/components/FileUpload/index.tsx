@@ -1,7 +1,8 @@
-
 import { Button, Box, Typography, Stack, IconButton, CircularProgress, ClickAwayListener, TextField, Tooltip } from '@mui/material'
 import { CloudUpload, AttachFile, Delete, Close, Stop, Download, DriveFileRenameOutline, Visibility } from '@mui/icons-material'
 import { useRef, useState, useEffect } from 'react'
+import { type AccessMode } from '../Dashboard/DashboardBodyCard'
+import { isHidden as checkIsHidden, isReadOnly as checkIsReadOnly, canPreview as checkCanPreview, canDownload as checkCanDownload } from '../../utils/accessControl'
 
 type FileUploadProps = {
     label?: string
@@ -18,6 +19,7 @@ type FileUploadProps = {
     showPreview?: boolean
     showDownload?: boolean
     disabled?: boolean
+    accessMode?: AccessMode
 }
 
 const FileUpload = ({
@@ -34,8 +36,19 @@ const FileUpload = ({
     helperText,
     showPreview = true,
     showDownload = true,
-    disabled = false
+    disabled = false,
+    accessMode = 'full'
 }: FileUploadProps) => {
+    const isHidden = checkIsHidden(accessMode)
+    const isReadOnly = checkIsReadOnly(accessMode)
+    const canPreviewMeta = checkCanPreview(accessMode)
+    const canDownloadMeta = checkCanDownload(accessMode)
+    const finalDisabled = disabled || isReadOnly
+
+    const finalShowPreview = showPreview && canPreviewMeta
+    const finalShowDownload = showDownload && canDownloadMeta
+
+    if (isHidden) return null
     const inputRef = useRef<HTMLInputElement>(null)
     const readerRef = useRef<FileReader | null>(null)
     const [loading, setLoading] = useState(false)
@@ -167,7 +180,7 @@ const FileUpload = ({
                             startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <CloudUpload />}
                             onClick={() => inputRef.current?.click()}
                             fullWidth={fullWidth}
-                            disabled={loading || disabled}
+                            disabled={loading || finalDisabled}
                             sx={{
                                 flexGrow: 1,
                                 ...(!error && { borderColor: 'var(--color-border)' })
@@ -232,7 +245,7 @@ const FileUpload = ({
                         </Stack>
 
                         <Stack direction="row" spacing={0} sx={{ justifyContent: { xs: 'flex-end', sm: 'flex-start' }, width: { xs: '100%', sm: 'auto' } }}>
-                            {!disabled && (
+                            {!finalDisabled && (
                                 <Tooltip title="Renomear">
                                     <IconButton
                                         size="small"
@@ -244,7 +257,7 @@ const FileUpload = ({
                                 </Tooltip>
                             )}
 
-                            {showPreview && (
+                            {finalShowPreview && (
                                 <Tooltip title="Visualizar">
                                     <IconButton
                                         size="small"
@@ -255,7 +268,7 @@ const FileUpload = ({
                                 </Tooltip>
                             )}
 
-                            {showDownload && (
+                            {finalShowDownload && (
                                 <Tooltip title="Download">
                                     <IconButton
                                         size="small"
@@ -274,7 +287,7 @@ const FileUpload = ({
                             )}
 
 
-                            {!disabled && (
+                            {!finalDisabled && (
                                 <ClickAwayListener onClickAway={() => setConfirmDelete(false)}>
                                     <Box>
                                         {!confirmDelete ? (

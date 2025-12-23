@@ -61,6 +61,8 @@ import PeopleFormDialog from './components/PeopleFormDialog'
 import React from 'react'
 import { MenuItem } from '@mui/material'
 import { toUTCDate, formatDateDisplay } from '../../utils/date'
+import { getAccessMode, canCreate, canEdit, isReadOnly, isHidden, getContextualAccessMode } from '../../utils/accessControl'
+
 
 
 const MARITAL_STATUS_MAP: Record<string, string> = {
@@ -784,34 +786,33 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
 
     if (!open) return null
 
-    const detailsCard = people && permissions.includes('cadastro:pessoas:detalhes:visualizar') && (
+    const detailsCard = people && (
         <DashboardBodyCard
             title="Detalhes"
+            accessMode={getAccessMode(permissions, 'cadastro:pessoas:detalhes')}
             action={
-                permissions.includes('cadastro:pessoas:detalhes:editar') && (
-                    <Button
-                        variant="outlined"
-                        size="small"
-                        onClick={handleEditDetails}
-                        sx={{
-                            color: 'text.primary',
-                            borderColor: 'divider',
-                            '&:hover': {
-                                borderColor: 'text.primary',
-                                backgroundColor: 'action.hover',
-                            },
-                            minWidth: { xs: 36, md: 64 },
-                            p: { xs: 0.5, md: '4px 10px' },
-                            borderRadius: '10px',
-                            textTransform: 'none'
-                        }}
-                    >
-                        <Edit fontSize="small" sx={{ mr: { xs: 0, md: 1 } }} />
-                        <Box component="span" sx={{ display: { xs: 'none', md: 'block' } }}>
-                            Editar
-                        </Box>
-                    </Button>
-                )
+                <Button
+                    variant="outlined"
+                    size="small"
+                    onClick={handleEditDetails}
+                    sx={{
+                        color: 'text.primary',
+                        borderColor: 'divider',
+                        '&:hover': {
+                            borderColor: 'text.primary',
+                            backgroundColor: 'action.hover',
+                        },
+                        minWidth: { xs: 36, md: 64 },
+                        p: { xs: 0.5, md: '4px 10px' },
+                        borderRadius: '10px',
+                        textTransform: 'none'
+                    }}
+                >
+                    <Edit fontSize="small" sx={{ mr: { xs: 0, md: 1 } }} />
+                    <Box component="span" sx={{ display: { xs: 'none', md: 'block' } }}>
+                        Editar
+                    </Box>
+                </Button>
             }
         >
             <Stack spacing={2}>
@@ -870,9 +871,10 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
         </DashboardBodyCard>
     )
 
-    const bankAccountCard = people && permissions.includes('cadastro:pessoas:dados-bancarios:listar') && (
+    const bankAccountCard = people && (
         <DashboardBodyCardList<PeopleBankAccount>
             title="Dados Bancários"
+            accessMode={getAccessMode(permissions, 'cadastro:pessoas:dados-bancarios')}
             items={people.bankAccounts || []}
             keyExtractor={(item) => item.id}
             renderIcon={() => <Box className="dashboard-icon-badge"><AccountBalance /></Box>}
@@ -898,15 +900,18 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                 </Box>
             )}
             listItemClassName="dashboard-list-item"
-            onAdd={permissions.includes('cadastro:pessoas:dados-bancarios:criar') ? handleAddAccount : undefined}
-            onEdit={permissions.includes('cadastro:pessoas:dados-bancarios:editar') || permissions.includes('cadastro:pessoas:dados-bancarios:visualizar') ? (item) => handleEditAccount(item as PeopleBankAccount) : undefined}
-            onDelete={permissions.includes('cadastro:pessoas:dados-bancarios:excluir') ? (item) => handleDeleteAccount(item as PeopleBankAccount) : undefined}
+            onAdd={handleAddAccount}
+            onEdit={(item) => handleEditAccount(item as PeopleBankAccount)}
+            onDelete={(item) => handleDeleteAccount(item as PeopleBankAccount)}
             emptyText="Nenhuma conta bancária registrada."
         />
     )
 
-    const systemInfoCard = people && permissions.includes('cadastro:pessoas:auditoria') && (
-        <DashboardBodyCard title="Informações do Sistema">
+    const systemInfoCard = people && (
+        <DashboardBodyCard
+            title="Informações do Sistema"
+            accessMode={getAccessMode(permissions, 'cadastro:pessoas:auditoria')}
+        >
             <Grid container spacing={2}>
                 <Grid size={{ xs: 12 }}>
                     <Typography variant="subtitle2" className="dashboard-label">ID do Sistema</Typography>
@@ -924,9 +929,10 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
         </DashboardBodyCard>
     )
 
-    const addressesCard = people && permissions.includes('cadastro:pessoas:enderecos:listar') && (
+    const addressesCard = people && (
         <DashboardBodyCardList<PeopleAddress>
             title="Endereços"
+            accessMode={getAccessMode(permissions, 'cadastro:pessoas:enderecos')}
             items={people.addresses || []}
             keyExtractor={(item) => item.id}
             renderIcon={() => <Box className="dashboard-icon-badge"><LocationOn /></Box>}
@@ -946,16 +952,17 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                 </Box>
             )}
             listItemClassName="dashboard-list-item"
-            onAdd={permissions.includes('cadastro:pessoas:enderecos:criar') ? handleAddAddress : undefined}
-            onEdit={permissions.includes('cadastro:pessoas:enderecos:editar') || permissions.includes('cadastro:pessoas:enderecos:visualizar') ? handleEditAddress : undefined}
-            onDelete={permissions.includes('cadastro:pessoas:enderecos:excluir') ? handleDeleteAddress : undefined}
+            onAdd={handleAddAddress}
+            onEdit={handleEditAddress}
+            onDelete={handleDeleteAddress}
             emptyText="Nenhum endereço registrado."
         />
     )
 
-    const documentsCard = people && permissions.includes('cadastro:pessoas:documentos:listar') && (
+    const documentsCard = people && (
         <DashboardBodyCardList<PeopleDocument>
             title="Documentos"
+            accessMode={getAccessMode(permissions, 'cadastro:pessoas:documentos')}
             items={people.documents || []}
             keyExtractor={(item) => item.id}
             renderIcon={() => <Box className="dashboard-icon-badge"><Description /></Box>}
@@ -972,17 +979,18 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                     </Stack>
                 </React.Fragment>
             )}
-            onAdd={permissions.includes('cadastro:pessoas:documentos:criar') ? handleAddDocument : undefined}
+            onAdd={handleAddDocument}
             listItemClassName="dashboard-list-item"
-            onEdit={permissions.includes('cadastro:pessoas:documentos:editar') || permissions.includes('cadastro:pessoas:documentos:visualizar') ? (item) => handleEditDocument(item as PeopleDocument) : undefined}
-            onDelete={permissions.includes('cadastro:pessoas:documentos:excluir') ? (item) => handleDeleteDocument(item as PeopleDocument) : undefined}
+            onEdit={(item) => handleEditDocument(item as PeopleDocument)}
+            onDelete={(item) => handleDeleteDocument(item as PeopleDocument)}
             emptyText="Nenhum documento registrado."
         />
     )
 
-    const contactsCard = people && permissions.includes('cadastro:pessoas:contatos:listar') && (
+    const contactsCard = people && (
         <DashboardBodyCardList<PeopleContact>
             title="Contatos"
+            accessMode={getAccessMode(permissions, 'cadastro:pessoas:contatos')}
             items={people.contacts || []}
             keyExtractor={(item) => item.id}
             renderIcon={(item) => (
@@ -999,16 +1007,17 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
             }}
             renderSecondaryText={(item) => `${item.contactType}${item.label ? ' • ' + item.label : ''}`}
             listItemClassName="dashboard-list-item"
-            onAdd={permissions.includes('cadastro:pessoas:contatos:criar') ? handleAddContact : undefined}
-            onEdit={permissions.includes('cadastro:pessoas:contatos:editar') || permissions.includes('cadastro:pessoas:contatos:visualizar') ? handleEditContact : undefined}
-            onDelete={permissions.includes('cadastro:pessoas:contatos:excluir') ? handleDeleteContact : undefined}
+            onAdd={handleAddContact}
+            onEdit={handleEditContact}
+            onDelete={handleDeleteContact}
             emptyText="Nenhum contato registrado."
         />
     )
 
-    const relationshipsCard = people && permissions.includes('cadastro:pessoas:relacionamentos:listar') && (
+    const relationshipsCard = people && (
         <DashboardBodyCardList<PeopleRelationship>
             title="Relacionamentos"
+            accessMode={getAccessMode(permissions, 'cadastro:pessoas:relacionamentos')}
             items={people.relationships || []}
             keyExtractor={(item) => item.id}
             renderIcon={() => <Box className="dashboard-icon-badge"><Group /></Box>}
@@ -1025,9 +1034,9 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
             primaryClassName="dashboard-text-secondary"
             secondaryClassName="dashboard-text-primary"
             listItemClassName="dashboard-list-item"
-            onAdd={permissions.includes('cadastro:pessoas:relacionamentos:criar') ? handleAddRelationship : undefined}
-            onEdit={permissions.includes('cadastro:pessoas:relacionamentos:editar') || permissions.includes('cadastro:pessoas:relacionamentos:visualizar') ? handleEditRelationship : undefined}
-            onDelete={permissions.includes('cadastro:pessoas:relacionamentos:excluir') ? handleDeleteRelationship : undefined}
+            onAdd={handleAddRelationship}
+            onEdit={handleEditRelationship}
+            onDelete={handleDeleteRelationship}
             emptyText="Nenhum relacionamento registrado."
         />
     )
@@ -1056,28 +1065,28 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                             {/* Header Area */}
                             <DashboardTopCard
                                 title={`${people.name}`}
+                                accessMode={getAccessMode(permissions, 'cadastro:pessoas')}
                                 action={
-                                    permissions.includes('cadastro:pessoas:editar') && (
-                                        <Button
-                                            variant="outlined"
-                                            onClick={handleStartEdit}
-                                            sx={{
-                                                color: 'text.primary',
-                                                borderColor: 'divider',
-                                                minWidth: { xs: 40, md: 64 },
-                                                p: { xs: 1, md: '5px 15px' },
-                                                borderRadius: '10px',
-                                                textTransform: 'none',
-                                            }}
-                                        >
-                                            <Edit sx={{ mr: { xs: 0, md: 1 } }} />
-                                            <Box component="span" sx={{ display: { xs: 'none', md: 'block' } }}>
-                                                Editar
-                                            </Box>
-                                        </Button>
-                                    )
+                                    <Button
+                                        variant="outlined"
+                                        onClick={handleStartEdit}
+                                        sx={{
+                                            color: 'text.primary',
+                                            borderColor: 'divider',
+                                            minWidth: { xs: 40, md: 64 },
+                                            p: { xs: 1, md: '5px 15px' },
+                                            borderRadius: '10px',
+                                            textTransform: 'none',
+                                        }}
+                                    >
+                                        <Edit fontSize="small" sx={{ mr: { xs: 0, md: 1 } }} />
+                                        <Box component="span" sx={{ display: { xs: 'none', md: 'block' } }}>
+                                            Editar
+                                        </Box>
+                                    </Button>
                                 }
                             >
+
                                 {people.cpfCnpj && (
                                     <Typography variant="subtitle1" className="dashboard-subtitle">
                                         CPF/CNPJ: {people.cpfCnpj}
@@ -1131,18 +1140,13 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                 open={editOpen}
                 onClose={() => setEditOpen(false)}
                 onSave={(data) => {
-                    // Adapt the data structure if needed, but handleSaveEdit used editForm state.
-                    // We need to update editForm with data from onSave, or better, refactor handleSaveEdit to accept data.
-                    // But for now, let's update state and call save.
                     setEditForm(prev => ({ ...prev, ...data }))
-                    // We need to trigger save, but handleSaveEdit uses editForm state which is async.
-                    // Better to pass data directly to a new save function or updated handleSaveEdit.
-                    // Let's refactor handleSaveEdit to accept data optionally.
                     handleSaveEdit(data)
                 }}
                 initialValues={editForm}
                 title="Editar Pessoa"
                 saving={saving}
+                accessMode={getContextualAccessMode(getAccessMode(permissions, 'cadastro:pessoas'), true)}
             />
 
             <Dialog
@@ -1156,25 +1160,27 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                 </DialogTitle>
                 <DialogContent dividers={false}>
                     <Grid container spacing={2}>
-                        <Grid size={{ xs: 12, sm: 4 }}>
-                            <TextField
-                                label="Tipo"
-                                value={contactForm.contactType}
-                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setContactForm(prev => ({
-                                    ...prev,
-                                    contactType: e.target.value,
-                                    contactValue: '' // Clear value on type change
-                                }))}
-                                fullWidth
-                                select
-                                required
-                                disabled={!permissions.includes('cadastro:pessoas:contatos:editar')}
-                            >
-                                <MenuItem value="Telefone">Telefone</MenuItem>
-                                <MenuItem value="Email">Email</MenuItem>
-                                <MenuItem value="Whatsapp">Whatsapp</MenuItem>
-                            </TextField>
-                        </Grid>
+                        {!isHidden(getAccessMode(permissions, 'cadastro:pessoas:contatos')) && (
+                            <Grid size={{ xs: 12, sm: 4 }}>
+                                <TextField
+                                    label="Tipo"
+                                    value={contactForm.contactType}
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setContactForm(prev => ({
+                                        ...prev,
+                                        contactType: e.target.value,
+                                        contactValue: '' // Clear value on type change
+                                    }))}
+                                    fullWidth
+                                    select
+                                    required
+                                    disabled={isReadOnly(getContextualAccessMode(getAccessMode(permissions, 'cadastro:pessoas:contatos'), !!editingContact))}
+                                >
+                                    <MenuItem value="Telefone">Telefone</MenuItem>
+                                    <MenuItem value="Email">Email</MenuItem>
+                                    <MenuItem value="Whatsapp">Whatsapp</MenuItem>
+                                </TextField>
+                            </Grid>
+                        )}
                         <Grid size={{ xs: 12, sm: 8 }}>
                             {contactForm.contactType === 'Email' ? (
                                 <MailPicker
@@ -1183,7 +1189,7 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                                     onChange={(val) => setContactForm(prev => ({ ...prev, contactValue: val }))}
                                     fullWidth
                                     required
-                                    disabled={!permissions.includes('cadastro:pessoas:contatos:editar')}
+                                    accessMode={getContextualAccessMode(getAccessMode(permissions, 'cadastro:pessoas:contatos'), !!editingContact)}
                                 />
                             ) : ['Telefone', 'Whatsapp'].includes(contactForm.contactType) ? (
                                 <PhonePicker
@@ -1192,7 +1198,7 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                                     onChange={(val) => setContactForm(prev => ({ ...prev, contactValue: val }))}
                                     fullWidth
                                     required
-                                    disabled={!permissions.includes('cadastro:pessoas:contatos:editar')}
+                                    accessMode={getContextualAccessMode(getAccessMode(permissions, 'cadastro:pessoas:contatos'), !!editingContact)}
                                 />
                             ) : (
                                 <TextPicker
@@ -1202,7 +1208,7 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                                     fullWidth
                                     required
                                     placeholder={'(00) 00000-0000'}
-                                    disabled={!permissions.includes('cadastro:pessoas:contatos:editar')}
+                                    accessMode={getContextualAccessMode(getAccessMode(permissions, 'cadastro:pessoas:contatos'), !!editingContact)}
                                 />
                             )}
                         </Grid>
@@ -1213,7 +1219,7 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                                 onChange={(val) => setContactForm(prev => ({ ...prev, label: val }))}
                                 fullWidth
                                 placeholder="Ex: Casa, Trabalho, Comercial"
-                                disabled={!permissions.includes('cadastro:pessoas:contatos:editar')}
+                                accessMode={getContextualAccessMode(getAccessMode(permissions, 'cadastro:pessoas:contatos'), !!editingContact)}
                             />
                         </Grid>
                     </Grid>
@@ -1229,7 +1235,7 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                     <Button
                         onClick={handleSaveContact}
                         variant="contained"
-                        disabled={savingContact || !permissions.includes('cadastro:pessoas:contatos:editar')}
+                        disabled={savingContact || !(editingContact ? canEdit : canCreate)(getAccessMode(permissions, 'cadastro:pessoas:contatos'))}
                     >
                         {savingContact ? 'Salvando...' : 'Salvar'}
                     </Button>
@@ -1247,21 +1253,23 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                 </DialogTitle>
                 <DialogContent dividers={false}>
                     <Grid container spacing={2}>
-                        <Grid size={{ xs: 12, sm: 4 }}>
-                            <TextField
-                                label="Tipo"
-                                value={addressForm.addressType}
-                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAddressForm(prev => ({ ...prev, addressType: e.target.value }))}
-                                fullWidth
-                                select
-                                required
-                                disabled={!permissions.includes('cadastro:pessoas:enderecos:editar')}
-                            >
-                                <MenuItem value="Residencial">Residencial</MenuItem>
-                                <MenuItem value="Comercial">Comercial</MenuItem>
-                                <MenuItem value="Outros">Outros</MenuItem>
-                            </TextField>
-                        </Grid>
+                        {!isHidden(getAccessMode(permissions, 'cadastro:pessoas:enderecos')) && (
+                            <Grid size={{ xs: 12, sm: 4 }}>
+                                <TextField
+                                    label="Tipo"
+                                    value={addressForm.addressType}
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAddressForm(prev => ({ ...prev, addressType: e.target.value }))}
+                                    fullWidth
+                                    select
+                                    required
+                                    disabled={isReadOnly(getContextualAccessMode(getAccessMode(permissions, 'cadastro:pessoas:enderecos'), !!editingAddress))}
+                                >
+                                    <MenuItem value="Residencial">Residencial</MenuItem>
+                                    <MenuItem value="Comercial">Comercial</MenuItem>
+                                    <MenuItem value="Outros">Outros</MenuItem>
+                                </TextField>
+                            </Grid>
+                        )}
                         <Grid size={{ xs: 12, sm: 4 }}>
                             <CEPPicker
                                 label="CEP"
@@ -1280,7 +1288,7 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                                 }}
                                 fullWidth
                                 required
-                                disabled={!permissions.includes('cadastro:pessoas:enderecos:editar')}
+                                accessMode={getContextualAccessMode(getAccessMode(permissions, 'cadastro:pessoas:enderecos'), !!editingAddress)}
                             />
                         </Grid>
                         <Grid size={{ xs: 12, sm: 4 }}>
@@ -1291,7 +1299,7 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                                 fullWidth
                                 required
                                 maxLength={2}
-                                disabled={!permissions.includes('cadastro:pessoas:enderecos:editar')}
+                                accessMode={getContextualAccessMode(getAccessMode(permissions, 'cadastro:pessoas:enderecos'), !!editingAddress)}
                             />
                         </Grid>
                         <Grid size={{ xs: 12, sm: 9 }}>
@@ -1301,7 +1309,7 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                                 onChange={(val) => setAddressForm(prev => ({ ...prev, street: val }))}
                                 fullWidth
                                 required
-                                disabled={!permissions.includes('cadastro:pessoas:enderecos:editar')}
+                                accessMode={getContextualAccessMode(getAccessMode(permissions, 'cadastro:pessoas:enderecos'), !!editingAddress)}
                             />
                         </Grid>
                         <Grid size={{ xs: 12, sm: 3 }}>
@@ -1311,7 +1319,7 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                                 onChange={(val) => setAddressForm(prev => ({ ...prev, number: val }))}
                                 fullWidth
                                 required
-                                disabled={!permissions.includes('cadastro:pessoas:enderecos:editar')}
+                                accessMode={getContextualAccessMode(getAccessMode(permissions, 'cadastro:pessoas:enderecos'), !!editingAddress)}
                             />
                         </Grid>
                         <Grid size={{ xs: 12, sm: 6 }}>
@@ -1321,7 +1329,7 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                                 onChange={(val) => setAddressForm(prev => ({ ...prev, neighborhood: val }))}
                                 fullWidth
                                 required
-                                disabled={!permissions.includes('cadastro:pessoas:enderecos:editar')}
+                                accessMode={getContextualAccessMode(getAccessMode(permissions, 'cadastro:pessoas:enderecos'), !!editingAddress)}
                             />
                         </Grid>
                         <Grid size={{ xs: 12, sm: 6 }}>
@@ -1331,16 +1339,16 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                                 onChange={(val) => setAddressForm(prev => ({ ...prev, city: val }))}
                                 fullWidth
                                 required
-                                disabled={!permissions.includes('cadastro:pessoas:enderecos:editar')}
+                                accessMode={getContextualAccessMode(getAccessMode(permissions, 'cadastro:pessoas:enderecos'), !!editingAddress)}
                             />
                         </Grid>
                         <Grid size={{ xs: 12 }}>
                             <TextPicker
                                 label="Complemento"
-                                value={addressForm.complement}
+                                value={addressForm.complement || ''}
                                 onChange={(val) => setAddressForm(prev => ({ ...prev, complement: val }))}
                                 fullWidth
-                                disabled={!permissions.includes('cadastro:pessoas:enderecos:editar')}
+                                accessMode={getContextualAccessMode(getAccessMode(permissions, 'cadastro:pessoas:enderecos'), !!editingAddress)}
                             />
                         </Grid>
                     </Grid>
@@ -1356,7 +1364,7 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                     <Button
                         onClick={handleSaveAddress}
                         variant="contained"
-                        disabled={savingAddress || !permissions.includes('cadastro:pessoas:enderecos:editar')}
+                        disabled={savingAddress || !(editingAddress ? canEdit : canCreate)(getAccessMode(permissions, 'cadastro:pessoas:enderecos'))}
                     >
                         {savingAddress ? 'Salvando...' : 'Salvar'}
                     </Button>
@@ -1374,20 +1382,22 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                 </DialogTitle>
                 <DialogContent dividers={false}>
                     <Grid container spacing={2}>
-                        <Grid size={{ xs: 12, sm: 4 }}>
-                            <TextField
-                                label="Tipo de Conta"
-                                value={bankForm.accountType}
-                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setBankForm(prev => ({ ...prev, accountType: e.target.value }))}
-                                fullWidth
-                                select
-                                required
-                                disabled={!permissions.includes('cadastro:pessoas:dados-bancarios:editar')}
-                            >
-                                <MenuItem value="Pagamento">Pagamento</MenuItem>
-                                <MenuItem value="Poupança">Poupança</MenuItem>
-                            </TextField>
-                        </Grid>
+                        {!isHidden(getAccessMode(permissions, 'cadastro:pessoas:dados-bancarios')) && (
+                            <Grid size={{ xs: 12 }}>
+                                <TextField
+                                    label="Tipo de Conta"
+                                    value={bankForm.accountType}
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setBankForm(prev => ({ ...prev, accountType: e.target.value }))}
+                                    fullWidth
+                                    select
+                                    required
+                                    disabled={isReadOnly(getContextualAccessMode(getAccessMode(permissions, 'cadastro:pessoas:dados-bancarios'), !!editingAccount))}
+                                >
+                                    <MenuItem value="Pagamento">Pagamento</MenuItem>
+                                    <MenuItem value="Poupança">Poupança</MenuItem>
+                                </TextField>
+                            </Grid>
+                        )}
                         <Grid size={{ xs: 12, sm: 8 }}>
                             <BankCodePicker
                                 label="Código do Banco"
@@ -1395,7 +1405,7 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                                 onChange={(val) => setBankForm(prev => ({ ...prev, bankCode: val }))}
                                 fullWidth
                                 required
-                                disabled={!permissions.includes('cadastro:pessoas:dados-bancarios:editar')}
+                                accessMode={getContextualAccessMode(getAccessMode(permissions, 'cadastro:pessoas:dados-bancarios'), !!editingAccount)}
                             />
                         </Grid>
                         <Grid size={{ xs: 12, sm: 4 }}>
@@ -1405,7 +1415,7 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                                 onChange={(val) => setBankForm(prev => ({ ...prev, branchCode: val.replace(/\D/g, '') }))}
                                 fullWidth
                                 required
-                                disabled={!permissions.includes('cadastro:pessoas:dados-bancarios:editar')}
+                                accessMode={getContextualAccessMode(getAccessMode(permissions, 'cadastro:pessoas:dados-bancarios'), !!editingAccount)}
                             />
                         </Grid>
                         <Grid size={{ xs: 12, sm: 8 }}>
@@ -1415,7 +1425,7 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                                 onChange={(val) => setBankForm(prev => ({ ...prev, accountNumber: val.replace(/\D/g, '') }))}
                                 fullWidth
                                 required
-                                disabled={!permissions.includes('cadastro:pessoas:dados-bancarios:editar')}
+                                accessMode={getContextualAccessMode(getAccessMode(permissions, 'cadastro:pessoas:dados-bancarios'), !!editingAccount)}
                             />
                         </Grid>
                         <Grid size={{ xs: 12 }}>
@@ -1425,7 +1435,7 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                                 onChange={(val) => setBankForm(prev => ({ ...prev, pixKey: val }))}
                                 fullWidth
                                 placeholder="CPF, Email, Telefone, Chave Aleatória"
-                                disabled={!permissions.includes('cadastro:pessoas:dados-bancarios:editar')}
+                                accessMode={getContextualAccessMode(getAccessMode(permissions, 'cadastro:pessoas:dados-bancarios'), !!editingAccount)}
                             />
                         </Grid>
                         <Grid size={{ xs: 12 }}>
@@ -1433,7 +1443,7 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                                 label="Marcar como Conta Principal para Recebimento"
                                 checked={bankForm.isDefaultReceipt}
                                 onChange={(val) => setBankForm(prev => ({ ...prev, isDefaultReceipt: val }))}
-                                disabled={!permissions.includes('cadastro:pessoas:dados-bancarios:editar')}
+                                accessMode={getContextualAccessMode(getAccessMode(permissions, 'cadastro:pessoas:dados-bancarios'), !!editingAccount)}
                             />
                         </Grid>
                     </Grid>
@@ -1449,7 +1459,7 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                     <Button
                         onClick={handleSaveAccount}
                         variant="contained"
-                        disabled={savingAccount || !permissions.includes('cadastro:pessoas:dados-bancarios:editar')}
+                        disabled={savingAccount || !(editingAccount ? canEdit : canCreate)(getAccessMode(permissions, 'cadastro:pessoas:dados-bancarios'))}
                     >
                         {savingAccount ? 'Salvando...' : 'Salvar'}
                     </Button>
@@ -1467,28 +1477,30 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                 </DialogTitle>
                 <DialogContent dividers={false}>
                     <Grid container spacing={2}>
-                        <Grid size={{ xs: 12 }}>
-                            <TextField
-                                label="Tipo de Documento"
-                                value={documentForm.documentType}
-                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDocumentForm(prev => ({ ...prev, documentType: e.target.value }))}
-                                fullWidth
-                                select
-                                required
-                                disabled={!permissions.includes('cadastro:pessoas:documentos:editar')}
-                            >
-                                <MenuItem value="RG - Digital">RG - Digital</MenuItem>
-                                <MenuItem value="RG - Frente">RG - Frente</MenuItem>
-                                <MenuItem value="RG - Verso">RG - Verso</MenuItem>
-                                <MenuItem value="CNH - Digital">CNH - Digital</MenuItem>
-                                <MenuItem value="CNH - Impressa">CNH - Impressa</MenuItem>
-                                <MenuItem value="CPF - Digital">CPF - Digital</MenuItem>
-                                <MenuItem value="CPF - Impresso">CPF - Impresso</MenuItem>
-                                <MenuItem value="Selfie com Doc">Selfie com Doc</MenuItem>
-                                <MenuItem value="Comprovante de Residência">Comprovante de Residência</MenuItem>
-                                <MenuItem value="Contrato Social">Contrato Social</MenuItem>
-                            </TextField>
-                        </Grid>
+                        {!isHidden(getAccessMode(permissions, 'cadastro:pessoas:documentos')) && (
+                            <Grid size={{ xs: 12 }}>
+                                <TextField
+                                    label="Tipo de Documento"
+                                    value={documentForm.documentType}
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDocumentForm(prev => ({ ...prev, documentType: e.target.value }))}
+                                    fullWidth
+                                    select
+                                    required
+                                    disabled={isReadOnly(getContextualAccessMode(getAccessMode(permissions, 'cadastro:pessoas:documentos'), !!editingDocument))}
+                                >
+                                    <MenuItem value="RG - Digital">RG - Digital</MenuItem>
+                                    <MenuItem value="RG - Frente">RG - Frente</MenuItem>
+                                    <MenuItem value="RG - Verso">RG - Verso</MenuItem>
+                                    <MenuItem value="CNH - Digital">CNH - Digital</MenuItem>
+                                    <MenuItem value="CNH - Impressa">CNH - Impressa</MenuItem>
+                                    <MenuItem value="CPF - Digital">CPF - Digital</MenuItem>
+                                    <MenuItem value="CPF - Impresso">CPF - Impresso</MenuItem>
+                                    <MenuItem value="Selfie com Doc">Selfie com Doc</MenuItem>
+                                    <MenuItem value="Comprovante de Residência">Comprovante de Residência</MenuItem>
+                                    <MenuItem value="Contrato Social">Contrato Social</MenuItem>
+                                </TextField>
+                            </Grid>
+                        )}
                         <Grid size={{ xs: 12 }}>
                             <FileUpload
                                 label="Arquivo do Documento"
@@ -1509,7 +1521,7 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                                 required
                                 showPreview={permissions.includes('cadastro:pessoas:documentos:preview')}
                                 showDownload={permissions.includes('cadastro:pessoas:documentos:download')}
-                                disabled={!permissions.includes('cadastro:pessoas:documentos:editar')}
+                                accessMode={getContextualAccessMode(getAccessMode(permissions, 'cadastro:pessoas:documentos'), !!editingDocument)}
                             />
                         </Grid>
 
@@ -1526,7 +1538,7 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                     <Button
                         onClick={handleSaveDocument}
                         variant="contained"
-                        disabled={savingDocument || !permissions.includes('cadastro:pessoas:documentos:editar')}
+                        disabled={savingDocument || !(editingDocument ? canEdit : canCreate)(getAccessMode(permissions, 'cadastro:pessoas:documentos'))}
                     >
                         {savingDocument ? 'Salvando...' : 'Salvar'}
                     </Button>
@@ -1552,6 +1564,7 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                                         value={detailsForm.firstName}
                                         onChange={(val) => setDetailsForm(prev => ({ ...prev, firstName: val }))}
                                         fullWidth
+                                        accessMode={getContextualAccessMode(getAccessMode(permissions, 'cadastro:pessoas:detalhes'), true)}
                                     />
                                 </Grid>
                                 <Grid size={{ xs: 12, sm: 6 }}>
@@ -1560,6 +1573,7 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                                         value={detailsForm.surname}
                                         onChange={(val) => setDetailsForm(prev => ({ ...prev, surname: val }))}
                                         fullWidth
+                                        accessMode={getContextualAccessMode(getAccessMode(permissions, 'cadastro:pessoas:detalhes'), true)}
                                     />
                                 </Grid>
                                 <Grid size={{ xs: 12 }}>
@@ -1568,6 +1582,7 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                                         value={detailsForm.birthDate ?? ''}
                                         onChange={(val) => setDetailsForm(prev => ({ ...prev, birthDate: val }))}
                                         fullWidth
+                                        accessMode={getContextualAccessMode(getAccessMode(permissions, 'cadastro:pessoas:detalhes'), true)}
                                     />
                                 </Grid>
                                 <Grid size={{ xs: 12, sm: 6 }}>
@@ -1581,6 +1596,7 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                                         ]}
                                         fullWidth
                                         placeholder="Selecione"
+                                        accessMode={getContextualAccessMode(getAccessMode(permissions, 'cadastro:pessoas:detalhes'), true)}
                                     />
                                 </Grid>
                                 <Grid size={{ xs: 12, sm: 6 }}>
@@ -1594,6 +1610,7 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                                         }))}
                                         fullWidth
                                         placeholder="Selecione"
+                                        accessMode={getContextualAccessMode(getAccessMode(permissions, 'cadastro:pessoas:detalhes'), true)}
                                     />
                                 </Grid>
                                 <Grid size={{ xs: 12 }}>
@@ -1602,6 +1619,7 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                                         value={detailsForm.nationality}
                                         onChange={(val) => setDetailsForm(prev => ({ ...prev, nationality: val }))}
                                         fullWidth
+                                        accessMode={getContextualAccessMode(getAccessMode(permissions, 'cadastro:pessoas:detalhes'), true)}
                                     />
                                 </Grid>
                                 <Grid size={{ xs: 12 }}>
@@ -1610,6 +1628,7 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                                         value={detailsForm.occupation}
                                         onChange={(val) => setDetailsForm(prev => ({ ...prev, occupation: val }))}
                                         fullWidth
+                                        accessMode={getContextualAccessMode(getAccessMode(permissions, 'cadastro:pessoas:detalhes'), true)}
                                     />
                                 </Grid>
                             </>
@@ -1621,6 +1640,7 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                                         value={detailsForm.legalName}
                                         onChange={(val) => setDetailsForm(prev => ({ ...prev, legalName: val }))}
                                         fullWidth
+                                        accessMode={getContextualAccessMode(getAccessMode(permissions, 'cadastro:pessoas:detalhes'), true)}
                                     />
                                 </Grid>
                                 <Grid size={{ xs: 12 }}>
@@ -1629,6 +1649,7 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                                         value={detailsForm.tradeName}
                                         onChange={(val) => setDetailsForm(prev => ({ ...prev, tradeName: val }))}
                                         fullWidth
+                                        accessMode={getContextualAccessMode(getAccessMode(permissions, 'cadastro:pessoas:detalhes'), true)}
                                     />
                                 </Grid>
                             </>
@@ -1646,7 +1667,7 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                     <Button
                         onClick={handleSaveDetails}
                         variant="contained"
-                        disabled={savingDetails}
+                        disabled={savingDetails || !canEdit(getAccessMode(permissions, 'cadastro:pessoas:detalhes'))}
                     >
                         {savingDetails ? 'Salvando...' : 'Salvar'}
                     </Button>
@@ -1682,7 +1703,7 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                                 }))}
                                 fullWidth
                                 placeholder="Selecione o tipo"
-                                disabled={!permissions.includes('cadastro:pessoas:relacionamentos:editar')}
+                                accessMode={getContextualAccessMode(getAccessMode(permissions, 'cadastro:pessoas:relacionamentos'), !!editingRelationship)}
                             />
                         </Grid>
                         <Grid size={{ xs: 12 }}>
@@ -1696,7 +1717,7 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                                 }))}
                                 fullWidth
                                 placeholder="Selecione a pessoa"
-                                disabled={!permissions.includes('cadastro:pessoas:relacionamentos:editar')}
+                                accessMode={getContextualAccessMode(getAccessMode(permissions, 'cadastro:pessoas:relacionamentos'), !!editingRelationship)}
                             />
                         </Grid>
                     </Grid>
@@ -1712,7 +1733,7 @@ const PeopleDashboard = ({ peopleId, open, onClose, onUpdate }: PeopleDashboardP
                     <Button
                         onClick={handleSaveRelationship}
                         variant="contained"
-                        disabled={savingRelationship || !permissions.includes('cadastro:pessoas:relacionamentos:editar')}
+                        disabled={savingRelationship || !canEdit(getAccessMode(permissions, 'cadastro:pessoas:relacionamentos'))}
                     >
                         {savingRelationship ? 'Salvando...' : 'Salvar'}
                     </Button>

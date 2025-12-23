@@ -11,6 +11,9 @@ import {
 import TextPicker from '../../../components/TextPicker'
 import CPFCNPJPicker, { cleanString, validateCPF, validateCNPJ } from '../../../components/CPFCNPJPicker'
 import { useState, useEffect } from 'react'
+import { isFull } from '../../../utils/accessControl'
+
+import { type AccessMode } from '../../../components/Dashboard/DashboardBodyCard'
 
 type PeopleFormDialogProps = {
     open: boolean
@@ -19,6 +22,7 @@ type PeopleFormDialogProps = {
     initialValues?: { name: string; cpfCnpj: string }
     title?: string
     saving?: boolean
+    accessMode?: AccessMode
 }
 
 const PeopleFormDialog = ({
@@ -27,7 +31,8 @@ const PeopleFormDialog = ({
     onSave,
     initialValues,
     title = 'Adicionar Pessoa',
-    saving = false
+    saving = false,
+    accessMode = 'full'
 }: PeopleFormDialogProps) => {
     const [form, setForm] = useState({
         name: '',
@@ -88,6 +93,7 @@ const PeopleFormDialog = ({
                                 onChange={(val) => setForm(prev => ({ ...prev, cpfCnpj: val }))}
                                 fullWidth
                                 required
+                                accessMode={accessMode}
                             />
                         </Grid>
                         <Grid size={{ xs: 12 }}>
@@ -98,6 +104,7 @@ const PeopleFormDialog = ({
                                 fullWidth
                                 required
                                 placeholder="Nome da pessoa"
+                                accessMode={accessMode}
                             />
                         </Grid>
                     </Grid>
@@ -113,7 +120,7 @@ const PeopleFormDialog = ({
                     <Button
                         onClick={handleSave}
                         variant="contained"
-                        disabled={saving}
+                        disabled={saving || !isFull(accessMode)}
                     >
                         {saving ? 'Salvando...' : 'Salvar'}
                     </Button>

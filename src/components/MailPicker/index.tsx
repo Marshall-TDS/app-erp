@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { TextField, IconButton } from '@mui/material'
 import { Email, CheckCircle } from '@mui/icons-material'
+import { type AccessMode } from '../Dashboard/DashboardBodyCard'
+import { isHidden as checkIsHidden, isReadOnly as checkIsReadOnly } from '../../utils/accessControl'
 import './style.css'
 
 type MailPickerProps = {
@@ -13,6 +15,7 @@ type MailPickerProps = {
   error?: boolean
   helperText?: string
   required?: boolean
+  accessMode?: AccessMode
 }
 
 const isValidEmail = (email: string): boolean => {
@@ -32,11 +35,17 @@ const MailPicker = ({
   error = false,
   helperText,
   required = false,
+  accessMode = 'full',
 }: MailPickerProps) => {
+  const isHidden = checkIsHidden(accessMode)
+  const isReadOnly = checkIsReadOnly(accessMode)
+  const finalDisabled = disabled || isReadOnly
+
+  if (isHidden) return null
   const [touched, setTouched] = useState(false)
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (disabled) return
+    if (finalDisabled) return
     onChange(event.target.value)
   }
 
@@ -54,7 +63,7 @@ const MailPicker = ({
       onBlur={handleBlur}
       fullWidth={fullWidth}
       placeholder={placeholder}
-      disabled={disabled}
+      disabled={finalDisabled}
       error={emailError}
       helperText={helperText || (touched && value && !isValidEmail(value) ? 'Email inválido' : '')}
       type="email"
@@ -64,7 +73,7 @@ const MailPicker = ({
           <IconButton
             edge="end"
             size="small"
-            disabled={disabled}
+            disabled={finalDisabled}
             className="mail-picker__icon-btn"
             sx={{ mr: -1 }}
           >

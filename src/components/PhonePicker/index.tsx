@@ -10,6 +10,8 @@ import {
   ListItemText,
 } from '@mui/material'
 import { Phone, ExpandMore, Search } from '@mui/icons-material'
+import { type AccessMode } from '../Dashboard/DashboardBodyCard'
+import { isHidden as checkIsHidden, isReadOnly as checkIsReadOnly } from '../../utils/accessControl'
 import './style.css'
 
 import { COUNTRIES, type Country, parsePhoneNumber, formatPhoneNumber } from './utils'
@@ -24,6 +26,7 @@ type PhonePickerProps = {
   error?: boolean
   helperText?: string
   required?: boolean
+  accessMode?: AccessMode
 }
 
 const PhonePicker = ({
@@ -36,7 +39,13 @@ const PhonePicker = ({
   error = false,
   helperText,
   required = false,
+  accessMode = 'full',
 }: PhonePickerProps) => {
+  const isHidden = checkIsHidden(accessMode)
+  const isReadOnly = checkIsReadOnly(accessMode)
+  const finalDisabled = disabled || isReadOnly
+
+  if (isHidden) return null
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const { country, number } = useMemo(() => parsePhoneNumber(value || ''), [value])
@@ -54,7 +63,7 @@ const PhonePicker = ({
   const open = Boolean(anchorEl)
 
   const handleCountryClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    if (disabled) return
+    if (finalDisabled) return
     setAnchorEl(event.currentTarget)
     setSearchQuery('')
   }
@@ -123,7 +132,7 @@ const PhonePicker = ({
   }
 
   const handleNumberChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (disabled) return
+    if (finalDisabled) return
     const inputValue = event.target.value
 
     // Remove caracteres não numéricos da entrada para processamento
@@ -165,7 +174,7 @@ const PhonePicker = ({
         onBlur={handleBlur}
         fullWidth={fullWidth}
         placeholder={placeholder}
-        disabled={disabled}
+        disabled={finalDisabled}
         error={hasError}
         helperText={hasError && !error ? 'Telefone inválido' : helperText}
         type="tel"
@@ -178,7 +187,7 @@ const PhonePicker = ({
                   onClick={handleCountryClick}
                   edge="start"
                   size="small"
-                  disabled={disabled}
+                  disabled={finalDisabled}
                   className="phone-picker__country-btn"
                   aria-label="Selecionar país"
                 >

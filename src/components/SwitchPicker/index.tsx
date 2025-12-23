@@ -1,4 +1,6 @@
 import { Box, Switch, Typography } from '@mui/material'
+import { type AccessMode } from '../Dashboard/DashboardBodyCard'
+import { isHidden as checkIsHidden, isReadOnly as checkIsReadOnly } from '../../utils/accessControl'
 
 type SwitchPickerProps = {
     label: string
@@ -6,6 +8,7 @@ type SwitchPickerProps = {
     onChange: (checked: boolean) => void
     disabled?: boolean
     className?: string
+    accessMode?: AccessMode
 }
 
 const SwitchPicker = ({
@@ -13,17 +16,24 @@ const SwitchPicker = ({
     checked,
     onChange,
     disabled = false,
-    className = ''
+    className = '',
+    accessMode = 'full'
 }: SwitchPickerProps) => {
+    const isHidden = checkIsHidden(accessMode)
+    const isReadOnly = checkIsReadOnly(accessMode)
+    const finalDisabled = disabled || isReadOnly
+
+    if (isHidden) return null
+
     const handleClick = () => {
-        if (!disabled) {
+        if (!finalDisabled) {
             onChange(!checked)
         }
     }
 
     return (
         <Box
-            className={`switch-picker-container ${disabled ? 'Mui-disabled' : ''} ${className}`}
+            className={`switch-picker-container ${finalDisabled ? 'Mui-disabled' : ''} ${className}`}
             onClick={handleClick}
         >
             <Typography className="switch-picker-label">
@@ -32,7 +42,7 @@ const SwitchPicker = ({
             <Switch
                 checked={checked}
                 onChange={(e) => onChange(e.target.checked)}
-                disabled={disabled}
+                disabled={finalDisabled}
                 onClick={(e) => e.stopPropagation()}
                 color="primary"
             />

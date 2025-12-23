@@ -1,7 +1,7 @@
-
 import { useState, useEffect } from 'react'
 import axios from 'axios'
 import SelectPicker, { type SelectOption } from '../SelectPicker'
+import { type AccessMode } from '../Dashboard/DashboardBodyCard'
 
 const API_BRASIL_BANKS_URL = 'https://brasilapi.com.br/api/banks/v1'
 
@@ -22,6 +22,7 @@ type BankCodePickerProps = {
     disabled?: boolean
     error?: boolean
     helperText?: string
+    accessMode?: AccessMode
 }
 
 const BankCodePicker = ({
@@ -33,7 +34,8 @@ const BankCodePicker = ({
     placeholder = "Selecione o banco",
     disabled = false,
     error = false,
-    helperText
+    helperText,
+    accessMode = 'full'
 }: BankCodePickerProps) => {
     const [options, setOptions] = useState<SelectOption[]>([])
     const [loading, setLoading] = useState(false)
@@ -88,6 +90,7 @@ const BankCodePicker = ({
             searchable={true}
             clearable={true}
             emptyText={loading ? "Carregando..." : "Nenhum banco encontrado"}
+            accessMode={accessMode}
         />
     )
 }

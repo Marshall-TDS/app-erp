@@ -16,6 +16,8 @@ import {
   Search,
   Close,
 } from '@mui/icons-material'
+import { type AccessMode } from '../Dashboard/DashboardBodyCard'
+import { isHidden as checkIsHidden, isReadOnly as checkIsReadOnly } from '../../utils/accessControl'
 import './style.css'
 
 export type SelectOption = {
@@ -43,6 +45,7 @@ type SelectPickerProps = {
   searchPlaceholder?: string
   showCheckbox?: boolean
   groupBy?: boolean
+  accessMode?: AccessMode
 }
 
 const SelectPicker = ({
@@ -63,7 +66,13 @@ const SelectPicker = ({
   searchPlaceholder = 'Buscar...',
   showCheckbox = false,
   groupBy = false,
+  accessMode = 'full',
 }: SelectPickerProps) => {
+  const isHidden = checkIsHidden(accessMode)
+  const isReadOnly = checkIsReadOnly(accessMode)
+  const finalDisabled = disabled || isReadOnly
+
+  if (isHidden) return null
   const [anchorEl, setAnchorEl] = useState<HTMLDivElement | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [focusedIndex, setFocusedIndex] = useState(-1)
@@ -153,7 +162,7 @@ const SelectPicker = ({
 
   // Lidar com abertura do popover
   const handleOpen = (event: React.MouseEvent<HTMLDivElement>) => {
-    if (disabled) return
+    if (finalDisabled) return
     setAnchorEl(event.currentTarget)
     setSearchQuery('')
     setFocusedIndex(-1)
@@ -246,7 +255,7 @@ const SelectPicker = ({
     }
   }, [open, searchable])
 
-  const shouldShowClearButton = clearable && !disabled && value !== null && value !== undefined &&
+  const shouldShowClearButton = clearable && !finalDisabled && value !== null && value !== undefined &&
     ((Array.isArray(value) && value.length > 0) || (!Array.isArray(value)))
 
   const optionsToRender = groupedOptions
@@ -260,7 +269,7 @@ const SelectPicker = ({
         value={displayValue}
         placeholder={placeholder}
         fullWidth={fullWidth}
-        disabled={disabled}
+        disabled={finalDisabled}
         error={error}
         helperText={helperText}
         required={required}
@@ -275,7 +284,7 @@ const SelectPicker = ({
                   onClick={handleClear}
                   edge="end"
                   size="small"
-                  disabled={disabled}
+                  disabled={finalDisabled}
                   className="select-picker__clear-btn"
                 >
                   <Close fontSize="small" />
@@ -284,7 +293,7 @@ const SelectPicker = ({
               <IconButton
                 edge="end"
                 size="small"
-                disabled={disabled}
+                disabled={finalDisabled}
                 className={`select-picker__arrow ${open ? 'select-picker__arrow--open' : ''}`}
               >
                 <ExpandMore fontSize="small" />

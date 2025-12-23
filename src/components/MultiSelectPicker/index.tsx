@@ -10,7 +10,6 @@ import {
   ListItemText,
   Checkbox,
   Chip,
-  Paper,
 } from '@mui/material'
 import {
   ExpandMore,
@@ -382,7 +381,7 @@ const MultiSelectPicker = ({
         className="multi-select-picker-popover"
         disableRestoreFocus
       >
-        <Paper className="multi-select-picker__paper">
+        <Box className="multi-select-picker__paper">
           {/* Campo de busca */}
           {searchable && (
             <Box className="multi-select-picker__search-container">
@@ -509,7 +508,7 @@ const MultiSelectPicker = ({
               </Typography>
             </Box>
           )}
-        </Paper>
+        </Box>
       </Popover>
     </>
   )

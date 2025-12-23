@@ -8,6 +8,8 @@ import {
   Button,
 } from '@mui/material'
 import { CalendarToday, Close } from '@mui/icons-material'
+import { type AccessMode } from '../Dashboard/DashboardBodyCard'
+import { isHidden as checkIsHidden, isReadOnly as checkIsReadOnly } from '../../utils/accessControl'
 import './style.css'
 
 type DatePickerProps = {
@@ -20,6 +22,7 @@ type DatePickerProps = {
   error?: boolean
   helperText?: string
   required?: boolean
+  accessMode?: AccessMode
 }
 
 // Normalizar o valor da data para formato YYYY-MM-DD (sem problemas de fuso horário)
@@ -67,7 +70,13 @@ const DatePicker = ({
   error = false,
   helperText,
   required = false,
+  accessMode = 'full',
 }: DatePickerProps) => {
+  const isHidden = checkIsHidden(accessMode)
+  const isReadOnly = checkIsReadOnly(accessMode)
+  const finalDisabled = disabled || isReadOnly
+
+  if (isHidden) return null
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null)
 
   const normalizedValue = normalizeDate(value || '')
@@ -87,7 +96,7 @@ const DatePicker = ({
   const open = Boolean(anchorEl)
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    if (disabled) return
+    if (finalDisabled) return
     setAnchorEl(event.currentTarget)
     const currentValue = tempDate || normalizedValue || ''
     setTempDate(currentValue)
@@ -119,7 +128,7 @@ const DatePicker = ({
   // ... (existing code)
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (disabled) return
+    if (finalDisabled) return
     const newValue = event.target.value
 
     // Validar se o ano tem mais de 4 dígitos
@@ -140,7 +149,7 @@ const DatePicker = ({
 
   // Handler para quando o campo perder o foco
   const handleBlur = () => {
-    if (disabled) return
+    if (finalDisabled) return
 
     if (tempDate) {
       // Validação estrita de data (ex: 31/02)
@@ -271,7 +280,7 @@ const DatePicker = ({
         onBlur={handleBlur}
         fullWidth={fullWidth}
         type="date"
-        disabled={disabled}
+        disabled={finalDisabled}
         error={error || localError}
         helperText={localError ? localHelperText : helperText}
         required={required}
@@ -285,13 +294,13 @@ const DatePicker = ({
         InputProps={{
           endAdornment: (
             <>
-              {(tempDate || normalizedValue) && !disabled && (
+              {(tempDate || normalizedValue) && !finalDisabled && (
                 <IconButton
                   onClick={handleClear}
                   edge="end"
                   size="small"
                   aria-label="Limpar data"
-                  disabled={disabled}
+                  disabled={finalDisabled}
                   sx={{ mr: 1 }}
                 >
                   <Close fontSize="small" />
@@ -302,7 +311,7 @@ const DatePicker = ({
                 edge="end"
                 size="small"
                 aria-label="Abrir calendário"
-                disabled={disabled}
+                disabled={finalDisabled}
                 sx={{ mr: -1 }}
               >
                 <CalendarToday fontSize="small" />

@@ -7,6 +7,9 @@ import {
 } from '@mui/material'
 import { Close, LocationOn, CheckCircle, Error } from '@mui/icons-material'
 
+import { type AccessMode } from '../Dashboard/DashboardBodyCard'
+import { isHidden as checkIsHidden, isReadOnly as checkIsReadOnly } from '../../utils/accessControl'
+
 type CEPPickerProps = {
     label?: string
     value: string
@@ -23,6 +26,7 @@ type CEPPickerProps = {
     disabled?: boolean
     error?: boolean
     helperText?: string
+    accessMode?: AccessMode
 }
 
 const cleanCEP = (str: string) => str.replace(/\D/g, '')
@@ -43,8 +47,14 @@ const CEPPicker = ({
     required = false,
     disabled = false,
     error: errorProp = false,
-    helperText: helperTextProp
+    helperText: helperTextProp,
+    accessMode = 'full'
 }: CEPPickerProps) => {
+    const isHidden = checkIsHidden(accessMode)
+    const isReadOnly = checkIsReadOnly(accessMode)
+    const finalDisabled = disabled || isReadOnly
+
+    if (isHidden) return null
     const [loading, setLoading] = useState(false)
     const [fetchError, setFetchError] = useState(false)
     const [lastFetchedCEP, setLastFetchedCEP] = useState(cleanCEP(value))
@@ -108,7 +118,7 @@ const CEPPicker = ({
         }
     }
 
-    const showClearButton = !disabled && value && value.length > 0
+    const showClearButton = !finalDisabled && value && value.length > 0
     const displayError = errorProp || fetchError
     const displayHelperText = helperTextProp || (fetchError ? 'CEP não encontrado' : '')
 
@@ -120,7 +130,7 @@ const CEPPicker = ({
             onChange={handleChange}
             fullWidth={fullWidth}
             required={required}
-            disabled={disabled || loading}
+            disabled={finalDisabled || loading}
             error={displayError}
             helperText={displayHelperText}
             placeholder="00000-000"
@@ -145,7 +155,7 @@ const CEPPicker = ({
                                 onClick={handleClear}
                                 edge="end"
                                 size="small"
-                                disabled={disabled || loading}
+                                disabled={finalDisabled || loading}
                                 sx={{ ml: 1 }}
                             >
                                 <Close fontSize="small" />

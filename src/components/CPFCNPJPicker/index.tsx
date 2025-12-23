@@ -6,6 +6,8 @@ import {
     InputAdornment,
 } from '@mui/material'
 import { Close, CheckCircle, Error, AssignmentInd } from '@mui/icons-material'
+import { type AccessMode } from '../Dashboard/DashboardBodyCard'
+import { isHidden as checkIsHidden, isReadOnly as checkIsReadOnly } from '../../utils/accessControl'
 import './style.css'
 
 type CPFCNPJPickerProps = {
@@ -19,6 +21,7 @@ type CPFCNPJPickerProps = {
     helperText?: string
     required?: boolean
     autoFocus?: boolean
+    accessMode?: AccessMode
 }
 
 // Utils for validation and formatting
@@ -116,6 +119,7 @@ const CPFCNPJPicker = ({
     helperText: helperTextProp,
     required = false,
     autoFocus = false,
+    accessMode = 'full',
 }: CPFCNPJPickerProps) => {
     const [focused, setFocused] = useState(false)
     const [isValid, setIsValid] = useState<boolean | null>(null)
@@ -204,6 +208,12 @@ const CPFCNPJPicker = ({
     const showError = errorProp || internalError
     const displayHelperText = helperTextProp || (internalError ? 'CPF/CNPJ inválido' : '')
 
+    const isHidden = checkIsHidden(accessMode)
+    const isReadOnly = checkIsReadOnly(accessMode)
+    const finalDisabled = disabled || isReadOnly
+
+    if (isHidden) return null
+
     return (
         <Box className="cpf-cnpj-picker-container">
             <TextField
@@ -215,7 +225,7 @@ const CPFCNPJPicker = ({
                 onBlur={handleBlur}
                 fullWidth={fullWidth}
                 placeholder={placeholder}
-                disabled={disabled}
+                disabled={finalDisabled}
                 error={showError}
                 helperText={displayHelperText}
                 required={required}

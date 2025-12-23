@@ -6,6 +6,8 @@ import {
   InputAdornment,
 } from '@mui/material'
 import { Close, Search } from '@mui/icons-material'
+import { type AccessMode } from '../Dashboard/DashboardBodyCard'
+import { isHidden as checkIsHidden, isReadOnly as checkIsReadOnly } from '../../utils/accessControl'
 import './style.css'
 
 type TextPickerProps = {
@@ -26,6 +28,7 @@ type TextPickerProps = {
   startIcon?: React.ReactNode
   type?: 'text' | 'search' | 'textarea' | 'number'
   autoFocus?: boolean
+  accessMode?: AccessMode
 }
 
 const TextPicker = ({
@@ -46,7 +49,13 @@ const TextPicker = ({
   startIcon,
   type = 'text',
   autoFocus = false,
+  accessMode = 'full',
 }: TextPickerProps) => {
+  const isHidden = checkIsHidden(accessMode)
+  const isReadOnly = checkIsReadOnly(accessMode)
+  const finalDisabled = disabled || isReadOnly
+
+  if (isHidden) return null
   const [focused, setFocused] = useState(false)
   const [characterCount, setCharacterCount] = useState(value?.length || 0)
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null)
@@ -118,7 +127,7 @@ const TextPicker = ({
         onBlur={handleBlur}
         fullWidth={fullWidth}
         placeholder={placeholder}
-        disabled={disabled}
+        disabled={finalDisabled}
         error={error}
         helperText={displayHelperText}
         required={required}
@@ -142,7 +151,7 @@ const TextPicker = ({
                 onClick={handleClear}
                 edge="end"
                 size="small"
-                disabled={disabled}
+                disabled={finalDisabled}
                 className="text-picker__clear-btn"
               >
                 <Close fontSize="small" />
@@ -150,9 +159,8 @@ const TextPicker = ({
             </InputAdornment>
           ) : undefined,
         }}
-        className={`text-picker ${focused ? 'text-picker--focused' : ''} ${
-          error ? 'text-picker--error' : ''
-        }`}
+        className={`text-picker ${focused ? 'text-picker--focused' : ''} ${error ? 'text-picker--error' : ''
+          }`}
       />
     </Box>
   )
