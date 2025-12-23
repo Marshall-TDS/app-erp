@@ -1,79 +1,65 @@
 name: Deploy App ERP - Homologação
 
-# Deploy automático para servidor 72.61.223.230 na porta 5173
-# Configurar secrets no GitHub: VPS_HOST=72.61.223.230, VPS_USER, VPS_SSH_PRIVATE_KEY, VPS_DEPLOY_PATH
-
 on:
   push:
     branches:
       - homolog
-  workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     
     steps:
-      - name: Checkout código
+      - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Configurar SSH
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.VPS_SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
-
-      - name: Deploy no servidor VPS
+      
+      - name: Deploy to server
         env:
-          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_SSH_PRIVATE_KEY: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
           VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
           VPS_DEPLOY_PATH: ${{ secrets.VPS_DEPLOY_PATH }}
+          # Variáveis de ambiente para homologação
           VITE_API_USUARIOS_BASE_URL_HOMOLOG: ${{ secrets.VITE_API_USUARIOS_BASE_URL_HOMOLOG }}
           VITE_API_CLIENTES_BASE_URL_HOMOLOG: ${{ secrets.VITE_API_CLIENTES_BASE_URL_HOMOLOG }}
           VITE_API_COMUNICACOES_BASE_URL_HOMOLOG: ${{ secrets.VITE_API_COMUNICACOES_BASE_URL_HOMOLOG }}
+          VITE_API_CONTRATOS_BASE_URL_HOMOLOG: ${{ secrets.VITE_API_CONTRATOS_BASE_URL_HOMOLOG }}
+          VITE_API_PESSOAS_BASE_URL_HOMOLOG: ${{ secrets.VITE_API_PESSOAS_BASE_URL_HOMOLOG }}
         run: |
+          mkdir -p ~/.ssh
+          echo "$VPS_SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H $VPS_HOST >> ~/.ssh/known_hosts
+          
           ssh -i ~/.ssh/deploy_key ${VPS_USER}@${VPS_HOST} bash << ENDSSH
             set -e
+            cd ${VPS_DEPLOY_PATH}
             
-            export VPS_DEPLOY_PATH="${{ secrets.VPS_DEPLOY_PATH }}"
-            export VITE_API_USUARIOS_BASE_URL_HOMOLOG="${{ secrets.VITE_API_USUARIOS_BASE_URL_HOMOLOG }}"
-            export VITE_API_CLIENTES_BASE_URL_HOMOLOG="${{ secrets.VITE_API_CLIENTES_BASE_URL_HOMOLOG }}"
-            export VITE_API_COMUNICACOES_BASE_URL_HOMOLOG="${{ secrets.VITE_API_COMUNICACOES_BASE_URL_HOMOLOG }}"
+            # Exportar variáveis de ambiente ANTES de executar docker-compose
+            export VITE_API_USUARIOS_BASE_URL_HOMOLOG="${VITE_API_USUARIOS_BASE_URL_HOMOLOG}"
+            export VITE_API_CLIENTES_BASE_URL_HOMOLOG="${VITE_API_CLIENTES_BASE_URL_HOMOLOG}"
+            export VITE_API_COMUNICACOES_BASE_URL_HOMOLOG="${VITE_API_COMUNICACOES_BASE_URL_HOMOLOG}"
+            export VITE_API_CONTRATOS_BASE_URL_HOMOLOG="${VITE_API_CONTRATOS_BASE_URL_HOMOLOG}"
+            export VITE_API_PESSOAS_BASE_URL_HOMOLOG="${VITE_API_PESSOAS_BASE_URL_HOMOLOG}"
             
-            # Navegar para o diretório do projeto
-            cd \${VPS_DEPLOY_PATH}/app-erp
-            
-            # Fazer pull da branch homolog
+            # Fazer checkout da branch homolog
             git fetch origin
             git checkout homolog
             git pull origin homolog
             
-            # Parar container de homolog se estiver rodando
+            # Parar e remover container antigo
             docker-compose stop app-erp-homolog || true
             docker-compose rm -f app-erp-homolog || true
             
-            # Rebuild e iniciar container de homolog
+            # Build e iniciar container (as variáveis já estão exportadas)
             docker-compose build app-erp-homolog
             docker-compose up -d app-erp-homolog
             
-            # Limpar imagens antigas não utilizadas
+            # Limpar imagens antigas
             docker image prune -f
             
-            # Verificar se o container está rodando
+            # Verificar status
             sleep 5
             docker-compose ps app-erp-homolog
-            
             echo "✅ Deploy do App ERP (homolog) concluído com sucesso!"
           ENDSSH
-
-      - name: Notificar sucesso
-        if: success()
-        run: |
-          echo "✅ Deploy concluído com sucesso na branch homolog"
-
-      - name: Notificar falha
-        if: failure()
-        run: |
-          echo "❌ Falha no deploy"
-
