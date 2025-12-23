@@ -1,5 +1,5 @@
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
     Box,
     Snackbar,
@@ -15,6 +15,7 @@ import { useAuth } from '../../context/AuthContext'
 import TextPicker from '../../components/TextPicker'
 import SelectPicker from '../../components/SelectPicker'
 import { relationshipTypeService, type RelationshipTypeDTO } from '../../services/relationshipTypes'
+import { getAccessMode, isHidden } from '../../utils/accessControl'
 import './style.css'
 
 type RelationshipTypeRow = TableCardRow & RelationshipTypeDTO
@@ -30,12 +31,7 @@ const RelationshipTypesPage = () => {
     const { setFilters, setPlaceholder, setQuery } = useSearch()
     const { permissions, user: currentUser } = useAuth()
 
-    const hasPermission = useCallback(
-        (permission: string) => {
-            return permissions.includes(permission)
-        },
-        [permissions],
-    )
+    const relationshipAccessMode = useMemo(() => getAccessMode(permissions, 'cadastro:tipos-relacionamento'), [permissions])
 
     useEffect(() => {
         setPlaceholder('Pesquisar por origem ou destino...')
@@ -65,13 +61,13 @@ const RelationshipTypesPage = () => {
     }
 
     useEffect(() => {
-        if (hasPermission('cadastro:tipos-relacionamento:listar')) {
+        if (!isHidden(relationshipAccessMode)) {
             loadTypes()
         } else {
             setLoading(false)
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [permissions])
+    }, [permissions, relationshipAccessMode])
 
     const handleAddType = async (data: Partial<RelationshipTypeRow>) => {
         try {
@@ -144,7 +140,7 @@ const RelationshipTypesPage = () => {
                 key: 'connectorPrefix',
                 label: 'Prefixo',
                 required: true,
-                renderInput: ({ value, onChange, field, disabled }) => (
+                renderInput: ({ value, onChange, field, accessMode }) => (
                     <TextPicker
                         label={field.label}
                         value={typeof value === 'string' ? value : ''}
@@ -152,7 +148,7 @@ const RelationshipTypesPage = () => {
                         fullWidth
                         placeholder="Ex: É pai de"
                         required={field.required}
-                        disabled={disabled}
+                        accessMode={accessMode}
                     />
                 ),
             },
@@ -160,7 +156,7 @@ const RelationshipTypesPage = () => {
                 key: 'relationshipSource',
                 label: 'Origem',
                 required: true,
-                renderInput: ({ value, onChange, field, disabled }) => (
+                renderInput: ({ value, onChange, field, accessMode }) => (
                     <TextPicker
                         label={field.label}
                         value={typeof value === 'string' ? value : ''}
@@ -168,7 +164,7 @@ const RelationshipTypesPage = () => {
                         fullWidth
                         placeholder="Ex: Pai"
                         required={field.required}
-                        disabled={disabled}
+                        accessMode={accessMode}
                     />
                 ),
             },
@@ -176,7 +172,7 @@ const RelationshipTypesPage = () => {
                 key: 'connectorSuffix',
                 label: 'Sufixo',
                 required: true,
-                renderInput: ({ value, onChange, field, disabled }) => (
+                renderInput: ({ value, onChange, field, accessMode }) => (
                     <TextPicker
                         label={field.label}
                         value={typeof value === 'string' ? value : ''}
@@ -184,7 +180,7 @@ const RelationshipTypesPage = () => {
                         fullWidth
                         placeholder="Ex: de"
                         required={field.required}
-                        disabled={disabled}
+                        accessMode={accessMode}
                     />
                 ),
             },
@@ -192,7 +188,7 @@ const RelationshipTypesPage = () => {
                 key: 'relationshipTarget',
                 label: 'Destino',
                 required: true,
-                renderInput: ({ value, onChange, field, disabled }) => (
+                renderInput: ({ value, onChange, field, accessMode }) => (
                     <TextPicker
                         label={field.label}
                         value={typeof value === 'string' ? value : ''}
@@ -200,7 +196,7 @@ const RelationshipTypesPage = () => {
                         fullWidth
                         placeholder="Ex: Filho"
                         required={field.required}
-                        disabled={disabled}
+                        accessMode={accessMode}
                     />
                 ),
             },
@@ -209,7 +205,7 @@ const RelationshipTypesPage = () => {
                 label: 'Tipo Inverso',
                 required: true,
                 defaultValue: 'auto',
-                renderInput: ({ value, onChange, field, disabled }) => (
+                renderInput: ({ value, onChange, field, accessMode }) => (
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                         <SelectPicker
                             label={field.label}
@@ -221,7 +217,7 @@ const RelationshipTypesPage = () => {
                             ]}
                             fullWidth
                             required={field.required}
-                            disabled={disabled}
+                            accessMode={accessMode}
                         />
                         {value === 'auto' && (
                             <Typography variant="caption" className="relationship-helper-text" sx={{ ml: 1 }}>
@@ -243,15 +239,6 @@ const RelationshipTypesPage = () => {
         { key: 'createdAt', label: 'Cadastro', dataType: 'date' },
     ], [types])
 
-    if (!loading && !hasPermission('cadastro:tipos-relacionamento:listar')) {
-        return (
-            <Box className="relationship-types-page">
-                <Typography variant="h6" align="center" sx={{ mt: 4 }}>
-                    Você não tem permissão para listar tipos de relacionamento
-                </Typography>
-            </Box>
-        )
-    }
 
     return (
         <Box className="relationship-types-page">
@@ -260,14 +247,12 @@ const RelationshipTypesPage = () => {
                 columns={tableColumns}
                 rows={types}
                 loading={loading}
-                onAdd={hasPermission('cadastro:tipos-relacionamento:criar') ? handleAddType : undefined}
-                onEdit={hasPermission('cadastro:tipos-relacionamento:editar') ? handleEditType : undefined}
-                onDelete={hasPermission('cadastro:tipos-relacionamento:excluir') ? handleDeleteType : undefined}
-                onBulkDelete={hasPermission('cadastro:tipos-relacionamento:excluir') ? handleBulkDelete : undefined}
+                onAdd={handleAddType}
+                onEdit={handleEditType}
+                onDelete={handleDeleteType}
+                onBulkDelete={handleBulkDelete}
                 formFields={relationshipFormFields}
-                disableDelete={!hasPermission('cadastro:tipos-relacionamento:excluir')}
-                disableEdit={!hasPermission('cadastro:tipos-relacionamento:editar')}
-                disableView={!hasPermission('cadastro:tipos-relacionamento:visualizar')}
+                accessMode={relationshipAccessMode}
             />
 
             <Snackbar

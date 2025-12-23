@@ -255,6 +255,14 @@
   color: var(--color-text) !important;
 }
 
+.table-card__no-access-message {
+  color: var(--color-on-secondary);
+}
+
+.theme-dark .table-card__no-access-message {
+  color: #ffffff !important;
+}
+
 /* Status pills */
 .status-pill {
   display: inline-flex;
@@ -529,11 +537,11 @@
 }
 
 /* Garantir espaço para o label flutuante do primeiro campo */
-.table-card .MuiDialogContent-root > *:first-child {
+.table-card .MuiDialogContent-root>*:first-child {
   margin-top: 0 !important;
 }
 
-.table-card .MuiDialogContent-root .MuiStack-root > *:first-child {
+.table-card .MuiDialogContent-root .MuiStack-root>*:first-child {
   margin-top: 8px !important;
 }
 

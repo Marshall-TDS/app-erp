@@ -25,7 +25,7 @@ export const getAccessMode = (permissions: string[], basePermission: string): Ac
 
     return {
         view,
-        visualizeItem: hasVisualizar || edit,
+        visualizeItem: hasVisualizar,
         create,
         edit,
         delete: del,

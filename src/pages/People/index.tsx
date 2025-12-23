@@ -15,6 +15,7 @@ import TableCard, {
 } from '../../components/TableCard'
 import { useSearch } from '../../context/SearchContext'
 import { useAuth } from '../../context/AuthContext'
+import { getAccessMode, isHidden, canVisualizeItem } from '../../utils/accessControl'
 
 import { peopleService, type PeopleDTO } from '../../services/people'
 import PeopleDashboard from './PeopleDashboard'
@@ -50,12 +51,8 @@ const PeoplePage = () => {
   const { setFilters, setPlaceholder, setQuery } = useSearch()
   const { permissions, user: currentUser } = useAuth()
 
-  const hasPermission = useCallback(
-    (permission: string) => {
-      return permissions.includes(permission)
-    },
-    [permissions],
-  )
+  const peopleAccessMode = useMemo(() => getAccessMode(permissions, 'cadastro:pessoas'), [permissions])
+
 
   useEffect(() => {
     setPlaceholder('')
@@ -92,18 +89,18 @@ const PeoplePage = () => {
   }
 
   useEffect(() => {
-    if (hasPermission('cadastro:pessoas:listar')) {
+    if (!isHidden(peopleAccessMode)) {
       loadPeople()
     } else {
       setLoading(false)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [permissions])
+  }, [permissions, peopleAccessMode])
 
   // Sync Dashboard state with URL Query Params
   useEffect(() => {
     const peopleIdParam = searchParams.get('peopleId')
-    const canView = hasPermission('cadastro:pessoas:visualizar')
+    const canView = canVisualizeItem(peopleAccessMode)
 
     if (peopleIdParam && canView) {
       if (dashboardPeopleId !== peopleIdParam || !dashboardOpen) {
@@ -116,7 +113,7 @@ const PeoplePage = () => {
         setDashboardPeopleId(null)
       }
     }
-  }, [searchParams, hasPermission, dashboardPeopleId, dashboardOpen])
+  }, [searchParams, peopleAccessMode, dashboardPeopleId, dashboardOpen])
 
   const handleAddPeople = async (data: { name: string; cpfCnpj: string }) => {
     try {
@@ -182,9 +179,8 @@ const PeoplePage = () => {
       label: 'Ver',
       icon: <VisibilityOutlined fontSize="small" />,
       onClick: handleOpenDashboard,
-      disabled: !hasPermission('cadastro:pessoas:visualizar'),
     },
-  ], [hasPermission, handleOpenDashboard])
+  ], [handleOpenDashboard])
 
   const bulkActions: TableCardBulkAction<PeopleRow>[] = useMemo(() => [
     {
@@ -194,9 +190,9 @@ const PeoplePage = () => {
         const person = people.find((c) => c.id === ids[0])
         if (person) handleOpenDashboard(person)
       },
-      disabled: (ids) => ids.length !== 1 || !hasPermission('cadastro:pessoas:visualizar'),
+      disabled: (ids) => ids.length !== 1,
     },
-  ], [people, hasPermission, handleOpenDashboard])
+  ], [people, handleOpenDashboard])
 
   const tableColumns = useMemo<TableCardColumn<PeopleRow>[]>(() => [
     { key: 'name', label: 'Nome' },
@@ -204,15 +200,6 @@ const PeoplePage = () => {
     { key: 'createdAt', label: 'Cadastro', dataType: 'date' },
   ], [])
 
-  if (!loading && !hasPermission('cadastro:pessoas:listar')) {
-    return (
-      <Box className="people-page">
-        <Typography variant="h6" align="center" sx={{ mt: 4 }}>
-          Você não tem permissão para listar pessoas
-        </Typography>
-      </Box>
-    )
-  }
 
   return (
     <Box className="people-page">
@@ -228,19 +215,13 @@ const PeoplePage = () => {
           title="Pessoas"
           columns={tableColumns}
           rows={people}
-          onAddClick={hasPermission('cadastro:pessoas:criar') ? () => setCreateModalOpen(true) : undefined}
+          onAddClick={() => setCreateModalOpen(true)}
           onDelete={handleDeletePeople}
-          onBulkDelete={hasPermission('cadastro:pessoas:excluir') ? handleBulkDelete : undefined}
+          onBulkDelete={handleBulkDelete}
           rowActions={rowActions}
           bulkActions={bulkActions}
-          onRowClick={(row) => {
-            if (hasPermission('cadastro:pessoas:visualizar')) {
-              handleOpenDashboard(row)
-            }
-          }}
-          disableDelete={!hasPermission('cadastro:pessoas:excluir')}
-          disableEdit={!hasPermission('cadastro:pessoas:editar')}
-          disableView={!hasPermission('cadastro:pessoas:visualizar')}
+          onRowClick={handleOpenDashboard}
+          accessMode={peopleAccessMode}
         />
       )}
 

@@ -1,4 +1,14 @@
 import { useMemo, useState, useEffect, useRef, type ReactNode } from 'react'
+import type { AccessMode } from '../Dashboard/DashboardBodyCard'
+import {
+  isReadOnly as checkIsReadOnly,
+  isHidden as checkIsHidden,
+  getContextualAccessMode,
+  canCreate,
+  canEdit,
+  canDelete,
+  canVisualizeItem,
+} from '../../utils/accessControl'
 import { useSearch } from '../../context/SearchContext'
 import { createPortal } from 'react-dom'
 import {
@@ -45,6 +55,7 @@ export type TableCardFieldRenderProps<T extends TableCardRow> = {
   formValues: Partial<T>
   setFieldValue: (key: keyof T, value: any) => void
   disabled: boolean
+  accessMode?: AccessMode
 }
 
 export type TableCardFormField<T extends TableCardRow> = TableCardColumn<T> & {
@@ -101,6 +112,7 @@ type TableCardProps<T extends TableCardRow> = {
   onRowClick?: (row: T) => void
   onAddClick?: () => void
   loading?: boolean
+  accessMode?: AccessMode
 }
 
 type DialogState<T extends TableCardRow> =
@@ -125,6 +137,7 @@ const TableCard = <T extends TableCardRow>({
   onRowClick,
   onAddClick,
   loading = false,
+  accessMode = 'full',
 }: TableCardProps<T>) => {
   const { query, selectedFilter } = useSearch()
   const theme = useTheme()
@@ -351,6 +364,9 @@ const TableCard = <T extends TableCardRow>({
     const inputType =
       'inputType' in field && field.inputType ? field.inputType : field.dataType ?? 'text'
 
+    const contextualAccessMode = getContextualAccessMode(accessMode, dialog.mode === 'edit')
+    const fieldIsReadOnly = checkIsReadOnly(contextualAccessMode)
+
     if ('renderInput' in field && field.renderInput) {
       return (
         <Box key={String(field.key)}>
@@ -360,7 +376,8 @@ const TableCard = <T extends TableCardRow>({
             field: field as TableCardFormField<T>,
             formValues,
             setFieldValue: (key, newValue) => handleFieldChange(key, newValue),
-            disabled: ('disabled' in field ? field.disabled : false) || (dialog.mode === 'edit' && disableEdit),
+            disabled: ('disabled' in field ? !!field.disabled : false) || fieldIsReadOnly,
+            accessMode: contextualAccessMode,
           })}
         </Box>
       )
@@ -380,10 +397,10 @@ const TableCard = <T extends TableCardRow>({
           value={value}
           onChange={(event) => handleFieldChange(field.key, event.target.value)}
           fullWidth
-          helperText={'helperText' in field ? field.helperText : undefined}
-          required={'required' in field ? field.required : undefined}
-          placeholder={'placeholder' in field ? field.placeholder : undefined}
-          disabled={('disabled' in field ? field.disabled : undefined) || (dialog.mode === 'edit' && disableEdit)}
+          helperText={'helperText' in field ? (field.helperText as string) : undefined}
+          required={'required' in field ? !!field.required : undefined}
+          placeholder={'placeholder' in field ? (field.placeholder as string) : undefined}
+          disabled={('disabled' in field ? !!field.disabled : false) || fieldIsReadOnly}
           size="small"
           sx={{
             '& .MuiOutlinedInput-root': {
@@ -438,10 +455,10 @@ const TableCard = <T extends TableCardRow>({
             multiple: true,
             renderValue: (selected) => (selected as (string | number)[]).map(String).join(', '),
           }}
-          helperText={'helperText' in field ? field.helperText : undefined}
-          required={'required' in field ? field.required : undefined}
-          placeholder={'placeholder' in field ? field.placeholder : undefined}
-          disabled={('disabled' in field ? field.disabled : undefined) || (dialog.mode === 'edit' && disableEdit)}
+          helperText={'helperText' in field ? (field.helperText as string) : undefined}
+          required={'required' in field ? !!field.required : undefined}
+          placeholder={'placeholder' in field ? (field.placeholder as string) : undefined}
+          disabled={('disabled' in field ? !!field.disabled : false) || fieldIsReadOnly}
           size="small"
           sx={{
             '& .MuiOutlinedInput-root': {
@@ -489,10 +506,10 @@ const TableCard = <T extends TableCardRow>({
         value={value}
         onChange={(event) => handleFieldChange(field.key, event.target.value)}
         fullWidth
-        helperText={'helperText' in field ? field.helperText : undefined}
-        required={'required' in field ? field.required : undefined}
-        placeholder={'placeholder' in field ? field.placeholder : undefined}
-        disabled={('disabled' in field ? field.disabled : undefined) || (dialog.mode === 'edit' && disableEdit)}
+        helperText={'helperText' in field ? (field.helperText as string) : undefined}
+        required={'required' in field ? !!field.required : undefined}
+        placeholder={'placeholder' in field ? (field.placeholder as string) : undefined}
+        disabled={('disabled' in field ? !!field.disabled : false) || fieldIsReadOnly}
         InputLabelProps={inputType === 'date' ? { shrink: true } : undefined}
         size="small"
         sx={{
@@ -565,7 +582,22 @@ const TableCard = <T extends TableCardRow>({
         </Stack>
 
         <Box sx={{ position: 'relative', minHeight: 200 }}>
-          {loading && filteredRows.length === 0 ? (
+          {checkIsHidden(accessMode) ? (
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                py: 8,
+                gap: 2,
+              }}
+            >
+              <Typography variant="body1" className="table-card__no-access-message" fontWeight={500}>
+                Você não possui acesso para estes registros
+              </Typography>
+            </Box>
+          ) : loading && filteredRows.length === 0 ? (
             <Box
               sx={{
                 display: 'flex',
@@ -620,7 +652,7 @@ const TableCard = <T extends TableCardRow>({
                             key={row.id}
                             className={`table-card__gmail-card ${isSelected ? 'table-card__gmail-card--selected' : ''}`}
                             onClick={() => {
-                              if (!disableView) {
+                              if (!disableView && canVisualizeItem(accessMode)) {
                                 if (onRowClick) {
                                   onRowClick(row)
                                 } else {
@@ -628,6 +660,7 @@ const TableCard = <T extends TableCardRow>({
                                 }
                               }
                             }}
+                            style={{ cursor: (!disableView && canVisualizeItem(accessMode)) ? 'pointer' : 'default' }}
                           >
                             <Box className="table-card__gmail-card-content">
                               <Checkbox
@@ -719,7 +752,7 @@ const TableCard = <T extends TableCardRow>({
                               hover
                               className={`table-card__row ${selectedIds.includes(row.id) ? 'table-card__row--selected' : ''}`}
                               onClick={() => {
-                                if (!disableView) {
+                                if (!disableView && canVisualizeItem(accessMode)) {
                                   if (onRowClick) {
                                     onRowClick(row)
                                   } else {
@@ -727,6 +760,7 @@ const TableCard = <T extends TableCardRow>({
                                   }
                                 }
                               }}
+                              style={{ cursor: (!disableView && canVisualizeItem(accessMode)) ? 'pointer' : 'default' }}
                             >
                               <TableCell padding="checkbox" onClick={(event) => event.stopPropagation()}>
                                 <Checkbox checked={selectedIds.includes(row.id)} onChange={() => handleToggleSelectRow(row.id)} />
@@ -791,10 +825,10 @@ const TableCard = <T extends TableCardRow>({
               }
               handleCloseMenu()
             }}
-            disabled={disableEdit}
+            disabled={disableView || !canVisualizeItem(accessMode)}
           >
             <EditOutlined fontSize="small" style={{ marginRight: 8 }} />
-            Editar
+            {canEdit(accessMode) && !disableEdit ? 'Editar' : 'Visualizar'}
           </MenuItem>
         )}
         {onDelete && (
@@ -804,7 +838,7 @@ const TableCard = <T extends TableCardRow>({
               setIsRowDeleteArmed(false)
               if (rowDeleteTimeoutRef.current) clearTimeout(rowDeleteTimeoutRef.current)
             }}
-            disabled={disableDelete}
+            disabled={disableDelete || !canDelete(accessMode)}
             sx={{ color: 'error.main' }}
           >
             {isRowDeleteArmed ? (
@@ -849,7 +883,7 @@ const TableCard = <T extends TableCardRow>({
             flexShrink: 0,
           }}
         >
-          {dialog.mode === 'add' ? 'Adicionar registro' : 'Editar registro'}
+          {dialog.mode === 'add' ? 'Adicionar registro' : (canEdit(accessMode) && !disableEdit) ? 'Editar registro' : 'Visualizar registro'}
         </DialogTitle>
         <DialogContent
           dividers={false}
@@ -889,31 +923,33 @@ const TableCard = <T extends TableCardRow>({
               fontSize: '15px',
             }}
           >
-            {dialog.mode === 'edit' && disableEdit ? 'Fechar' : 'Cancelar'}
+            {dialog.mode === 'edit' && (disableEdit || !canEdit(accessMode)) ? 'Fechar' : 'Cancelar'}
           </Button>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={handleSubmit}
-            disabled={dialog.mode === 'edit' && disableEdit}
-            sx={{
-              borderRadius: '10px',
-              padding: '8px 20px',
-              textTransform: 'none',
-              fontWeight: 600,
-              fontSize: '15px',
-              boxShadow: 'none',
-              '&:hover': {
-                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-              },
-            }}
-          >
-            Salvar
-          </Button>
+          {(dialog.mode === 'add' ? canCreate(accessMode) : (canEdit(accessMode) && !disableEdit)) && (
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleSubmit}
+              disabled={dialog.mode === 'edit' ? (disableEdit || !canEdit(accessMode)) : !canCreate(accessMode)}
+              sx={{
+                borderRadius: '10px',
+                padding: '8px 20px',
+                textTransform: 'none',
+                fontWeight: 600,
+                fontSize: '15px',
+                boxShadow: 'none',
+                '&:hover': {
+                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                },
+              }}
+            >
+              Salvar
+            </Button>
+          )}
         </DialogActions>
       </Dialog>
 
-      {(onAdd || onAddClick) &&
+      {(onAdd || onAddClick) && canCreate(accessMode) &&
         createPortal(
           <Fab
             color="primary"
@@ -972,7 +1008,7 @@ const TableCard = <T extends TableCardRow>({
                     <IconButton
                       color="error"
                       onClick={handleBulkDelete}
-                      disabled={!onBulkDelete}
+                      disabled={!onBulkDelete || !canDelete(accessMode)}
                       aria-label="Excluir selecionados"
                       sx={isBulkDeleteArmed ? { bgcolor: 'action.hover' } : {}}
                     >
